@@ -1,0 +1,51 @@
+[project]
+name = "transportation-harness"
+version = "1.3.0"
+description = "交通分析自进化评测系统:badcase → replaycase → 版本化评测集 → 迭代 → 回归验证的闭环 harness"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Transportation Harness Contributors" }]
+keywords = ["evaluation", "llm-judge", "regression", "traffic", "harness", "fastapi"]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+    "ruff>=0.5",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["harness", "pipeline", "webapp", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",     # pycodestyle
+    "F",          # pyflakes
+    "I",          # isort
+    "B",          # bugbear(常见 bug 模式)
+    "UP",         # pyupgrade(过时语法)
+    "SIM",        # simplify(可简化写法)
+    "C4",         # comprehensions
+]
+ignore = [
+    "E501",       # 行长交由 formatter/人工把控,中文注释普遍超 88
+    "SIM108",     # 三元表达式不一定比 if-else 可读
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 这些文件先把项目根插入 sys.path 再 import 项目包,属刻意的运行模式
+"webapp/app.py" = ["E402"]
+"scripts/*.py" = ["E402"]
+"tests/conftest.py" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]

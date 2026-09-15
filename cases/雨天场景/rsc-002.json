@@ -1,0 +1,27 @@
+{
+  "case_id": "rsc-002",
+  "title": "雨天解放西路保持「缓行」,全局拥堵指数 0.8927",
+  "label": "雨天场景",
+  "dataset_name": "rain_peak",
+  "checks": [
+    {
+      "type": "classify",
+      "segment": "S-06",
+      "field": null,
+      "expected": "缓行",
+      "tol": 0.01,
+      "keywords": []
+    },
+    {
+      "type": "metric",
+      "segment": null,
+      "field": "global_congestion_index",
+      "expected": 0.8927,
+      "tol": 0.005,
+      "keywords": []
+    }
+  ],
+  "source": "场景标定",
+  "created_at": "2026-09-05T09:00:00",
+  "notes": "饱和度 0.7728 落在缓行区间,且车速比 0.5 未触发边界升级;全局指数应较基准情景(0.7944)明显抬升。"
+}

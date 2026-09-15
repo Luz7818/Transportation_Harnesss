@@ -1,0 +1,21 @@
+{
+  "dataset_id": "evening_peak",
+  "description": "晚高峰:通勤潮汐方向反转,潮汐路段(学府路/长江路)压力回落,反向与快速联络线承压",
+  "scenario": {
+    "tag": "晚高峰通勤",
+    "insight": "17:30-18:30 通勤潮汐方向反转:早高峰的拥堵走廊(学府路/长江路)压力明显回落,而泉山南路等联络线与文昌桥进入高位运行;用于检验管线对方向性流量重分布的表达能力。"
+  },
+  "captured_at": "2026-08-31 17:45",
+  "segments": [
+    {"segment_id": "S-01", "name": "城东大道", "length_km": 3.2, "lane_count": 4, "capacity_per_lane": 1800, "volume": 3200, "speed": 42, "free_flow_speed": 60},
+    {"segment_id": "S-02", "name": "学府路", "length_km": 1.8, "lane_count": 2, "capacity_per_lane": 1700, "volume": 2600, "speed": 24, "free_flow_speed": 50},
+    {"segment_id": "S-03", "name": "长江路", "length_km": 4.5, "lane_count": 6, "capacity_per_lane": 1800, "volume": 7800, "speed": 28, "free_flow_speed": 60},
+    {"segment_id": "S-04", "name": "环北路", "length_km": 2.6, "lane_count": 2, "capacity_per_lane": 1700, "volume": 900, "speed": 47, "free_flow_speed": 55},
+    {"segment_id": "S-05", "name": "文昌桥", "length_km": 1.2, "lane_count": 4, "capacity_per_lane": 1750, "volume": 6300, "speed": 20, "free_flow_speed": 55},
+    {"segment_id": "S-06", "name": "解放西路", "length_km": 2.9, "lane_count": 3, "capacity_per_lane": 1700, "volume": 2900, "speed": 33, "free_flow_speed": 50},
+    {"segment_id": "S-07", "name": "科技园路", "length_km": 3.5, "lane_count": 2, "capacity_per_lane": 1600, "volume": 1250, "speed": 38, "free_flow_speed": 60},
+    {"segment_id": "S-08", "name": "滨江大道", "length_km": 2.2, "lane_count": 4, "capacity_per_lane": 1800, "volume": 4600, "speed": 33, "free_flow_speed": 60},
+    {"segment_id": "S-10", "name": "泉山南路", "length_km": 1.6, "lane_count": 2, "capacity_per_lane": 1700, "volume": 3900, "speed": 21, "free_flow_speed": 50},
+    {"segment_id": "S-11", "name": "云龙大道", "length_km": 2.0, "lane_count": 2, "capacity_per_lane": 1700, "volume": 2200, "speed": 27, "free_flow_speed": 50}
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "case_id": "rsc-003",
+  "title": "雨天泉山南路(V/C 1.16)应为「严重拥堵」且指标保留两位小数",
+  "label": "雨天场景",
+  "dataset_name": "rain_peak",
+  "checks": [
+    {
+      "type": "classify",
+      "segment": "S-10",
+      "field": null,
+      "expected": "严重拥堵",
+      "tol": 0.01,
+      "keywords": []
+    },
+    {
+      "type": "metric",
+      "segment": "S-10",
+      "field": "saturation",
+      "expected": 1.16,
+      "tol": 0.01,
+      "keywords": []
+    }
+  ],
+  "source": "场景标定",
+  "created_at": "2026-09-05T09:00:00",
+  "notes": "过饱和路段的精度回归:1.1592 → 展示 1.16。"
+}

@@ -1,0 +1,21 @@
+{
+  "dataset_id": "base",
+  "description": "某市早高峰主城区路网快照(10 个路段)",
+  "scenario": {
+    "tag": "常规早高峰",
+    "insight": "基准情景:工作日 8:00 主城区常规早高峰,用于标定其它情景的对比基线。"
+  },
+  "captured_at": "2026-08-31 08:00",
+  "segments": [
+    {"segment_id": "S-01", "name": "城东大道", "length_km": 3.2, "lane_count": 4, "capacity_per_lane": 1800, "volume": 3000, "speed": 45, "free_flow_speed": 60},
+    {"segment_id": "S-02", "name": "学府路", "length_km": 1.8, "lane_count": 2, "capacity_per_lane": 1700, "volume": 3100, "speed": 18, "free_flow_speed": 50},
+    {"segment_id": "S-03", "name": "长江路", "length_km": 4.5, "lane_count": 6, "capacity_per_lane": 1800, "volume": 9200, "speed": 22, "free_flow_speed": 60},
+    {"segment_id": "S-04", "name": "环北路", "length_km": 2.6, "lane_count": 2, "capacity_per_lane": 1700, "volume": 800, "speed": 48, "free_flow_speed": 55},
+    {"segment_id": "S-05", "name": "文昌桥", "length_km": 1.2, "lane_count": 4, "capacity_per_lane": 1750, "volume": 7100, "speed": 15, "free_flow_speed": 55},
+    {"segment_id": "S-06", "name": "解放西路", "length_km": 2.9, "lane_count": 3, "capacity_per_lane": 1700, "volume": 3600, "speed": 29, "free_flow_speed": 50},
+    {"segment_id": "S-07", "name": "科技园路", "length_km": 3.5, "lane_count": 2, "capacity_per_lane": 1600, "volume": 990, "speed": 40, "free_flow_speed": 60},
+    {"segment_id": "S-08", "name": "滨江大道", "length_km": 2.2, "lane_count": 4, "capacity_per_lane": 1800, "volume": 4320, "speed": 36, "free_flow_speed": 60},
+    {"segment_id": "S-10", "name": "泉山南路", "length_km": 1.6, "lane_count": 2, "capacity_per_lane": 1700, "volume": 3485, "speed": 26, "free_flow_speed": 50},
+    {"segment_id": "S-11", "name": "云龙大道", "length_km": 2.0, "lane_count": 2, "capacity_per_lane": 1700, "volume": 2652, "speed": 14, "free_flow_speed": 50}
+  ]
+}

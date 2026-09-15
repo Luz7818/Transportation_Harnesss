@@ -1,0 +1,45 @@
+<view class="card" wx:if="{{!loaded}}"><text class="muted">加载中…</text></view>
+
+<view class="card">
+  <view class="row spread">
+    <view class="card-title">⚡ 一键自进化</view>
+    <button class="btn" size="mini" disabled="{{evolving}}" bindtap="runEvolve">▶ 运行</button>
+  </view>
+  <view class="muted">基线 → 最多 2 轮迭代 → 验证「提升且无回归」→ 归档报告与进化记录。</view>
+</view>
+
+<view class="card" wx:for="{{versions}}" wx:key="version">
+  <view class="row spread">
+    <view class="card-title">{{item.version}} · {{item.name}}</view>
+    <button class="btn" size="mini" disabled="{{loading}}" data-version="{{item.version}}" bindtap="runEval">运行评测</button>
+  </view>
+  <view style="font-size:56rpx;font-weight:800;color:#4f46e5">{{item.accText}}</view>
+  <view class="muted" wx:if="{{item.latest}}">{{item.latest.passed_count}}/{{item.latest.total}} 条通过 · {{item.latest.evalset_id}}</view>
+  <view class="bar-track"><view class="bar-fill" style="width:{{item.barWidth}}%"></view></view>
+  <view class="muted" style="margin-top:12rpx" wx:if="{{item.changes.length}}">优化:{{item.changes[0]}}{{item.changes.length > 1 ? " 等" : ""}}</view>
+</view>
+
+<view class="card">
+  <view class="card-title">🧬 进化时间线</view>
+  <view wx:if="{{!evolutions.length}}" class="muted">暂无进化记录,点上方「运行」留下第一笔</view>
+  <view class="evo" wx:for="{{evolutions}}" wx:key="evolution_id">
+    <view class="row spread">
+      <text>{{item.timestamp}}</text>
+      <text class="pill pass" wx:if="{{item.allPass}}">✓ 全部通过</text>
+      <text class="pill fail" wx:else>⏹ {{item.stop_reason}}</text>
+    </view>
+    <view class="muted">{{item.traj}}(最佳 {{item.best.version}} {{item.best.passed_count}}/{{item.best.total}})</view>
+  </view>
+</view>
+
+<view class="card">
+  <view class="card-title">🗂 评测报告归档</view>
+  <view wx:if="{{!reports.length}}" class="muted">暂无报告,点上方「运行评测」生成</view>
+  <view class="rep" wx:for="{{reports}}" wx:key="report_id">
+    <view class="row spread">
+      <text>{{item.report_id}}</text>
+      <text class="muted">{{item.version}} · {{item.passed_count}}/{{item.total}}</text>
+    </view>
+    <view class="muted">{{item.evalset_id}} · {{item.timestamp}}</view>
+  </view>
+</view>

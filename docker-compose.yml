@@ -1,0 +1,29 @@
+services:
+  harness:
+    build: .
+    container_name: transportation-harness
+    ports:
+      # 生产建议改为 "127.0.0.1:8765:8765",只让 Nginx 反代对外(见 DEPLOY.md 路线 B)
+      - "8765:8765"
+    environment:
+      # 公网部署务必设置强随机令牌,客户端以 X-API-Token 头携带
+      - AUTH_TOKEN=${AUTH_TOKEN:-}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - HOST=0.0.0.0
+      - PORT=8765
+    volumes:
+      # 数据全部落盘,容器升级/重建不丢评测资产
+      - ./cases:/app/cases
+      - ./evalsets:/app/evalsets
+      - ./reports:/app/reports
+      - ./pipeline/data:/app/pipeline/data
+      # LLM 智能层:AI 草稿与响应缓存持久化(审计日志在容器内即可)
+      - ./drafts:/app/drafts
+      - ./llm_cache:/app/llm_cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8765/api/health', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3

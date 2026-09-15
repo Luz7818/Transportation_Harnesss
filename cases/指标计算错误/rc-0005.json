@@ -1,0 +1,19 @@
+{
+  "case_id": "rc-0005",
+  "title": "学府路延误指数应为 0.64(基线公式方向写反,输出 -0.64)",
+  "label": "指标计算错误",
+  "dataset_name": "base",
+  "checks": [
+    {
+      "type": "metric",
+      "segment": "S-02",
+      "field": "delay_index",
+      "expected": 0.64,
+      "tol": 0.02,
+      "keywords": []
+    }
+  ],
+  "source": "线上点踩",
+  "created_at": "2026-08-31T00:42:00",
+  "notes": "delay_index = max(0, (free_flow_speed - speed) / free_flow_speed)。"
+}

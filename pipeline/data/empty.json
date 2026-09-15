@@ -1,0 +1,6 @@
+{
+  "dataset_id": "empty",
+  "description": "空数据集:上游数据管道故障导致零路段返回",
+  "captured_at": "2026-08-31 08:00",
+  "segments": []
+}

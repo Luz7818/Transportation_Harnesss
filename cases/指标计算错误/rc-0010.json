@@ -1,0 +1,19 @@
+{
+  "case_id": "rc-0010",
+  "title": "全局拥堵指数应按流量加权 ≈ 0.7944,简单平均会低估主干道压力",
+  "label": "指标计算错误",
+  "dataset_name": "base",
+  "checks": [
+    {
+      "type": "metric",
+      "segment": null,
+      "field": "global_congestion_index",
+      "expected": 0.7944,
+      "tol": 0.005,
+      "keywords": []
+    }
+  ],
+  "source": "人工标注",
+  "created_at": "2026-08-31T00:46:00",
+  "notes": "全局指数 = Σ(volume×min(V/C,1.2)) / Σ(volume),流量大的路段权重大。"
+}

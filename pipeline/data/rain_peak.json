@@ -1,0 +1,21 @@
+{
+  "dataset_id": "rain_peak",
+  "description": "雨天早高峰:降雨导致通行能力下降约 15%,车速普降,流量小幅回落",
+  "scenario": {
+    "tag": "雨天早高峰",
+    "insight": "降雨使各路段通行能力下降约 15%(capacity_per_lane 已按 0.85 折算)、车速普降;同等出行需求下饱和度整体上移,多个路段升级为拥堵/严重拥堵。可用于检验管线在恶劣天气下的稳健性与预警灵敏度。"
+  },
+  "captured_at": "2026-09-05 08:00",
+  "segments": [
+    {"segment_id": "S-01", "name": "城东大道", "length_km": 3.2, "lane_count": 4, "capacity_per_lane": 1530, "volume": 2850, "speed": 40, "free_flow_speed": 60},
+    {"segment_id": "S-02", "name": "学府路", "length_km": 1.8, "lane_count": 2, "capacity_per_lane": 1445, "volume": 2950, "speed": 16, "free_flow_speed": 50},
+    {"segment_id": "S-03", "name": "长江路", "length_km": 4.5, "lane_count": 6, "capacity_per_lane": 1530, "volume": 8800, "speed": 19, "free_flow_speed": 60},
+    {"segment_id": "S-04", "name": "环北路", "length_km": 2.6, "lane_count": 2, "capacity_per_lane": 1445, "volume": 760, "speed": 42, "free_flow_speed": 55},
+    {"segment_id": "S-05", "name": "文昌桥", "length_km": 1.2, "lane_count": 4, "capacity_per_lane": 1488, "volume": 6800, "speed": 13, "free_flow_speed": 55},
+    {"segment_id": "S-06", "name": "解放西路", "length_km": 2.9, "lane_count": 3, "capacity_per_lane": 1445, "volume": 3350, "speed": 25, "free_flow_speed": 50},
+    {"segment_id": "S-07", "name": "科技园路", "length_km": 3.5, "lane_count": 2, "capacity_per_lane": 1360, "volume": 940, "speed": 34, "free_flow_speed": 60},
+    {"segment_id": "S-08", "name": "滨江大道", "length_km": 2.2, "lane_count": 4, "capacity_per_lane": 1530, "volume": 4150, "speed": 30, "free_flow_speed": 60},
+    {"segment_id": "S-10", "name": "泉山南路", "length_km": 1.6, "lane_count": 2, "capacity_per_lane": 1445, "volume": 3350, "speed": 22, "free_flow_speed": 50},
+    {"segment_id": "S-11", "name": "云龙大道", "length_km": 2.0, "lane_count": 2, "capacity_per_lane": 1445, "volume": 2520, "speed": 13, "free_flow_speed": 50}
+  ]
+}

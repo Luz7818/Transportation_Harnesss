@@ -1,0 +1,10 @@
+{
+  "evalset_id": "evalset_scenario_rain",
+  "description": "雨天早高峰场景评测集:检验恶劣天气下的分级与指标稳健性(3 条)",
+  "created_at": "2026-09-05",
+  "case_ids": [
+    "rsc-001",
+    "rsc-002",
+    "rsc-003"
+  ]
+}

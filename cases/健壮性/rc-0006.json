@@ -1,0 +1,27 @@
+{
+  "case_id": "rc-0006",
+  "title": "云谷隧道流量传感器故障(volume 缺失)导致整个分析崩溃",
+  "label": "健壮性",
+  "dataset_name": "missing_volume",
+  "checks": [
+    {
+      "type": "no_crash",
+      "segment": null,
+      "field": null,
+      "expected": null,
+      "tol": 0.01,
+      "keywords": []
+    },
+    {
+      "type": "classify",
+      "segment": "S-09",
+      "field": null,
+      "expected": "数据缺失",
+      "tol": 0.01,
+      "keywords": []
+    }
+  ],
+  "source": "线上反馈",
+  "created_at": "2026-08-31T00:43:00",
+  "notes": "单点数据缺失不允许让整份分析报告失败;缺失路段应标记为「数据缺失」。"
+}

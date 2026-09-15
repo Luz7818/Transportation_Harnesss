@@ -1,0 +1,19 @@
+{
+  "case_id": "rc-0004",
+  "title": "长江路饱和度按车道数折算后应为 0.85(基线漏乘车道数)",
+  "label": "指标计算错误",
+  "dataset_name": "base",
+  "checks": [
+    {
+      "type": "metric",
+      "segment": "S-03",
+      "field": "saturation",
+      "expected": 0.85,
+      "tol": 0.01,
+      "keywords": []
+    }
+  ],
+  "source": "人工标注",
+  "created_at": "2026-08-31T00:42:00",
+  "notes": "基线用 volume/capacity_per_lane,得到 5.11;正确应为 volume/(capacity_per_lane×lane_count)。"
+}

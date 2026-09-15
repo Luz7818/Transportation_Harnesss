@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <!-- 启动页/登录页背景:深夜城市路网 · 数据流光轨 · 进化循环 -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#05080f"/>
+      <stop offset=".45" stop-color="#0b1226"/>
+      <stop offset=".8" stop-color="#131033"/>
+      <stop offset="1" stop-color="#1b1140"/>
+    </linearGradient>
+    <radialGradient id="blobP" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#7c3aed" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blobC" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".3"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blobG" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#34d399" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="roadC" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#22d3ee" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="roadV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#8b5cf6" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fadeL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#04070f" stop-opacity=".88"/>
+      <stop offset=".45" stop-color="#04070f" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#04070f" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ringG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f46e5" stop-opacity=".85"/>
+      <stop offset=".6" stop-color="#7c3aed" stop-opacity=".5"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity=".9"/>
+    </linearGradient>
+    <filter id="blurL" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+    <filter id="blurS" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <pattern id="dots" width="46" height="46" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.3" fill="#8ea2c9" opacity=".14"/>
+    </pattern>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <rect width="1920" height="1080" fill="url(#dots)"/>
+
+  <!-- 远处光晕 -->
+  <ellipse cx="1520" cy="210" rx="560" ry="380" fill="url(#blobP)"/>
+  <ellipse cx="330" cy="880" rx="640" ry="420" fill="url(#blobC)"/>
+  <ellipse cx="1050" cy="1020" rx="520" ry="300" fill="url(#blobG)"/>
+
+  <!-- 城市路网主线(带光晕) -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M-40 780 C 360 700, 620 860, 980 760 S 1620 620, 1980 700"
+          stroke="#67e8f9" stroke-width="10" opacity=".22" filter="url(#blurL)"/>
+    <path d="M-40 780 C 360 700, 620 860, 980 760 S 1620 620, 1980 700"
+          stroke="url(#roadC)" stroke-width="3"/>
+    <path d="M220 -40 C 300 260, 180 520, 360 820 S 560 1020, 620 1120"
+          stroke="#a78bfa" stroke-width="9" opacity=".2" filter="url(#blurL)"/>
+    <path d="M220 -40 C 300 260, 180 520, 360 820 S 560 1020, 620 1120"
+          stroke="url(#roadV)" stroke-width="2.5"/>
+    <path d="M-40 380 C 300 340, 560 430, 860 380 S 1500 300, 1980 360"
+          stroke="#818cf8" stroke-width="7" opacity=".14" filter="url(#blurL)"/>
+    <path d="M-40 380 C 300 340, 560 430, 860 380 S 1500 300, 1980 360"
+          stroke="#c7d2fe" stroke-width="1.6" opacity=".5"/>
+    <path d="M760 -40 C 820 220, 700 420, 840 640 S 980 920, 940 1120"
+          stroke="#67e8f9" stroke-width="6" opacity=".16" filter="url(#blurL)"/>
+    <path d="M760 -40 C 820 220, 700 420, 840 640 S 980 920, 940 1120"
+          stroke="#a5f3fc" stroke-width="1.4" opacity=".45"/>
+    <path d="M1240 -40 C 1300 240, 1180 480, 1320 720 S 1420 980, 1400 1120"
+          stroke="#c084fc" stroke-width="6" opacity=".15" filter="url(#blurL)"/>
+    <path d="M1240 -40 C 1300 240, 1180 480, 1320 720 S 1420 980, 1400 1120"
+          stroke="#e9d5ff" stroke-width="1.4" opacity=".4"/>
+  </g>
+
+  <!-- 进化循环大环(呼应闭环方法论) -->
+  <g fill="none">
+    <circle cx="1470" cy="560" r="290" stroke="url(#ringG)" stroke-width="5"
+            stroke-dasharray="1500 240" stroke-linecap="round" opacity=".8"/>
+    <circle cx="1470" cy="560" r="290" stroke="#22d3ee" stroke-width="14"
+            opacity=".14" filter="url(#blurL)"/>
+    <polygon points="1585,286 1622,306 1588,336" fill="#67e8f9" opacity=".9" filter="url(#blurS)"/>
+    <circle cx="1204" cy="700" r="10" fill="#a5b4fc" opacity=".9"/>
+    <circle cx="1650" cy="800" r="8" fill="#34d399" opacity=".9"/>
+    <circle cx="1560" cy="292" r="7" fill="#67e8f9" opacity=".9"/>
+  </g>
+
+  <!-- 数据流粒子 -->
+  <g>
+    <circle cx="420" cy="742" r="4" fill="#67e8f9" opacity=".9"><animateMotion dur="9s" repeatCount="indefinite" path="M-40 780 C 360 700, 620 860, 980 760 S 1620 620, 1980 700"/></circle>
+    <circle cx="420" cy="742" r="3" fill="#a5f3fc" opacity=".7"><animateMotion dur="9s" begin="-4.5s" repeatCount="indefinite" path="M-40 780 C 360 700, 620 860, 980 760 S 1620 620, 1980 700"/></circle>
+    <circle cx="352" cy="410" r="4" fill="#a78bfa" opacity=".85"><animateMotion dur="11s" repeatCount="indefinite" path="M220 -40 C 300 260, 180 520, 360 820 S 560 1020, 620 1120"/></circle>
+    <circle cx="806" cy="330" r="3.4" fill="#67e8f9" opacity=".8"><animateMotion dur="12s" begin="-6s" repeatCount="indefinite" path="M760 -40 C 820 220, 700 420, 840 640 S 980 920, 940 1120"/></circle>
+    <circle cx="1284" cy="360" r="3.4" fill="#c084fc" opacity=".8"><animateMotion dur="13s" begin="-3s" repeatCount="indefinite" path="M1240 -40 C 1300 240, 1180 480, 1320 720 S 1420 980, 1400 1120"/></circle>
+    <circle cx="520" cy="398" r="3" fill="#c7d2fe" opacity=".6"><animateMotion dur="10s" begin="-2s" repeatCount="indefinite" path="M-40 380 C 300 340, 560 430, 860 380 S 1500 300, 1980 360"/></circle>
+  </g>
+
+  <!-- 路网节点 -->
+  <g fill="#9fd9ff">
+    <circle cx="360" cy="822" r="5" opacity=".85"/><circle cx="842" cy="638" r="5" opacity=".8"/>
+    <circle cx="1318" cy="716" r="5" opacity=".8"/><circle cx="978" cy="760" r="5" opacity=".75"/>
+    <circle cx="860" cy="380" r="4.5" opacity=".7"/><circle cx="190" cy="520" r="4" opacity=".6"/>
+  </g>
+
+  <!-- 顶部/底部压暗,保证文字可读 -->
+  <rect width="1920" height="200" fill="#04070f" opacity=".35"/>
+  <rect y="880" width="1920" height="200" fill="#04070f" opacity=".4"/>
+  <rect width="1920" height="1080" fill="url(#fadeL)"/>
+</svg>

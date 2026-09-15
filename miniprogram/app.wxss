@@ -1,0 +1,19 @@
+/* 全局样式 */
+page { background: #f3f5fa; color: #1f2733;
+       font-size: 28rpx; line-height: 1.6; }
+.card { background: #fff; border-radius: 24rpx; padding: 28rpx;
+        margin: 20rpx 24rpx; box-shadow: 0 2rpx 8rpx rgba(16,24,40,.06); }
+.card-title { font-size: 30rpx; font-weight: 700; margin-bottom: 16rpx; }
+.muted { color: #6b7686; font-size: 24rpx; }
+.btn { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: #fff;
+       border-radius: 16rpx; font-size: 28rpx; font-weight: 600; padding: 6rpx 0; }
+.btn[disabled] { opacity: .55; }
+.btn-ghost { background: #fff; color: #4f46e5; border: 1rpx solid #d8ddfb; }
+.pill { display: inline-block; padding: 2rpx 18rpx; border-radius: 999rpx; font-size: 22rpx; font-weight: 600; }
+.pill.pass { color: #059669; background: #ecfdf5; }
+.pill.fail { color: #dc2626; background: #fef2f2; }
+.badge { display: inline-block; padding: 2rpx 16rpx; border-radius: 999rpx; font-size: 22rpx; color: #fff; background: #94a3b8; }
+.badge.l0 { background: #10b981; } .badge.l1 { background: #84cc16; } .badge.l2 { background: #f59e0b; }
+.badge.l3 { background: #f97316; } .badge.l4 { background: #ef4444; } .badge.l5 { background: #94a3b8; }
+.row { display: flex; align-items: center; gap: 16rpx; }
+.spread { justify-content: space-between; }

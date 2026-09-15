@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>Transportation Harness · 交通分析自进化评测系统</title>
+<link rel="icon" type="image/svg+xml" href="/static/assets/icon.svg">
+<link rel="apple-touch-icon" href="/static/assets/icon.svg">
+<style>
+/* ================= 设计令牌 ================= */
+:root {
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --line: #e7eaf3;
+  --line-2: #d8deeb;
+  --t1: #0f1728; --t2: #3f4c63; --t3: #69758c; --t4: #98a2b8;
+  --primary: #4f46e5; --primary-h: #4338ca; --primary-soft: #eef1ff;
+  --accent: #06b6d4;
+  --ok: #079455; --ok-soft: #e7f6ef;
+  --warn: #b54708; --warn-soft: #fef4e6;
+  --bad: #b42318; --bad-soft: #feecea;
+  --side-1: #0b1020; --side-2: #141b33;
+  --shadow-xs: 0 1px 2px rgba(16,24,40,.05);
+  --shadow-sm: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.04);
+  --shadow-md: 0 12px 28px -8px rgba(16,24,40,.16), 0 2px 6px rgba(16,24,40,.05);
+  --ring: 0 0 0 3px rgba(79,70,229,.15);
+  --r-lg: 16px; --r-md: 12px; --r-sm: 9px;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; overflow: hidden; background: var(--bg); color: var(--t1); display: flex;
+       font: 14px/1.6 "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+       -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+::selection { background: rgba(79,70,229,.18); }
+.num { font-variant-numeric: tabular-nums; }
+.ico-svg { display: block; flex: none; }
+button { font: inherit; }
+:focus-visible { outline: none; box-shadow: var(--ring); }
+
+/* ================= 滚动条 ================= */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #ccd3e0; border-radius: 8px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: #b6bfd2; }
+
+/* ================= 侧边栏 ================= */
+.sidebar { width: 248px; flex: none; height: 100vh; display: flex; flex-direction: column;
+           background: linear-gradient(180deg, var(--side-1), var(--side-2)); color: #cdd5e6; }
+.brand { display: flex; align-items: center; gap: 11px; padding: 20px 18px 18px;
+         border-bottom: 1px solid rgba(255,255,255,.07); }
+.brand img { width: 38px; height: 38px; border-radius: 10px; box-shadow: 0 6px 18px rgba(6,182,212,.25); }
+.brand .bt { line-height: 1.35; }
+.brand .bt b { display: block; font-size: 13.5px; font-weight: 700; color: #f2f5fb; letter-spacing: .2px; }
+.brand .bt span { font-size: 10.5px; color: #7d8aa5; letter-spacing: .4px; }
+.nav-scroll { flex: 1; overflow-y: auto; padding: 14px 12px; }
+.nav-label { padding: 12px 12px 7px; font-size: 10.5px; font-weight: 600; letter-spacing: .14em; color: #5a6780; text-transform: uppercase; }
+.nav-item { position: relative; display: flex; align-items: center; gap: 11px; width: 100%;
+            border: 0; cursor: pointer; background: transparent; color: #a7b2ca; font: inherit;
+            text-align: left; padding: 9px 12px; border-radius: 10px; margin-bottom: 3px;
+            font-weight: 500; font-size: 13.5px;
+            transition: background .15s, color .15s; }
+.nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+.nav-item.active { background: rgba(99,102,241,.18); color: #fff; }
+.nav-item.active::before { content: ""; position: absolute; left: -12px; top: 22%; height: 56%;
+                           width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.nav-item .nv-ico { color: #6d7a95; transition: color .15s; }
+.nav-item:hover .nv-ico, .nav-item.active .nv-ico { color: #a5f3fc; }
+.side-foot { padding: 14px 16px 16px; border-top: 1px solid rgba(255,255,255,.07); font-size: 12px; }
+.sys-status { display: flex; align-items: center; gap: 8px; color: #8d99b3; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399;
+       box-shadow: 0 0 0 3px rgba(52,211,153,.16); animation: pulse 2.4s infinite; }
+.dot.off { background: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,.16); animation: none; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(52,211,153,.16);} 50% { box-shadow: 0 0 0 5px rgba(52,211,153,.07);} }
+.user-box { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; flex: none; display: flex; align-items: center;
+          justify-content: center; background: linear-gradient(135deg, #6366f1, #22d3ee);
+          color: #fff; font-weight: 700; font-size: 13px; }
+.user-box .ub-t { flex: 1; min-width: 0; }
+.user-box .ub-t b { display: block; color: #e8edf7; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linklike { background: none; border: 0; color: #8fb0ff; cursor: pointer; padding: 0; font: inherit; font-size: 11.5px; }
+.linklike:hover { text-decoration: underline; }
+.ub-actions { display: flex; gap: 8px; }
+.ub-actions .linklike { color: #7d8aa5; }
+.ub-actions .linklike:hover { color: #a5f3fc; }
+
+/* ================= 主区 ================= */
+.main { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; }
+.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center;
+          justify-content: space-between; gap: 16px; padding: 14px 32px;
+          background: rgba(255,255,255,.82); backdrop-filter: blur(12px);
+          border-bottom: 1px solid var(--line); }
+.topbar h2 { margin: 0; font-size: 16.5px; letter-spacing: .1px; font-weight: 700; }
+.topbar .sub { color: var(--t3); font-size: 12px; margin-top: 1px; }
+.chipbar { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--surface);
+        border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
+        color: var(--t3); box-shadow: var(--shadow-xs); }
+.chip .ico-svg { color: var(--t4); }
+
+main { padding: 24px 32px 64px; max-width: 1160px; width: 100%; margin: 0 auto; }
+section.page { display: none; }
+section.page.active { display: block; animation: fadeUp .3s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ================= 卡片 ================= */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+        box-shadow: var(--shadow-xs); padding: 20px 24px 22px; margin-bottom: 20px; }
+.card > h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; letter-spacing: .1px;
+             display: flex; align-items: center; gap: 10px; }
+.card > h3 .h-ico { width: 30px; height: 30px; border-radius: 9px; flex: none;
+                    display: flex; align-items: center; justify-content: center;
+                    background: var(--primary-soft); color: var(--primary); }
+.card > .desc { color: var(--t3); font-size: 12.5px; margin: 0 0 18px; }
+.muted { color: var(--t3); font-size: 12.5px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+
+/* ================= 按钮 ================= */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+       border: 1px solid transparent; cursor: pointer; font: inherit; font-size: 13.5px; font-weight: 600;
+       color: #fff; background: var(--primary); padding: 0 18px; height: 38px; border-radius: 10px;
+       transition: background .15s, transform .12s, box-shadow .15s; box-shadow: var(--shadow-xs); }
+.btn:hover:not(:disabled) { background: var(--primary-h); transform: translateY(-1px); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn.lg { height: 44px; font-size: 14.5px; padding: 0 24px; border-radius: 11px; }
+.btn.sm { height: 31px; font-size: 12.5px; padding: 0 13px; border-radius: 8px; }
+.btn.secondary { background: var(--surface); color: var(--t1); border-color: var(--line-2); }
+.btn.secondary:hover:not(:disabled) { background: #f7f8fc; }
+.btn.danger { background: var(--bad); }
+.btn.danger:hover:not(:disabled) { background: #912018; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+            border: 0; background: transparent; border-radius: 7px; cursor: pointer; color: var(--t4);
+            transition: background .15s, color .15s; }
+.icon-btn:hover { background: var(--bad-soft); color: var(--bad); }
+
+/* ================= 表单 ================= */
+label { display: block; font-size: 12px; color: var(--t2); margin: 12px 0 5px; font-weight: 600; }
+input, select, textarea { width: 100%; height: 38px; padding: 0 12px; border: 1px solid var(--line-2);
+                          border-radius: 10px; font: inherit; font-size: 13.5px; background: var(--surface);
+                          color: var(--t1); transition: border .12s, box-shadow .12s; }
+textarea { height: auto; padding: 9px 12px; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: #a5b0fc; box-shadow: var(--ring); }
+select { appearance: none; padding-right: 32px; cursor: pointer;
+         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2369758c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+         background-repeat: no-repeat; background-position: right 10px center; }
+select.inline { width: auto; min-width: 200px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+.hint { display: flex; gap: 9px; background: var(--primary-soft); border: 1px solid #dfe3ff; color: #3730a3;
+        border-radius: 10px; padding: 10px 13px; font-size: 12.5px; margin-top: 14px; line-height: 1.55; }
+.hint .ico-svg { margin-top: 2px; color: #6366f1; }
+.hint.ok { background: var(--ok-soft); border-color: #c9ecd9; color: #067647; }
+.hint.ok .ico-svg { color: var(--ok); }
+.hint.warn { background: var(--bad-soft); border-color: #f6cfcf; color: var(--bad); }
+.hint.warn .ico-svg { color: var(--bad); }
+
+details.changes { margin-top: 10px; }
+details.changes summary { cursor: pointer; color: var(--primary); font-size: 12.5px; font-weight: 600;
+                          user-select: none; list-style: none; display: flex; align-items: center; gap: 5px; }
+details.changes summary::before { content: "›"; display: inline-block; transition: transform .15s; font-size: 14px; }
+details.changes[open] summary::before { transform: rotate(90deg); }
+details.changes ul { margin: 7px 0 0; padding-left: 20px; color: var(--t3); font-size: 12.5px; }
+details.changes li { margin-bottom: 3px; }
+
+/* ================= KPI ================= */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+       box-shadow: var(--shadow-xs); padding: 16px 20px 15px; transition: box-shadow .15s; }
+.kpi:hover { box-shadow: var(--shadow-sm); }
+.kpi .k-top { display: flex; align-items: center; justify-content: space-between; }
+.kpi .k-label { color: var(--t3); font-size: 12px; font-weight: 600; letter-spacing: .03em; }
+.kpi .k-ico { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center;
+              justify-content: center; background: var(--primary-soft); color: var(--primary); }
+.kpi .k-value { font-size: 25px; font-weight: 800; margin-top: 8px; font-variant-numeric: tabular-nums;
+                letter-spacing: -.3px; }
+.kpi .k-value small { font-size: 13px; color: var(--t3); font-weight: 600; margin-left: 7px; }
+.kpi .k-value.grad { background: linear-gradient(90deg, #4f46e5, #0891b2);
+                     -webkit-background-clip: text; background-clip: text; color: transparent; }
+.kpi .k-foot { color: var(--t3); font-size: 11.5px; margin-top: 3px; }
+
+/* ================= 闭环 stepper ================= */
+.loop { display: flex; align-items: stretch; flex-wrap: nowrap; overflow-x: auto; padding: 8px 0 12px; }
+.step { flex: 1; min-width: 126px; text-align: center; padding: 10px 8px; border-radius: 12px;
+        transition: background .15s; }
+.step:hover { background: #f7f8fe; }
+.step .s-ico { width: 40px; height: 40px; margin: 0 auto; border-radius: 12px; display: flex;
+               align-items: center; justify-content: center; color: var(--primary);
+               background: var(--primary-soft); border: 1px solid #e2e6ff; }
+.step.click { cursor: pointer; }
+.step.click .s-ico { color: var(--primary); }
+.step .s-title { font-weight: 700; font-size: 13px; margin-top: 9px; }
+.step .s-sub { color: var(--t3); font-size: 11.5px; margin-top: 2px; line-height: 1.45; }
+.s-arrow { align-self: center; color: #c2cadb; flex: none; padding: 0 1px; }
+.loopback { position: relative; margin: 4px 30px 0; height: 30px;
+            border: 1.5px dashed #ccd4e4; border-top: 0; border-radius: 0 0 14px 14px; }
+.loopback .lb-label { position: absolute; left: 50%; top: 9px; transform: translateX(-50%);
+                      background: #fff; padding: 0 14px; color: var(--t3); font-size: 12px;
+                      white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+.loopback .lb-label .ico-svg { color: var(--accent); }
+.loopback .lb-head { position: absolute; left: -6px; top: -7px; width: 11px; height: 11px;
+                     border-left: 1.5px dashed #ccd4e4; border-top: 1.5px dashed #ccd4e4;
+                     transform: rotate(45deg); }
+
+/* ================= 时间线 ================= */
+.tl { position: relative; padding-left: 24px; }
+.tl::before { content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px; width: 2px;
+              background: linear-gradient(180deg, var(--primary), var(--accent), #dbe2f5); border-radius: 2px; }
+.tl-item { position: relative; padding: 8px 0 20px; }
+.tl-item::before { content: ""; position: absolute; left: -23px; top: 15px; width: 9px; height: 9px;
+                   border-radius: 50%; background: #fff; border: 3px solid var(--primary);
+                   box-shadow: 0 0 0 3px #fff; }
+.tl-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tl-head b { font-size: 13.5px; }
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 2.5px 10px;
+       border-radius: 999px; font-weight: 600; background: #f1f3f9; color: var(--t3); }
+.tag.ok { color: var(--ok); background: var(--ok-soft); }
+.tag.warn { color: var(--warn); background: var(--warn-soft); }
+.tl-traj { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 2px; }
+.traj-chip { display: inline-flex; align-items: center; gap: 7px; background: #f8f9fd;
+             border: 1px solid var(--line); border-radius: 10px; padding: 5.5px 12px; font-size: 12.5px; }
+.traj-chip b { font-variant-numeric: tabular-nums; font-size: 13px; }
+.traj-chip .tv { font-weight: 700; color: var(--t2); }
+.traj-chip.best { background: var(--ok-soft); border-color: #bfe5d2; }
+.traj-chip.best .tv { color: var(--ok); }
+.delta { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.delta.up { color: var(--ok); background: rgba(7,148,85,.1); }
+.delta.zero { color: var(--t3); background: #f1f3f9; }
+.delta.down { color: var(--bad); background: var(--bad-soft); }
+.traj-arrow { color: #c2cadb; }
+
+/* ================= 版本卡片 ================= */
+.vcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+         box-shadow: var(--shadow-xs); padding: 16px 18px; display: flex; flex-direction: column;
+         transition: box-shadow .15s, border-color .15s; }
+.vcard:hover { box-shadow: var(--shadow-sm); }
+.vcard .ver { display: flex; align-items: flex-start; gap: 10px; }
+.ver-badge { font-size: 12px; font-weight: 700; border-radius: 8px; padding: 3px 9px; letter-spacing: .3px; }
+.ver-badge.b0 { background: #f1f3f9; color: var(--t3); }
+.ver-badge.b1 { background: var(--primary-soft); color: var(--primary); }
+.ver-badge.b2 { background: var(--ok-soft); color: var(--ok); }
+.ver-badge.b3 { background: var(--warn-soft); color: var(--warn); }
+.vcard .ver .vn { flex: 1; min-width: 0; }
+.vcard .ver .vn b { font-size: 13.5px; display: block; line-height: 1.4; }
+.vcard .ver .vn span { font-size: 11.5px; color: var(--t3); }
+.vcard .score { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.3px; }
+.vcard .score.dim { color: var(--t4); font-size: 15px; align-self: center; }
+.bar { height: 7px; border-radius: 999px; background: #edf0f7; margin-top: 12px; overflow: hidden; }
+.bar > div { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--accent));
+             transition: width .8s cubic-bezier(.2,.8,.2,1); }
+.vcard .act { margin-top: auto; padding-top: 12px; display: flex; justify-content: flex-end; }
+
+/* ================= 徽章 / 状态 ================= */
+.lv { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 10px 2px 8px;
+      font-size: 12px; font-weight: 600; white-space: nowrap; }
+.lv i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.lv-a { background: #e7f6ef; color: #067647; } .lv-a i { background: #12b76a; }
+.lv-b { background: #f2fbe8; color: #55750c; } .lv-b i { background: #84cc16; }
+.lv-c { background: #fef4e6; color: #b54708; } .lv-c i { background: #f79009; }
+.lv-d { background: #fff1e6; color: #c2410c; } .lv-d i { background: #fb8c3c; }
+.lv-e { background: #feecea; color: #b42318; } .lv-e i { background: #f04438; }
+.lv-x { background: #f1f3f9; color: #667085; } .lv-x i { background: #98a2b8; }
+
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 1.5px 9px; border-radius: 999px;
+        font-size: 11.5px; font-weight: 700; letter-spacing: .02em; }
+.pill.pass { color: var(--ok); background: var(--ok-soft); }
+.pill.fail { color: var(--bad); background: var(--bad-soft); }
+.pill.na { color: var(--t4); background: #f1f3f9; }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.chip2 { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 13px;
+         font-size: 12.5px; font-weight: 600; background: var(--primary-soft); color: var(--primary); }
+.chip2.good { background: var(--ok-soft); color: var(--ok); }
+.chip2.warn { background: var(--bad-soft); color: var(--bad); }
+.chip2.plain { background: #f1f3f9; color: var(--t2); }
+.chip2.click { cursor: pointer; transition: filter .12s; }
+.chip2.click:hover { filter: brightness(.96); }
+
+/* ================= 表格 ================= */
+.table-wrap { overflow-x: auto; }
+/* 限高表格:行数多时内部滚动,页面长度不随数据增长,表头冻结 */
+.table-wrap.scroll-tbl { max-height: 440px; overflow-y: auto; border-radius: 10px; border: 1px solid var(--line); }
+.scroll-tbl th { position: sticky; top: 0; z-index: 2; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 9px 10px; color: var(--t3); font-weight: 600; font-size: 11px;
+     letter-spacing: .07em; text-transform: uppercase; border-bottom: 1px solid var(--line-2);
+     white-space: nowrap; background: #fafbfe; }
+th:first-child { border-radius: 8px 0 0 8px; }
+th:last-child { border-radius: 0 8px 8px 0; }
+td { padding: 10px; border-bottom: 1px solid #f0f2f8; vertical-align: middle; }
+tbody tr { transition: background .12s; }
+tbody tr:hover { background: #f8faff; }
+tr.clickable { cursor: pointer; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ================= 图表 ================= */
+.chart-svg { width: 100%; height: auto; display: block; }
+.chart-note { color: var(--t4); font-size: 11.5px; margin-top: 8px; }
+
+/* ================= round(逐轮结果) ================= */
+.round { border: 1px solid var(--line); border-left: 3px solid var(--primary); background: #fafbff;
+         border-radius: 10px; padding: 11px 15px; margin-top: 10px; }
+.round .head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* ================= 骨架屏 / 空状态 ================= */
+.skeleton { border-radius: var(--r-lg); background: linear-gradient(90deg, #eef0f7 25%, #f7f9fd 45%, #eef0f7 65%);
+            background-size: 240% 100%; animation: shimmer 1.2s infinite linear; margin-bottom: 16px; }
+@keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+.empty { text-align: center; padding: 42px 12px; color: var(--t3); }
+.empty .e-ico { width: 58px; height: 58px; margin: 0 auto 12px; border-radius: 50%; background: #f1f3f9;
+                display: flex; align-items: center; justify-content: center; color: var(--t4); }
+.empty .e-t { font-weight: 700; color: var(--t2); font-size: 13.5px; }
+.empty .e-s { font-size: 12.5px; margin-top: 3px; }
+.empty .btn { margin-top: 14px; }
+
+/* ================= Toast ================= */
+.toast { position: fixed; right: 22px; bottom: 22px; background: #0c1322; color: #f2f5fb;
+         padding: 12px 18px; border-radius: 12px; font-size: 13.5px; opacity: 0; transform: translateY(10px);
+         transition: all .25s; pointer-events: none; z-index: 80; max-width: 440px;
+         box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 9px; }
+.toast .ico-svg { color: #34d399; }
+.toast.show { opacity: .98; transform: none; }
+.toast.err { background: #58187d0d; background: #4a1210; }
+.toast.err .ico-svg { color: #fda29b; }
+
+/* ================= 欢迎页 / 登录页 ================= */
+.hidden { display: none !important; }
+.fullscreen { position: fixed; inset: 0; overflow-y: auto; z-index: 40; }
+#view-welcome, #view-login {
+  background: #070b17 url("/static/assets/hero-bg.svg") center / cover no-repeat fixed;
+  color: #e8edf7;
+}
+.hero-nav { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 40px; background: rgba(7,11,23,.55); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,.06); }
+.hero-nav .hn-brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 14.5px;
+                      color: #f2f5fb; letter-spacing: .2px; }
+.hero-nav .hn-brand img { width: 34px; height: 34px; border-radius: 9px; }
+.hero-nav .hn-brand span { color: #7d8aa5; font-weight: 500; font-size: 12px; margin-left: 8px; }
+.hn-actions { display: flex; align-items: center; gap: 10px; }
+.btn-hero { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 16px;
+            border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+            transition: filter .15s, background .15s; }
+.btn-hero.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: 0;
+                    box-shadow: 0 6px 18px -4px rgba(99,102,241,.55); }
+.btn-hero.primary:hover { filter: brightness(1.08); }
+.btn-hero.ghost { background: rgba(255,255,255,.07); color: #cbd5eb; border: 1px solid rgba(255,255,255,.14); }
+.btn-hero.ghost:hover { background: rgba(255,255,255,.12); }
+
+.hero { min-height: calc(100vh - 73px); display: flex; align-items: center; justify-content: center; padding: 56px 24px 72px; }
+.hero-inner { max-width: 1020px; text-align: center; }
+.hero-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(129,140,248,.35);
+             background: rgba(99,102,241,.12); color: #c7d2fe; border-radius: 999px; padding: 6px 16px;
+             font-size: 12.5px; font-weight: 600; letter-spacing: .04em; }
+.hero-chip .ico-svg { color: #a5f3fc; }
+.hero h1 { font-size: 44px; margin: 22px 0 12px; letter-spacing: .5px; line-height: 1.22; font-weight: 800; }
+.hero h1 em { font-style: normal; background: linear-gradient(90deg, #a5b4fc, #67e8f9);
+              -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-slogan { color: #a6b2c9; font-size: 15px; max-width: 680px; margin: 0 auto 30px; line-height: 1.75; }
+.hero-slogan b { color: #dbe4f5; font-weight: 600; }
+.hero-cta { display: flex; gap: 12px; justify-content: center; margin-bottom: 34px; }
+.btn-hero.lg { height: 46px; padding: 0 26px; font-size: 14.5px; border-radius: 11px; }
+.hero-stats { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 42px; }
+.hstat { background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.11);
+         backdrop-filter: blur(6px); border-radius: 14px; padding: 14px 30px; font-size: 12px; color: #9aa8c2; }
+.hstat b { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 24px;
+           color: #fff; font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+.hstat .ico-svg { color: #67e8f9; }
+.feature-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; text-align: left; }
+.feat { background: rgba(13,20,36,.66); border: 1px solid rgba(255,255,255,.09);
+        border-radius: 16px; padding: 22px 22px 20px; backdrop-filter: blur(8px);
+        transition: transform .18s, border-color .18s; }
+.feat:hover { transform: translateY(-3px); border-color: rgba(129,140,248,.4); }
+.feat .f-ico { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center;
+               justify-content: center; background: linear-gradient(135deg, rgba(99,102,241,.25), rgba(34,211,238,.18));
+               color: #a5f3fc; border: 1px solid rgba(129,140,248,.3); }
+.feat .f-t { font-weight: 700; margin: 14px 0 6px; font-size: 14.5px; color: #f2f5fb; }
+.feat p { color: #9aa8c2; font-size: 12.5px; margin: 0; line-height: 1.7; }
+.hero-foot { margin-top: 36px; color: #5a6780; font-size: 12px; display: flex; align-items: center;
+             justify-content: center; gap: 8px; flex-wrap: wrap; }
+.hero-foot .sep { opacity: .4; }
+
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.login-card { width: 400px; background: rgba(13,20,36,.82); border: 1px solid rgba(255,255,255,.11);
+              border-radius: 20px; padding: 34px 34px 26px; backdrop-filter: blur(16px);
+              color: #e8edf7; box-shadow: 0 30px 90px rgba(0,0,0,.55); animation: fadeUp .3s ease both; }
+.login-head { text-align: center; margin-bottom: 6px; }
+.login-head img { width: 60px; height: 60px; border-radius: 15px; box-shadow: 0 10px 30px rgba(6,182,212,.3); }
+.login-card h2 { margin: 14px 0 3px; font-size: 20px; }
+.login-card .muted { color: #8b98ad; }
+.login-card label { color: #93a0ba; }
+.login-card input { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); color: #fff; height: 41px; }
+.login-card input:focus { border-color: #67e8f9; box-shadow: 0 0 0 3px rgba(103,232,249,.13); }
+.login-card .btn { width: 100%; height: 42px; margin-top: 18px; }
+.login-foot { text-align: center; margin-top: 16px; }
+.login-foot .linklike { color: #7d8aa5; }
+.login-foot .linklike:hover { color: #a5f3fc; }
+#login-hint { display: none; margin-top: 14px; background: rgba(99,102,241,.1); border: 1px solid rgba(129,140,248,.3);
+              color: #c7d2fe; border-radius: 10px; padding: 9px 13px; font-size: 12px; }
+
+/* ================= 弹窗 ================= */
+.app-shell { display: flex; width: 100%; height: 100vh; }
+.modal-mask { position: fixed; inset: 0; background: rgba(8,12,24,.55); backdrop-filter: blur(4px);
+              z-index: 60; display: flex; align-items: center; justify-content: center; animation: fadeIn .18s ease both; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal { width: 400px; background: #fff; border-radius: 16px; padding: 24px 26px 22px; box-shadow: var(--shadow-md);
+         animation: popIn .2s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes popIn { from { opacity: 0; transform: scale(.94) translateY(6px); } to { opacity: 1; transform: none; } }
+.modal h3 { margin: 0 0 3px; font-size: 15.5px; display: flex; align-items: center; gap: 9px; }
+.modal h3 .h-ico { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center;
+                   justify-content: center; background: var(--primary-soft); color: var(--primary); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* ================= 双栏工作台(压缩滚动长度) ================= */
+.dash-grid { display: grid; grid-template-columns: minmax(0, 58fr) minmax(0, 42fr); gap: 20px; align-items: start; }
+.dash-col { min-width: 0; }
+.dash-col .card:last-child { margin-bottom: 0; }
+@media (max-width: 1150px) { .dash-grid { grid-template-columns: 1fr; } }
+
+/* ================= 回到顶部 ================= */
+.back-top { position: fixed; right: 26px; bottom: 26px; width: 42px; height: 42px; border-radius: 12px;
+            background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-md); cursor: pointer;
+            color: var(--t3); font-size: 17px; display: flex; align-items: center; justify-content: center;
+            z-index: 45; opacity: 0; pointer-events: none; transform: translateY(10px); transition: all .2s; }
+.back-top.show { opacity: 1; pointer-events: auto; transform: none; }
+.back-top:hover { color: var(--primary); }
+
+/* ================= 响应式 ================= */
+@media (max-width: 960px) {
+  body { overflow: auto; flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; }
+  .nav-scroll { display: flex; overflow-x: auto; padding: 10px; align-items: center; }
+  .nav-label { display: none; }
+  .nav-item { white-space: nowrap; width: auto; margin-bottom: 0; }
+  .nav-item.active::before { display: none; }
+  .side-foot { display: none; }
+  .main { height: auto; overflow: visible; }
+  main, .topbar { padding-left: 16px; padding-right: 16px; }
+  .row, .row3 { grid-template-columns: 1fr; }
+  .loopback { display: none; }
+  .hero-nav { padding: 14px 20px; }
+  .hero h1 { font-size: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<!-- ===== 启动页(欢迎页) ===== -->
+<div id="view-welcome" class="fullscreen">
+  <div class="hero-nav">
+    <div class="hn-brand"><img src="/static/assets/icon.svg" alt="">Transportation Harness<span>交通分析自进化评测系统</span></div>
+    <div class="hn-actions">
+      <a class="btn-hero ghost" href="/help" target="_blank" rel="noopener">文档</a>
+      <button class="btn-hero primary" onclick="enterApp()">进入系统</button>
+    </div>
+  </div>
+  <div class="hero">
+    <div class="hero-inner">
+      <span class="hero-chip">评测驱动 · 回归守护 · 持续进化</span>
+      <h1>交通分析<em>自进化</em>评测系统</h1>
+      <p class="hero-slogan">badcase 沉淀为可重放用例 → 组成版本化评测集 → <b>评测 · 定位 · 迭代 · 回归验证</b> 闭环<br>
+        让每一次管线迭代都有数字背书 —— 实测 <b>7.7% → 100%</b>,全程零回归</p>
+      <div class="hero-cta">
+        <button class="btn-hero primary lg" onclick="enterApp()">进入工作台</button>
+        <a class="btn-hero ghost lg" href="/help" target="_blank" rel="noopener">文档中心</a>
+      </div>
+      <div class="hero-stats" id="welcome-stats"></div>
+      <div class="feature-row">
+        <div class="feat"><div class="f-ico" data-ico="cycle" data-ico-size="21"></div><div class="f-t">评测驱动闭环</div>
+          <p>收集反馈、沉淀 replaycase、批量重放判分、按标签聚类定位失败 —— 六步闭环,每一步都有页面与 API 承接。</p></div>
+        <div class="feat"><div class="f-ico" data-ico="activity" data-ico-size="21"></div><div class="f-t">自进化迭代纪律</div>
+          <p>基线测量 → 最多 2 轮迭代 → 逐轮验证「提升且无回归」,收益 &lt;5% 即收束;进化时间线回放每一次得分爬升。</p></div>
+        <div class="feat"><div class="f-ico" data-ico="shield" data-ico-size="21"></div><div class="f-t">回归守护</div>
+          <p>回归保护用例与逐 case 差分确保「改好一处、不改坏另一处」;雨天/事故/晚高峰多情景数据覆盖真实工况。</p></div>
+      </div>
+      <div class="hero-foot">评测资产全量落盘<span class="sep">·</span>Docker 一键部署<span class="sep">·</span>微信小程序接入<span class="sep">·</span>OpenAPI 文档内置</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 登录页 ===== -->
+<div id="view-login" class="fullscreen hidden">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-head">
+        <img src="/static/assets/icon.svg" alt="logo">
+        <h2>欢迎回来</h2>
+        <div class="muted">登录以进入评测工作台</div>
+      </div>
+      <label>用户名</label>
+      <input id="login-user" autocomplete="username" placeholder="用户名">
+      <label>密码</label>
+      <input id="login-pass" type="password" autocomplete="current-password" placeholder="密码">
+      <div id="login-err"></div>
+      <button class="btn" onclick="doLogin(this)">登 录</button>
+      <div id="login-hint">初始账号 <b>admin / harness123</b>,登录后请尽快在左下角修改密码</div>
+      <div class="login-foot"><span class="linklike" onclick="showWelcome()">← 返回欢迎页</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 应用壳 ===== -->
+<div id="app" class="app-shell hidden">
+<aside class="sidebar">
+  <div class="brand">
+    <img src="/static/assets/icon.svg" alt="">
+    <div class="bt"><b>Transportation Harness</b><span>交通分析自进化评测系统</span></div>
+  </div>
+  <div class="nav-scroll">
+    <div class="nav-label">工作台</div>
+    <button class="nav-item active" data-tab="dashboard"><span class="nv-ico" data-ico="dashboard"></span>评测看板</button>
+    <button class="nav-item" data-tab="cases"><span class="nv-ico" data-ico="database"></span>Case 管理</button>
+    <button class="nav-item" data-tab="assistant"><span class="nv-ico" data-ico="spark"></span>智能助手</button>
+    <div class="nav-label">评测资产</div>
+    <button class="nav-item" data-tab="compare"><span class="nv-ico" data-ico="scale"></span>版本对比</button>
+    <button class="nav-item" data-tab="analyze"><span class="nv-ico" data-ico="flask"></span>分析提交</button>
+    <div class="nav-label">其它</div>
+    <button class="nav-item" onclick="showWelcome()"><span class="nv-ico" data-ico="rocket"></span>欢迎页</button>
+    <a class="nav-item" href="/help" target="_blank" rel="noopener" style="text-decoration:none"><span class="nv-ico" data-ico="book"></span>文档中心</a>
+  </div>
+  <div class="side-foot">
+    <div class="sys-status"><span class="dot" id="health-dot"></span><span id="health-text">连接中…</span></div>
+    <div class="user-box" id="user-row" style="display:none">
+      <div class="avatar" id="user-avatar">A</div>
+      <div class="ub-t"><b id="user-name">—</b></div>
+      <div class="ub-actions">
+        <button class="linklike" onclick="openPasswordModal()" title="修改密码">改密</button>
+        <button class="linklike" onclick="doLogout()" title="退出登录">退出</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="main" id="scroll-area">
+  <header class="topbar">
+    <div><h2 id="page-title">评测看板</h2><div class="sub" id="page-sub">评测驱动迭代:基线 → 最多 2 轮 → 验证无回归 → 归档报告</div></div>
+    <div class="chipbar">
+      <span class="chip" id="auth-chip">—</span>
+      <span class="chip" id="health-chip">—</span>
+    </div>
+  </header>
+  <main>
+    <section class="page active" id="tab-dashboard"></section>
+    <section class="page" id="tab-cases"></section>
+    <section class="page" id="tab-assistant"></section>
+    <section class="page" id="tab-compare"></section>
+    <section class="page" id="tab-analyze"></section>
+  </main>
+</div>
+</div><!-- /#app -->
+
+<!-- ===== 修改密码弹窗 ===== -->
+<div id="modal-mask" class="modal-mask hidden">
+  <div class="modal">
+    <h3><span class="h-ico" data-ico="key"></span>修改密码</h3>
+    <div class="muted">修改成功后会话自动续签,无需重新登录。</div>
+    <label>原密码</label><input id="pw-old" type="password" autocomplete="current-password">
+    <label>新密码(6~64 位)</label><input id="pw-new" type="password" autocomplete="new-password">
+    <label>确认新密码</label><input id="pw-new2" type="password" autocomplete="new-password">
+    <div id="pw-err"></div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">取消</button>
+      <button class="btn" onclick="doChangePassword(this)">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<button id="back-top" class="back-top" title="回到顶部">↑</button>
+
+<script>
+"use strict";
+/* ============ SVG 图标库(Lucide 风格,统一 24 viewBox 线性图标) ============ */
+const ICONS = {
+  dashboard: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>',
+  database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 5v14a9 3 0 0 1-18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>',
+  scale: '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  flask: '<path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/>',
+  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+  filetext: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+  cycle: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  trend: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  unlock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  branch: '<line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
+  swap: '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
+  inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
+  layers: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>',
+  arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+  tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+  key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+  spark: '<path d="M12 3l1.9 5.7a1 1 0 0 0 .63.63L20.2 11.2a.57.57 0 0 1 0 1.08l-5.7 1.9a1 1 0 0 0-.63.63L12 20.4a.57.57 0 0 1-1.08 0l-1.9-5.7a1 1 0 0 0-.63-.63l-5.7-1.9a.57.57 0 0 1 0-1.08l5.7-1.9a1 1 0 0 0 .63-.63L11 3a.57.57 0 0 1 1 0z"/>',
+  book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+};
+const icon = (name, size = 18) =>
+  `<svg class="ico-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+
+/* ============ 通用工具 ============ */
+const LEVELS = ["畅通", "基本畅通", "缓行", "拥堵", "严重拥堵", "数据缺失"];
+const LV_KEY = { "畅通": "a", "基本畅通": "b", "缓行": "c", "拥堵": "d", "严重拥堵": "e", "数据缺失": "x" };
+const VER_COLOR = { v0: "#98a2b8", v1: "#4f46e5", v2: "#079455", v3: "#f79009" };
+const $ = (sel, el = document) => el.querySelector(sel);
+const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = x => (x * 100).toFixed(1) + "%";
+const fmtTs = s => {
+  if (!s) return "—";
+  const d = String(s).replace(/\D/g, "");
+  if (d.length < 8) return String(s);
+  const y = d.slice(0, 4), mo = d.slice(4, 6), da = d.slice(6, 8);
+  const hm = d.length >= 12 ? ` ${d.slice(8, 10)}:${d.slice(10, 12)}` : "";
+  return (y === String(new Date().getFullYear()) ? `${mo}-${da}` : `${y}-${mo}-${da}`) + hm;
+};
+const lvPill = lv => `<span class="lv lv-${LV_KEY[lv] || "x"}"><i></i>${esc(lv)}</span>`;
+const pill = p => p === null || p === undefined ? `<span class="pill na">—</span>`
+  : (p ? `<span class="pill pass">${icon("check", 12)}PASS</span>` : `<span class="pill fail">${icon("x", 12)}FAIL</span>`);
+const deltaTag = d => d > 0.0005 ? `<span class="delta up">▲ ${pct(d)}</span>`
+  : (d < -0.0005 ? `<span class="delta down">▼ ${pct(-d)}</span>` : `<span class="delta zero">持平</span>`);
+const stopTag = reason => /全部通过/.test(reason) ? `<span class="tag ok">${icon("check", 12)}${esc(reason)}</span>`
+  : /收益/.test(reason) ? `<span class="tag">${icon("clock", 12)}${esc(reason)}</span>` : `<span class="tag warn">${icon("alert", 12)}${esc(reason)}</span>`;
+const emptyBox = (ico, title, sub, action = "") =>
+  `<div class="empty"><div class="e-ico">${icon(ico, 26)}</div><div class="e-t">${title}</div><div class="e-s">${sub}</div>${action}</div>`;
+
+async function api(url, body, method) {
+  const m = method || (body ? "POST" : "GET");
+  const opt = body || m !== "GET"
+    ? { method: m, headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : undefined } : {};
+  let res;
+  try { res = await fetch(url, opt); }
+  catch (e) { throw new Error("无法连接服务器,请确认服务已启动"); }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `请求失败(${res.status})`);
+  }
+  return res.json();
+}
+function toast(msg, isErr = false) {
+  const el = $("#toast");
+  el.innerHTML = `${icon(isErr ? "alert" : "check", 16)}<span>${esc(msg)}</span>`;
+  el.classList.toggle("err", isErr); el.classList.add("show");
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 3400);
+}
+async function withBusy(btn, fn) {
+  if (!btn) return fn();
+  const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = `${icon("cycle", 15)} 运行中…`;
+  try { return await fn(); }
+  catch (e) { toast(e.message, true); }
+  finally { btn.disabled = false; btn.innerHTML = old; }
+}
+function switchTab(tab) {
+  $$(".nav-item[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  $$("main section").forEach(s => s.classList.toggle("active", s.id === "tab-" + tab));
+  const [t, sub] = TITLES[tab];
+  $("#page-title").textContent = t; $("#page-sub").textContent = sub;
+  $("#scroll-area").scrollTo({ top: 0 });
+  renderers[tab]();
+}
+
+/* ============ 视图分流与登录 ============ */
+const views = { welcome: $("#view-welcome"), login: $("#view-login"), app: $("#app") };
+function showView(name) { for (const [k, el] of Object.entries(views)) el.classList.toggle("hidden", k !== name); }
+function showWelcome() { showView("welcome"); }
+function showLogin() { $("#login-err").innerHTML = ""; showView("login"); $("#login-user").focus(); }
+function showApp(username) {
+  localStorage.setItem("harness_seen", "1");
+  $("#user-name").textContent = username;
+  $("#user-avatar").textContent = (username[0] || "A").toUpperCase();
+  $("#user-row").style.display = "";
+  showView("app");
+  renderDashboard(); loadHealth();
+}
+async function enterApp() {
+  try { showApp((await api("/api/auth/me")).username); }
+  catch { showLogin(); }
+}
+async function boot() {
+  loadHealth();
+  try { showApp((await api("/api/auth/me")).username); }
+  catch {
+    if (localStorage.getItem("harness_seen")) showLogin(); else showWelcome();
+  }
+}
+async function doLogin(btn) {
+  const old = btn.textContent; btn.disabled = true; btn.textContent = "登录中…";
+  $("#login-err").innerHTML = "";
+  try {
+    const out = await api("/api/auth/login", {
+      username: $("#login-user").value.trim(), password: $("#login-pass").value,
+    });
+    showApp(out.username); toast(`欢迎回来,${out.username}`);
+  } catch (e) {
+    $("#login-err").innerHTML = `<div id="login-hint" style="display:block;background:rgba(240,68,56,.12);border-color:rgba(240,68,56,.4);color:#fda29b">${esc(e.message)}</div>`;
+  } finally { btn.disabled = false; btn.textContent = old; }
+}
+async function doLogout() {
+  try { await api("/api/auth/logout", {}); } catch {}
+  toast("已退出登录");
+  showLogin();
+}
+function openPasswordModal() {
+  $("#pw-old").value = ""; $("#pw-new").value = ""; $("#pw-new2").value = ""; $("#pw-err").innerHTML = "";
+  $("#modal-mask").classList.remove("hidden");
+}
+function closeModal() { $("#modal-mask").classList.add("hidden"); }
+async function doChangePassword(btn) {
+  const nw = $("#pw-new").value, nw2 = $("#pw-new2").value;
+  $("#pw-err").innerHTML = "";
+  if (nw !== nw2) { $("#pw-err").innerHTML = `<div class="hint warn">${icon("alert", 15)}<span>两次输入的新密码不一致</span></div>`; return; }
+  const old = btn.textContent; btn.disabled = true; btn.textContent = "保存中…";
+  try {
+    await api("/api/auth/password", { old_password: $("#pw-old").value, new_password: nw });
+    closeModal(); toast("密码已修改");
+  } catch (e) {
+    $("#pw-err").innerHTML = `<div class="hint warn">${icon("alert", 15)}<span>${esc(e.message)}</span></div>`;
+  } finally { btn.disabled = false; btn.textContent = old; }
+}
+$("#modal-mask").addEventListener("click", e => { if (e.target === $("#modal-mask")) closeModal(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !$("#modal-mask").classList.contains("hidden")) closeModal();
+});
+
+/* ============ 健康检查 ============ */
+async function loadHealth() {
+  try {
+    const h = await api("/api/health");
+    $("#health-dot").classList.remove("off");
+    $("#health-text").textContent = `服务在线 · ${h.case_count} cases`;
+    $("#health-chip").innerHTML = `${icon("database", 13)} ${h.case_count} cases · ${h.report_count} 报告`;
+    $("#auth-chip").innerHTML = h.auth_mode === "open"
+      ? `${icon("unlock", 13)} 演示模式` : `${icon("lock", 13)} 登录模式`;
+    $("#login-hint").style.display = h.default_credentials ? "block" : "none";
+    const ws = $("#welcome-stats");
+    if (ws) ws.innerHTML = `
+      <div class="hstat"><b>${icon("database", 18)}<span class="num">${h.case_count}</span></b>replaycase 用例</div>
+      <div class="hstat"><b>${icon("filetext", 18)}<span class="num">${h.report_count}</span></b>评测报告归档</div>
+      <div class="hstat"><b>${icon("branch", 18)}<span class="num">${h.versions.length}</span></b>管线版本</div>`;
+  } catch {
+    $("#health-dot").classList.add("off");
+    $("#health-text").textContent = "服务离线";
+  }
+}
+
+/* ============ 评测看板 ============ */
+let evalsetOptions = [];
+let currentEvalset = "evalset_v1";
+let currentBaseline = "v0";
+async function renderDashboard() {
+  $("#tab-dashboard").innerHTML =
+    `<div class="skeleton" style="height:96px"></div><div class="skeleton" style="height:190px"></div>
+     <div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:130px"></div>`;
+  let versions, reports, evolutions, health, evalsets;
+  try {
+    [versions, reports, evolutions, health, evalsets] = await Promise.all([
+      api("/api/versions"), api("/api/reports"), api("/api/evolutions"), api("/api/health"),
+      api("/api/evalsets")]);
+  } catch (e) {
+    $("#tab-dashboard").innerHTML = `<div class="card">${emptyBox("alert", "加载失败", esc(e.message))}</div>`;
+    return;
+  }
+  evalsetOptions = evalsets;
+  if (!evalsets.some(e => e.evalset_id === currentEvalset)) currentEvalset = evalsets[0]?.evalset_id || "evalset_v1";
+  const evalsetSelect = `<select id="evalset-pick" style="width:100%" onchange="onEvalsetChange()">
+    ${evalsets.map(e => `<option value="${esc(e.evalset_id)}" ${e.evalset_id === currentEvalset ? "selected" : ""}>${esc(e.evalset_id)} · ${e.case_count} 条</option>`).join("")}
+  </select>`;
+  const baselineSelect = `<select id="baseline-pick" style="width:100%" onchange="onBaselineChange()">
+    ${versions.map(v => `<option value="${esc(v.version)}" ${v.version === currentBaseline ? "selected" : ""}>${esc(v.version)} · ${esc(v.name)}</option>`).join("")}
+  </select>`;
+
+  /* --- KPI --- */
+  const latest = {};
+  for (const r of reports) if (!latest[r.version]) latest[r.version] = r;
+  const lastEvo = evolutions[0] || null;
+  const kpis = `
+    <div class="kpis">
+      <div class="kpi"><div class="k-top"><span class="k-label">当前最佳版本</span><span class="k-ico">${icon("target", 16)}</span></div>
+        <div class="k-value grad">${lastEvo ? `${esc(lastEvo.best.version)} <small>${pct(lastEvo.best.accuracy)}</small>` : "—"}</div>
+        <div class="k-foot">${lastEvo ? `最近进化:${lastEvo.best.passed_count}/${lastEvo.best.total} 通过` : "尚未运行自进化"}</div></div>
+      <div class="kpi"><div class="k-top"><span class="k-label">评测集规模</span><span class="k-ico">${icon("database", 16)}</span></div>
+        <div class="k-value num">${health.case_count}<small>replaycase</small></div>
+        <div class="k-foot">${lastEvo ? `最近运行覆盖 ${lastEvo.total_cases} 条` : "在 Case 管理页沉淀"}</div></div>
+      <div class="kpi"><div class="k-top"><span class="k-label">自进化运行</span><span class="k-ico">${icon("cycle", 16)}</span></div>
+        <div class="k-value num">${evolutions.length}<small>次</small></div>
+        <div class="k-foot">${lastEvo ? stopTag(lastEvo.stop_reason) : "闭环流程见下方"}</div></div>
+      <div class="kpi"><div class="k-top"><span class="k-label">评测报告</span><span class="k-ico">${icon("filetext", 16)}</span></div>
+        <div class="k-value num">${health.report_count}<small>份</small></div>
+        <div class="k-foot">每版本 × 每次评测自动归档</div></div>
+    </div>`;
+
+  /* --- 自进化闭环图 --- */
+  const steps = [
+    ["inbox", "收集反馈", "线上点踩 / 人工抽检", "cases"],
+    ["database", "沉淀用例", "输入 + 期望 + 判分规则", "cases"],
+    ["flask", "运行评测", "重放全部 case 并判分", ""],
+    ["gauge", "定位失败", "按标签聚类失败原因", ""],
+    ["tool", "迭代管线", "每轮只改一类,最多 2 轮", ""],
+    ["shield", "回归验证", "提升且无回归才合入", ""],
+  ];
+  const loop = `
+    <div class="card">
+      <h3><span class="h-ico">${icon("cycle", 16)}</span>自进化运行闭环</h3>
+      <p class="desc">自进化的本质是一个永不停止的循环:新的 badcase 持续回流,评测集随之增长,管线被一次次推向更高得分。</p>
+      <div class="loop">${steps.map(([ico, t, sub, tab], i) =>
+        `<div class="step ${tab ? "click" : ""}" ${tab ? `onclick="switchTab('${tab}')"` : ""}>
+           <div class="s-ico">${icon(ico, 19)}</div>
+           <div class="s-title">${t}</div><div class="s-sub">${sub}</div></div>`
+      ).join(`<div class="s-arrow">${icon("chevR", 16)}</div>`)}</div>
+      <div class="loopback"><div class="lb-head"></div>
+        <div class="lb-label">${icon("cycle", 13)}新 badcase 回流 → 评测集增长 → 下一轮进化</div></div>
+    </div>`;
+
+  /* --- 进化时间线 --- */
+  const timeline = `
+    <div class="card">
+      <h3><span class="h-ico">${icon("activity", 16)}</span>进化时间线</h3>
+      <p class="desc">每次自进化运行的完整轨迹:得分逐轮爬升、每轮验证「提升且无回归」、达到停止条件即收束。</p>
+      ${evolutions.length ? `<div class="tl">${evolutions.map(e => {
+        const chips = [`<span class="traj-chip"><span class="tv">${esc(e.baseline.version)}</span><b>${pct(e.baseline.accuracy)}</b></span>`];
+        let prevAcc = e.baseline.accuracy;
+        for (const r of e.rounds) {
+          chips.push(`<span class="traj-arrow">${icon("arrowR", 13)}</span>`);
+          chips.push(`<span class="traj-chip ${r.version === e.best.version ? "best" : ""}"><span class="tv">${esc(r.version)}</span><b>${pct(r.accuracy)}</b>${deltaTag(r.accuracy - prevAcc)}</span>`);
+          prevAcc = r.accuracy;
+        }
+        return `<div class="tl-item">
+          <div class="tl-head"><b>${esc(fmtTs(e.timestamp))}</b>
+            <span class="tag">${esc(e.evalset_id)} · ${e.total_cases} 条</span>
+            ${stopTag(e.stop_reason)}</div>
+          <div class="tl-traj">${chips.join("")}</div>
+          ${e.rounds.map(r => `<details class="changes"><summary>第 ${r.round} 轮「${esc(r.version_name)}」:新通过 ${r.newly_passed.length},回归 ${r.regressed.length}</summary>
+            <ul>${r.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul></details>`).join("")}
+        </div>`;
+      }).join("")}</div>`
+        : emptyBox("activity", "还没有进化记录", "点击下方「运行完整自进化循环」留下第一笔")}
+    </div>`;
+
+  /* --- 版本卡片 --- */
+  const verBadge = v => `b${parseInt(String(v).replace(/\D/g, ""), 10) % 4 || 0}`;
+  const cards = `<div class="grid">${versions.map(v => {
+    const rep = latest[v.version], acc = rep ? rep.accuracy : null;
+    return `<div class="vcard">
+      <div class="ver">
+        <span class="ver-badge ${verBadge(v.version)}">${esc(v.version)}</span>
+        <div class="vn"><b>${esc(v.name)}</b><span>${rep ? `${rep.passed_count}/${rep.total} 条通过` : "点击下方按钮首次评测"}</span></div>
+        <div class="score ${rep ? "" : "dim"}">${rep ? pct(acc) : "未评测"}</div>
+      </div>
+      <div class="bar"><div style="width:${acc !== null ? acc * 100 : 0}%"></div></div>
+      ${v.changes.length ? `<details class="changes"><summary>本轮优化内容(${v.changes.length})</summary>
+        <ul>${v.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul></details>` : ""}
+      <div class="act"><button class="btn sm secondary" onclick="runEval(this,'${esc(v.version)}')">${icon("play", 13)} 运行评测</button></div>
+    </div>`;
+  }).join("")}</div>`;
+
+  /* --- 得分趋势 --- */
+  const trendCard = reports.length >= 2 ? `
+    <div class="card">
+      <h3><span class="h-ico">${icon("trend", 16)}</span>评测得分趋势</h3>
+      <p class="desc">每次评测自动归档一份报告,连线即管线的成长曲线:迭代后应单调上升,回落即为回归信号。</p>
+      ${areaChart(reports)}
+    </div>` : "";
+
+  /* --- 报告归档 --- */
+  const reportsCard = `
+    <div class="card">
+      <h3><span class="h-ico">${icon("layers", 16)}</span>评测报告归档</h3>
+      ${reports.length ? `<div class="table-wrap scroll-tbl"><table>
+        <thead><tr><th>报告</th><th>版本</th><th>评测集</th><th class="num">得分</th><th class="num">通过</th><th class="num">时间</th></tr></thead>
+        <tbody>${reports.map(r => `<tr class="clickable" onclick="showReport('${esc(r.report_id)}')">
+          <td class="num">${esc(r.report_id)}</td><td>${esc(r.version)}</td><td>${esc(r.evalset_id || "—")}</td>
+          <td class="num"><b>${pct(r.accuracy)}</b></td><td class="num">${r.passed_count}/${r.total}</td><td class="num">${esc(fmtTs(r.timestamp))}</td></tr>`).join("")}
+        </tbody></table></div>`
+        : emptyBox("layers", "暂无报告", "点上方「运行评测」生成第一份")}
+      <div id="report-detail"></div>
+    </div>`;
+
+  const evalCard = `
+    <div class="card" style="padding-bottom:16px">
+      <h3><span class="h-ico">${icon("play", 16)}</span>评测与自进化</h3>
+      <p class="desc">单版本重跑用于快速验证;完整循环会按「逐版本验证 + 收益递减」纪律自动收束。都在所选评测集上、从基线版本起逐轮验证。</p>
+      <label style="margin-top:0">评测范围</label>
+      ${evalsetSelect}
+      <label>基线版本(增量验证新版本时选当前最佳)</label>
+      ${baselineSelect}
+      <p style="margin:14px 0 0"><button class="btn" style="width:100%" onclick="runEvolve(this)">${icon("cycle", 16)} 运行完整自进化循环</button></p>
+      <div id="evolve-out"></div>
+      ${cards}
+    </div>`;
+  $("#tab-dashboard").innerHTML = `
+    ${kpis}
+    ${loop}
+    <div class="dash-grid">
+      <div class="dash-col">${timeline}${trendCard}</div>
+      <div class="dash-col">${evalCard}</div>
+    </div>
+    ${reportsCard}`;
+}
+
+function onEvalsetChange() { currentEvalset = $("#evalset-pick").value; }
+function onBaselineChange() { currentBaseline = $("#baseline-pick").value; }
+
+function areaChart(reports) {
+  const data = [...reports].reverse();  // 旧 → 新
+  const W = 780, H = 230, L = 46, R = 18, T = 16, B = 32;
+  const iw = W - L - R, ih = H - T - B;
+  const px = i => L + (data.length === 1 ? iw / 2 : i * iw / (data.length - 1));
+  const py = a => T + (1 - a) * ih;
+  const gridY = [0, .25, .5, .75, 1].map(a =>
+    `<line x1="${L}" y1="${py(a)}" x2="${W - R}" y2="${py(a)}" stroke="#edf0f7" stroke-width="1"/>
+     <text x="${L - 8}" y="${py(a) + 4}" font-size="10.5" fill="#98a2b8" text-anchor="end">${a * 100}%</text>`).join("");
+  const pts = data.map((r, i) => `${px(i).toFixed(1)},${py(r.accuracy).toFixed(1)}`);
+  const line = pts.join(" ");
+  const area = `M ${px(0).toFixed(1)},${py(0)} L ${line.replace(/ /g, " L ")} L ${px(data.length - 1).toFixed(1)},${py(0)} Z`;
+  const dots = data.map((r, i) => {
+    const last = i === data.length - 1;
+    return `<circle cx="${px(i).toFixed(1)}" cy="${py(r.accuracy).toFixed(1)}" r="${last ? 5.5 : 4.5}"
+      fill="${VER_COLOR[r.version] || "#4f46e5"}" stroke="#fff" stroke-width="${last ? 2.5 : 1.5}">
+      <title>${esc(r.report_id)} · ${pct(r.accuracy)}</title></circle>
+      ${last ? `<circle cx="${px(i).toFixed(1)}" cy="${py(r.accuracy).toFixed(1)}" r="9" fill="none"
+        stroke="${VER_COLOR[r.version] || "#4f46e5"}" stroke-opacity=".3" stroke-width="1.5"/>` : ""}`;
+  }).join("");
+  const labels = data.map((r, i) =>
+    `<text x="${px(i)}" y="${H - 10}" font-size="10.5" fill="#98a2b8" text-anchor="middle">${esc(r.version)}</text>`).join("");
+  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}">
+    <defs><linearGradient id="area-g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f46e5" stop-opacity=".2"/><stop offset="1" stop-color="#4f46e5" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${gridY}
+    <path d="${area}" fill="url(#area-g)"/>
+    <polyline points="${line}" fill="none" stroke="#4f46e5" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}${labels}</svg>
+    <div class="chart-note">横轴为时间(旧 → 新),纵轴为评测通过率;悬停数据点可查看对应报告。</div>`;
+}
+
+async function runEval(btn, version) {
+  await withBusy(btn, async () => {
+    const rep = await api("/api/eval/run", { version, evalset: currentEvalset });
+    toast(`${version} 在 ${currentEvalset} 上评测完成:${rep.passed_count}/${rep.total}(${pct(rep.accuracy)})`);
+    await renderDashboard();
+  });
+}
+
+async function runEvolve(btn) {
+  await withBusy(btn, async () => {
+    const s = await api("/api/evolve/run", { evalset: currentEvalset, baseline: currentBaseline });
+    const b = s.baseline;
+    const rounds = s.rounds.map(r => `
+      <div class="round">
+        <div class="head"><b>第 ${r.round} 轮 · ${esc(r.version)}(${esc(r.version_name)})</b>
+          <span class="chip2 plain num">${r.passed_count}/${r.total} · ${pct(r.accuracy)}</span></div>
+        <div class="muted">优化:${r.changes.map(esc).join(";")}</div>
+        <div class="chips">
+          <span class="chip2 plain num">较上轮 ${pct(r.improvement)}</span>
+          <span class="chip2 good">新通过 ${r.newly_passed.length}</span>
+          <span class="chip2 ${r.regressed.length ? "warn" : "good"}">回归 ${r.regressed.length}</span>
+        </div>
+        ${Object.keys(r.remaining_failures).length
+          ? `<div class="muted">剩余失败:${Object.entries(r.remaining_failures).map(([l, items]) => `${l}×${items.length}`).join("、")}</div>` : ""}
+      </div>`).join("");
+    const pending = (s.pending_versions || []).length
+      ? `<div class="hint warn">${icon("alert", 15)}<span>因单轮上限未验证:${s.pending_versions.map(esc).join("、")}
+         —— 把基线切到 <b>${esc(s.best.version)}</b> 再运行一轮即可继续验证。</span></div>` : "";
+    $("#evolve-out").innerHTML = `
+      <div class="hint ok">${icon("check", 15)}<span>循环结束:基线 ${esc(b.version)} ${b.passed_count}/${b.total}(${pct(b.accuracy)})
+        → 最佳 <b>${esc(s.best.version)}</b> ${pct(s.best.accuracy)}
+        (迭代 ${s.iterations_used} 轮,${esc(s.stop_reason)});报告已归档 <b>${esc(s.md_report)}</b></span></div>
+      ${pending}${rounds}`;
+    toast(`自进化完成:最佳 ${s.best.version} ${pct(s.best.accuracy)}`);
+    loadHealth();
+  });
+}
+
+async function showReport(reportId) {
+  try {
+    const rep = await api("/api/reports/" + reportId);
+    const labels = Object.entries(rep.label_stats).map(([label, st]) =>
+      `<tr><td>${esc(label)}</td><td class="num">${st.passed}/${st.total}</td><td class="num">${pct(st.passed / st.total)}</td></tr>`).join("");
+    const fails = rep.results.filter(r => !r.passed).map(r => {
+      const detail = r.checks.filter(c => !c.passed).map(c => esc(c.detail)).join("; ")
+        || (r.error ? "崩溃: " + esc(r.error) : "");
+      return `<tr><td class="num">${esc(r.case_id)}</td><td>${esc(r.label)}</td><td>${esc(r.title)}</td><td>${detail}</td></tr>`;
+    }).join("");
+    $("#report-detail").innerHTML = `
+      <div class="hint" style="margin-top:16px;flex-direction:column;gap:6px">
+        <div style="display:flex;gap:8px;align-items:center"><b>报告 ${esc(reportId)}</b>
+          <span class="chip2 plain">版本 ${esc(rep.version)}</span>
+          <span class="chip2 ${rep.accuracy === 1 ? "good" : ""} num">得分 ${pct(rep.accuracy)}</span>
+          <span class="chip2 plain num">耗时 ${rep.duration_ms} ms</span></div>
+        ${rep.changes && rep.changes.length ? `<div class="muted">优化内容:${rep.changes.map(esc).join(";")}</div>` : ""}
+        <div class="table-wrap"><table>
+          <thead><tr><th>失败标签</th><th class="num">通过/总数</th><th class="num">通过率</th></tr></thead><tbody>${labels}</tbody></table></div>
+        ${fails ? `<p style="margin:8px 0 2px;font-weight:700">未通过案例</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Case</th><th>标签</th><th>标题</th><th>失败明细</th></tr></thead>
+            <tbody>${fails}</tbody></table></div>` : `<div>${icon("check", 14)} 全部案例通过</div>`}
+      </div>`;
+    $("#report-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ============ Case 管理 ============ */
+let caseFilter = "全部";
+async function renderCases() {
+  const [cases, datasets] = await Promise.all([api("/api/cases"), api("/api/datasets")]);
+  const labels = ["全部", ...new Set(cases.map(c => c.label))];
+  if (!labels.includes(caseFilter)) caseFilter = "全部";
+  const shown = cases.filter(c => caseFilter === "全部" || c.label === caseFilter);
+
+  $("#tab-cases").innerHTML = `
+    <div class="card">
+      <h3><span class="h-ico">${icon("plus", 16)}</span>沉淀新的 replaycase</h3>
+      <p class="desc">闭环第 1-2 步:把线上反馈转化为可重放的评测用例 —— 输入 + 期望结论 + 判分规则,保存后自动加入当前评测集。</p>
+      <div class="row3">
+        <div><label>标题</label><input id="c-title" maxlength="80" placeholder="例:学府路应判为拥堵而非严重拥堵"></div>
+        <div><label>失败标签</label><input id="c-label" list="label-list" maxlength="20" placeholder="选择或输入新标签">
+          <datalist id="label-list">${labels.filter(l => l !== "全部").map(l => `<option value="${esc(l)}">`).join("")}</datalist></div>
+        <div><label>数据集</label><select id="c-dataset" onchange="onFormDatasetChange()">
+          ${datasets.map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join("")}</select></div>
+      </div>
+      <div class="row3">
+        <div><label>路段</label><select id="c-segment" onchange="onFormSegmentChange()"></select></div>
+        <div><label>期望拥堵等级</label><select id="c-level">${LEVELS.map(l => `<option>${l}</option>`).join("")}</select></div>
+        <div><label>期望饱和度(可选)</label><input id="c-sat" type="number" step="0.01" min="0" max="3" placeholder="留空则只校验等级"></div>
+      </div>
+      <label>备注(反馈原文 / 复现步骤)</label>
+      <input id="c-notes" maxlength="200" placeholder="例:用户点踩,该路段 V/C 已超 0.9…">
+      <div id="c-ref"></div>
+      <p style="margin:16px 0 0"><button class="btn" onclick="createCase(this)">${icon("database", 15)} 沉淀为 replaycase 并加入评测集</button></p>
+    </div>
+    <div class="card">
+      <h3><span class="h-ico">${icon("database", 16)}</span>Replaycase 库<span class="chip2 plain" style="margin-left:4px">${cases.length} 条</span></h3>
+      <p class="desc">cases/ 按失败标签分目录存放,一个 case 一个 JSON 文件,可直接纳入 git 管理。</p>
+      <div class="chips">${labels.map(l =>
+        `<span class="chip2 ${l === caseFilter ? "" : "plain"} click" onclick="setFilter('${esc(l)}')">${esc(l)}</span>`).join("")}</div>
+      ${shown.length ? `<div class="table-wrap scroll-tbl"><table>
+        <thead><tr><th>Case</th><th>标签</th><th>标题</th><th>数据集</th><th class="num">检查数</th><th>来源</th><th></th></tr></thead>
+        <tbody>${shown.map(c => `<tr>
+          <td class="num">${esc(c.case_id)}</td><td>${esc(c.label)}</td><td>${esc(c.title)}</td>
+          <td>${esc(c.dataset_name)}</td><td class="num">${c.checks.length}</td><td>${esc(c.source)}</td>
+          <td style="width:36px"><button class="icon-btn" title="删除该 case" onclick="deleteCase('${esc(c.case_id)}')">${icon("trash", 15)}</button></td></tr>`).join("")}
+        </tbody></table></div>`
+        : emptyBox("inbox", "该标签下暂无 case", "切换标签或沉淀新用例")}
+    </div>`;
+  await onFormDatasetChange();
+}
+function setFilter(label) { caseFilter = label; renderCases(); }
+
+async function onFormDatasetChange() {
+  const ds = $("#c-dataset").value;
+  const { segments } = await api("/api/segments/" + ds);
+  $("#c-segment").innerHTML = segments.map(s =>
+    `<option value="${esc(s.segment_id)}">${esc(s.segment_id)} · ${esc(s.name)}</option>`).join("");
+  onFormSegmentChange();
+}
+async function onFormSegmentChange() {
+  const ds = $("#c-dataset").value, seg = $("#c-segment").value;
+  if (!seg) { $("#c-ref").innerHTML = ""; return; }
+  try {
+    const out = await api("/api/analyze", { version: "v2", dataset_name: ds });
+    const row = out.segments.find(r => r.segment_id === seg);
+    if (!row) { $("#c-ref").innerHTML = ""; return; }
+    const sat = row.saturation === null || row.saturation === undefined ? "—" : row.saturation;
+    $("#c-ref").innerHTML = `<div class="hint">${icon("bulb", 15)}<span>参考:当前 v2 对 ${esc(seg)} 的判定为 ${lvPill(row.classification)}
+      ,饱和度 <b class="num">${sat}</b>(期望值可直接沿用该判定,也可按人工结论修改)</span></div>`;
+  } catch { $("#c-ref").innerHTML = ""; }
+}
+async function createCase(btn) {
+  await withBusy(btn, async () => {
+    const body = {
+      title: $("#c-title").value,
+      label: $("#c-label").value || "未分类",
+      dataset_name: $("#c-dataset").value,
+      segment: $("#c-segment").value,
+      expected_level: $("#c-level").value,
+      expected_saturation: $("#c-sat").value === "" ? null : parseFloat($("#c-sat").value),
+      notes: $("#c-notes").value,
+    };
+    const out = await api("/api/cases", body);
+    toast(`已沉淀 ${out.case.case_id}${out.added_to_evalset ? " 并加入评测集" : ""}`);
+    await renderCases(); loadHealth();
+  });
+}
+async function deleteCase(caseId) {
+  if (!confirm(`确认删除 ${caseId}?该 case 会同时从所有评测集清单中移除,已归档的报告不受影响。`)) return;
+  try {
+    await api("/api/cases/" + encodeURIComponent(caseId), null, "DELETE");
+    toast(`已删除 ${caseId}`);
+    await renderCases(); loadHealth();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ============ 版本对比 ============ */
+async function renderCompare() {
+  const reports = await api("/api/reports");
+  const options = reports.map(r =>
+    `<option value="${esc(r.report_id)}">${esc(r.report_id)}(${esc(r.version)} ${pct(r.accuracy)})</option>`).join("");
+  $("#tab-compare").innerHTML = `
+    <div class="card">
+      <h3><span class="h-ico">${icon("scale", 16)}</span>报告对比</h3>
+      <p class="desc">闭环第 6 步:迭代是否合格,取决于「目标案例提升 + 历史案例不回归」,这里做逐 case 差分。</p>
+      ${reports.length < 2 ? emptyBox("scale", "至少需要两份报告才能对比", "先在评测看板运行评测生成报告")
+        : `<div class="row">
+            <div><label>报告 A(基线)</label><select id="cmp-a">${options}</select></div>
+            <div><label>报告 B(对比)</label><select id="cmp-b">${options}</select></div>
+          </div>
+          <p style="display:flex;gap:10px;margin:16px 0 0">
+            <button class="btn" onclick="doCompare(this)">${icon("scale", 15)} 对比</button>
+            <button class="btn secondary" onclick="const a=$('#cmp-a'),b=$('#cmp-b');[a.value,b.value]=[b.value,a.value]">${icon("swap", 15)} 交换</button>
+          </p>
+          <div id="cmp-out"></div>`}
+    </div>`;
+}
+async function doCompare(btn) {
+  await withBusy(btn, async () => {
+    const out = await api(`/api/compare?a=${$("#cmp-a").value}&b=${$("#cmp-b").value}`);
+    const rows = out.rows.map(r => `<tr>
+      <td class="num">${esc(r.case_id)}</td><td>${esc(r.label)}</td><td>${esc(r.title)}</td>
+      <td>${pill(r.a_passed)}</td><td>${pill(r.b_passed)}</td>
+      <td class="num">${r.a_score ?? "—"} → ${r.b_score ?? "—"}</td></tr>`).join("");
+    $("#cmp-out").innerHTML = `
+      <div class="chips">
+        <span class="chip2 plain">A:${esc(out.a.version)} ${pct(out.a.accuracy)}</span>
+        <span class="chip2 plain">B:${esc(out.b.version)} ${pct(out.b.accuracy)}</span>
+        <span class="chip2 good">新通过 ${out.newly_passed.length} 条</span>
+        <span class="chip2 ${out.regressed.length ? "warn" : "good"}">回归 ${out.regressed.length} 条</span>
+      </div>
+      <div class="table-wrap scroll-tbl"><table>
+        <thead><tr><th>Case</th><th>标签</th><th>标题</th><th>A</th><th>B</th><th class="num">得分变化</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+  });
+}
+
+/* ============ 分析提交 ============ */
+let cachedDatasets = [];
+async function renderAnalyze() {
+  const [versions, datasets] = await Promise.all([api("/api/versions"), api("/api/datasets")]);
+  cachedDatasets = datasets;
+  $("#tab-analyze").innerHTML = `
+    <div class="card">
+      <h3><span class="h-ico">${icon("flask", 16)}</span>发起一次交通分析</h3>
+      <p class="desc">用任意版本的管线分析任意情景数据集 —— 情景建模在数据参数里,管线零改动即可被场景检验。</p>
+      <div class="row">
+        <div><label>管线版本</label><select id="an-version">
+          ${versions.map(v => `<option value="${esc(v.version)}">${esc(v.version)} · ${esc(v.name)}</option>`).join("")}</select></div>
+        <div><label>情景数据集</label><select id="an-dataset" onchange="onAnalyzeDatasetChange()">
+          ${datasets.map(d => `<option value="${esc(d.name)}">${esc(d.name)} · ${esc((d.scenario && d.scenario.tag) || "")}</option>`).join("")}</select></div>
+      </div>
+      <div id="an-scenario"></div>
+      <p style="margin:16px 0 0"><button class="btn" onclick="doAnalyze(this)">${icon("play", 15)} 分析</button></p>
+      <div id="an-out"></div>
+    </div>`;
+  onAnalyzeDatasetChange();
+}
+function onAnalyzeDatasetChange() {
+  const ds = cachedDatasets.find(d => d.name === $("#an-dataset").value);
+  $("#an-scenario").innerHTML = ds && ds.scenario
+    ? `<div class="hint">${icon("bulb", 15)}<span><b>${esc(ds.scenario.tag)}</b> — ${esc(ds.scenario.insight)}</span></div>` : "";
+}
+async function doAnalyze(btn) {
+  await withBusy(btn, async () => {
+    const out = await api("/api/analyze", {
+      version: $("#an-version").value, dataset_name: $("#an-dataset").value,
+    });
+    const rows = out.segments.map(s => `<tr>
+      <td class="num">${esc(s.segment_id)}</td><td>${esc(s.name)}</td>
+      <td>${lvPill(s.classification)}</td>
+      <td class="num">${s.saturation ?? "—"}</td><td class="num">${s.delay_index ?? "—"}</td>
+      <td class="num">${s.speed_ratio ?? "—"}</td><td>${esc(s.status)}</td></tr>`).join("");
+    const recs = (out.recommendations || []).map(r =>
+      `<li style="display:flex;gap:8px;margin-bottom:6px"><span style="color:var(--warn);margin-top:2px">${icon("tool", 14)}</span><span>${esc(r.text)}</span></li>`).join("");
+    $("#an-out").innerHTML = `
+      <div class="hint ok">${icon("check", 15)}<span><b>${esc(out.summary)}</b></span></div>
+      ${rows ? `<div class="table-wrap" style="margin-top:12px"><table>
+        <thead><tr><th>路段</th><th>名称</th><th>等级</th><th class="num">饱和度</th><th class="num">延误指数</th><th class="num">速度比</th><th>状态</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`
+        : emptyBox("inbox", "该数据集没有路段", "优雅降级为空结果,管线不崩溃")}
+      ${recs ? `<p style="margin:14px 0 6px;font-weight:700;font-size:13px">处置建议</p><ul style="margin:0;padding-left:4px;list-style:none;font-size:13px">${recs}</ul>` : ""}`;
+  });
+}
+
+/* ============ 智能助手(LLM 层) ============ */
+let asstDatasets = [];
+let asstDraft = null;
+async function renderAssistant() {
+  $("#tab-assistant").innerHTML = `<div class="skeleton" style="height:110px"></div>
+    <div class="skeleton" style="height:280px"></div><div class="skeleton" style="height:220px"></div>`;
+  let status, versions, datasets;
+  try {
+    [status, versions, datasets] = await Promise.all([
+      api("/api/llm/status"), api("/api/versions"), api("/api/datasets")]);
+  } catch (e) {
+    $("#tab-assistant").innerHTML = `<div class="card">${emptyBox("alert", "加载失败", esc(e.message))}</div>`;
+    return;
+  }
+  asstDatasets = datasets;
+  const evalsetOpts = evalsetOptions.length ? evalsetOptions
+    : [{ evalset_id: "evalset_v1", case_count: "—" }];
+  const prov = status.configured
+    ? `<span class="chip2 good">${icon("check", 13)} 已接入真实端点</span>`
+    : `<span class="chip2 plain">离线 Mock(未配置 LLM_API_KEY,零成本可复现)</span>`;
+  $("#tab-assistant").innerHTML = `
+    <div class="card">
+      <h3><span class="h-ico">${icon("spark", 16)}</span>LLM Runtime 状态</h3>
+      <p class="desc">统一模型访问层:任意 OpenAI 兼容端点 · 结构化输出 · 响应缓存 · 调用审计 · 离线降级。七维设计详见文档中心。</p>
+      <div class="chips">
+        ${prov}
+        <span class="chip2 plain">模型:${esc(status.model)}</span>
+        <span class="chip2 plain num">响应缓存 ${status.cache_count} 条</span>
+      </div>
+      ${status.recent_runs.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>时间</th><th>用途</th><th class="num">耗时(ms)</th><th class="num">缓存</th><th class="num">tokens</th></tr></thead>
+        <tbody>${status.recent_runs.map(r => `<tr>
+          <td class="num">${esc(fmtTs(r.ts))}</td><td>${esc(r.purpose)}</td>
+          <td class="num">${r.elapsed_ms}</td><td>${r.cache_hit ? "命中" : "—"}</td>
+          <td class="num">${(r.usage && (r.usage.total_tokens || r.usage.estimated_prompt_tokens)) || "—"}</td></tr>`).join("")}
+        </tbody></table></div>` : `<div class="muted" style="margin-top:8px">还没有调用记录 —— 生成一个草稿或跑一次诊断试试。</div>`}
+    </div>
+    <div class="card">
+      <h3><span class="h-ico">${icon("plus", 16)}</span>坏例沉淀助手</h3>
+      <p class="desc">闭环第 1-2 步的加速器:粘贴用户反馈原文,LLM 结合数据集上下文起草 replaycase;草稿必须人工确认才会入库(Human-in-the-loop)。</p>
+      <label style="margin-top:0">反馈原文</label>
+      <textarea id="asst-complaint" rows="3" maxlength="500"
+        placeholder="例:用户点踩:学府路在雨天早高峰被误判,该路段 V/C 已达 0.91,应判为拥堵而不是缓行…"></textarea>
+      <div class="row3">
+        <div><label>数据集</label><select id="asst-dataset" onchange="onAsstDatasetChange()">
+          ${datasets.map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join("")}</select></div>
+        <div><label>指定路段(可选)</label><select id="asst-segment"></select></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn" style="width:100%" onclick="llmDraft(this)">${icon("spark", 15)} 生成草稿</button></div>
+      </div>
+      <div id="asst-editor"></div>
+      <div id="asst-drafts"></div>
+    </div>
+    <div class="card">
+      <h3><span class="h-ico">${icon("tool", 16)}</span>失败诊断(分析者 + 评审者)</h3>
+      <p class="desc">闭环第 4 步的加速器:对指定版本重放评测,分析者智能体按失败标签归因,评审者智能体复核收敛;结论仅供参考,不自动改动任何资产。</p>
+      <div class="row">
+        <div><label>管线版本</label><select id="asst-dg-version">
+          ${versions.map(v => `<option value="${esc(v.version)}"${v.version === "v2" ? " selected" : ""}>${esc(v.version)} · ${esc(v.name)}</option>`).join("")}</select></div>
+        <div><label>评测集</label><select id="asst-dg-evalset">
+          ${evalsetOpts.map(e => `<option value="${esc(e.evalset_id)}">${esc(e.evalset_id)}${e.case_count !== "—" ? ` · ${e.case_count} 条` : ""}</option>`).join("")}</select></div>
+      </div>
+      <p style="margin:14px 0 0"><button class="btn" onclick="llmDiagnose(this)">${icon("tool", 15)} 生成诊断</button></p>
+      <div id="asst-diagnosis"></div>
+    </div>`;
+  await onAsstDatasetChange();
+  await renderAsstDrafts();
+}
+async function onAsstDatasetChange() {
+  const ds = $("#asst-dataset").value;
+  const { segments } = await api("/api/segments/" + ds);
+  $("#asst-segment").innerHTML = `<option value="">让助手自动定位</option>` +
+    segments.map(s => `<option value="${esc(s.segment_id)}">${esc(s.segment_id)} · ${esc(s.name)}</option>`).join("");
+}
+function showAsstEditor(d) {
+  asstDraft = d;
+  $("#asst-editor").innerHTML = `
+    <div class="hint">${icon("spark", 15)}<span><b>草稿 ${esc(d.draft_id)}</b>(${esc(d.llm.model)} 生成)—— ${esc(d.rationale)}</span></div>
+    <div class="row3">
+      <div><label>标题</label><input id="asst-t" maxlength="80" value="${esc(d.title)}"></div>
+      <div><label>失败标签</label><input id="asst-l" maxlength="20" value="${esc(d.label)}"></div>
+      <div><label>期望等级</label><select id="asst-lv">
+        ${LEVELS.map(l => `<option${l === d.expected_level ? " selected" : ""}>${l}</option>`).join("")}</select></div>
+    </div>
+    <p style="display:flex;gap:10px;margin:14px 0 0">
+      <button class="btn" onclick="llmConfirmDraft(this)">${icon("check", 15)} 确认沉淀为 replaycase</button>
+      <button class="btn secondary" onclick="llmDiscardDraft('${esc(d.draft_id)}')">${icon("trash", 15)} 丢弃</button>
+    </p>`;
+}
+async function renderAsstDrafts() {
+  const drafts = await api("/api/llm/drafts").catch(() => []);
+  $("#asst-drafts").innerHTML = drafts.length ? `
+    <p style="margin:18px 0 8px;font-weight:700;font-size:13px">草稿记录(drafts/)</p>
+    <div class="table-wrap scroll-tbl"><table>
+      <thead><tr><th>草稿</th><th>状态</th><th>标题</th><th>标签</th><th>等级</th><th>关联 Case</th><th></th></tr></thead>
+      <tbody>${drafts.map(d => `<tr>
+        <td class="num">${esc(d.draft_id)}</td>
+        <td><span class="pill ${d.status === "confirmed" ? "pass" : d.status === "pending" ? "na" : "fail"}">${esc(d.status)}</span></td>
+        <td>${esc(d.title)}</td><td>${esc(d.label)}</td><td>${lvPill(d.expected_level)}</td>
+        <td class="num">${esc(d.confirmed_case_id || "—")}</td>
+        <td style="white-space:nowrap">${d.status === "pending"
+          ? `<button class="linklike" onclick="llmLoadDraft('${esc(d.draft_id)}')">编辑</button> ` : ""}
+        <button class="icon-btn" title="删除草稿" onclick="llmDiscardDraft('${esc(d.draft_id)}')">${icon("trash", 15)}</button></td></tr>`).join("")}
+      </tbody></table></div>` : "";
+}
+async function llmDraft(btn) {
+  await withBusy(btn, async () => {
+    const complaint = $("#asst-complaint").value.trim();
+    if (complaint.length < 5) { toast("请先填写反馈原文(至少 5 个字)", true); return; }
+    const d = await api("/api/llm/drafts", {
+      complaint, dataset_name: $("#asst-dataset").value,
+      segment_id: $("#asst-segment").value || null });
+    showAsstEditor(d); await renderAsstDrafts();
+    toast(`草稿 ${d.draft_id} 已生成,请人工确认后入库`);
+  });
+}
+async function llmLoadDraft(id) {
+  const d = (await api("/api/llm/drafts")).find(x => x.draft_id === id);
+  if (d) showAsstEditor(d);
+}
+async function llmConfirmDraft(btn) {
+  if (!asstDraft) return;
+  await withBusy(btn, async () => {
+    const out = await api(`/api/llm/drafts/${encodeURIComponent(asstDraft.draft_id)}/confirm`, {
+      title: $("#asst-t").value, label: $("#asst-l").value, expected_level: $("#asst-lv").value });
+    toast(`已沉淀 ${out.case.case_id} 并加入评测集`);
+    $("#asst-editor").innerHTML = `<div class="hint ok">${icon("check", 15)}<span>
+      草稿已确认为 <b>${esc(out.case.case_id)}</b>,已加入评测集 —— 可回评测看板重跑自进化验证效果。</span></div>`;
+    asstDraft = null; await renderAsstDrafts(); loadHealth();
+  });
+}
+async function llmDiscardDraft(id) {
+  if (!confirm(`确认删除草稿 ${id}?`)) return;
+  try { await api("/api/llm/drafts/" + encodeURIComponent(id), null, "DELETE"); }
+  catch (e) { toast(e.message, true); return; }
+  if (asstDraft && asstDraft.draft_id === id) { asstDraft = null; $("#asst-editor").innerHTML = ""; }
+  await renderAsstDrafts();
+}
+async function llmDiagnose(btn) {
+  await withBusy(btn, async () => {
+    const out = await api("/api/llm/diagnose", {
+      version: $("#asst-dg-version").value, evalset: $("#asst-dg-evalset").value });
+    if (!out.items.length) {
+      $("#asst-diagnosis").innerHTML = `<div class="hint ok">${icon("check", 15)}<span>${esc(out.reviewer_notes || "全部通过,无需诊断")}</span></div>`;
+      return;
+    }
+    $("#asst-diagnosis").innerHTML = `
+      ${out.reviewer_notes ? `<div class="hint">${icon("shield", 15)}<span><b>评审意见:</b>${esc(out.reviewer_notes)}</span></div>` : ""}
+      ${out.items.map(it => `<div class="round">
+        <div class="head"><b>${esc(it.label)}</b><span class="chip2 plain num">${it.affected_cases.length} 条失败</span></div>
+        <div class="muted" style="margin-top:6px"><b>根因:</b>${esc(it.root_cause)}</div>
+        <ul style="margin:8px 0 0;padding-left:18px;font-size:12.5px;color:var(--t3)">
+          ${it.suggestions.map(s => `<li>${esc(s)}</li>`).join("")}</ul>
+        <div class="chips" style="margin-bottom:2px">${it.affected_cases.map(c => `<span class="chip2 plain num">${esc(c)}</span>`).join("")}</div>
+      </div>`).join("")}
+      <div class="muted" style="margin-top:8px">模型:${esc(out.meta.model)} · 本次评测得分 ${pct(out.meta.accuracy)}(${out.meta.passed}/${out.meta.total})</div>`;
+  });
+}
+
+/* ============ 导航 ============ */
+const TITLES = {
+  dashboard: ["评测看板", "评测驱动迭代:基线 → 最多 2 轮 → 验证无回归 → 归档报告"],
+  cases: ["Case 管理", "闭环第 1-2 步:把线上反馈沉淀为可重放的评测用例"],
+  assistant: ["智能助手", "LLM 智能层:草稿沉淀 · 失败诊断 · LLM-as-Judge(Runtime 可观测)"],
+  compare: ["版本对比", "闭环第 6 步:守护每一次迭代不引入回归"],
+  analyze: ["分析提交", "用任意版本的管线分析任意数据集"],
+};
+const renderers = { dashboard: renderDashboard, cases: renderCases, assistant: renderAssistant,
+                    compare: renderCompare, analyze: renderAnalyze };
+// 图标注入(HTML 里用 data-ico 占位,避免重复书写长 SVG)
+$$("[data-ico]").forEach(el => { el.innerHTML = icon(el.dataset.ico, el.dataset.icoSize || 18); });
+document.querySelector(".nav-scroll").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-tab]");
+  if (btn) switchTab(btn.dataset.tab);
+});
+// 登录框回车提交
+$("#view-login").addEventListener("keydown", e => {
+  if (e.key === "Enter" && document.activeElement && document.activeElement.tagName === "INPUT") {
+    const btn = $("#view-login .btn"); if (btn && !btn.disabled) doLogin(btn);
+  }
+});
+// 长页面回到顶部
+const scrollArea = $("#scroll-area");
+$("#back-top").addEventListener("click", () => scrollArea.scrollTo({ top: 0, behavior: "smooth" }));
+scrollArea.addEventListener("scroll", () => {
+  $("#back-top").classList.toggle("show", scrollArea.scrollTop > 420);
+}, { passive: true });
+boot();
+</script>
+</body>
+</html>

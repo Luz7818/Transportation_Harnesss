@@ -1,0 +1,35 @@
+<view class="card">
+  <view class="card-title">➕ 沉淀新的 replaycase</view>
+  <view class="muted">标题</view>
+  <input class="ipt" value="{{form.title}}" data-field="title" bindinput="onInput" maxlength="80" placeholder="例:学府路应判为拥堵而非严重拥堵" />
+  <view class="muted" style="margin-top:14rpx">失败标签</view>
+  <input class="ipt" value="{{form.label}}" data-field="label" bindinput="onInput" maxlength="20" placeholder="例:阈值错误" />
+  <view class="muted" style="margin-top:14rpx">数据集 / 路段</view>
+  <picker mode="selector" range="{{datasets}}" range-key="name" bindchange="onDataset">
+    <view class="picker">{{datasets[datasetIdx] ? datasets[datasetIdx].name : "加载中…"}}</view>
+  </picker>
+  <picker mode="selector" range="{{segments}}" range-key="display" bindchange="onSegment" style="margin-top:12rpx">
+    <view class="picker">{{segments[segmentIdx] ? segments[segmentIdx].segment_id + " · " + segments[segmentIdx].name : "请先选择数据集"}}</view>
+  </picker>
+  <view class="muted" style="margin-top:14rpx">期望拥堵等级</view>
+  <picker mode="selector" range="{{levels}}" bindchange="onLevel">
+    <view class="picker">{{levels[levelIdx]}}</view>
+  </picker>
+  <view class="muted" style="margin-top:14rpx">期望饱和度(可选)</view>
+  <input class="ipt" type="digit" value="{{form.saturation}}" data-field="saturation" bindinput="onInput" placeholder="留空则只校验拥堵等级" />
+  <view class="muted" style="margin-top:14rpx">备注</view>
+  <input class="ipt" value="{{form.notes}}" data-field="notes" bindinput="onInput" maxlength="200" placeholder="反馈原文 / 复现步骤" />
+  <button class="btn" style="margin-top:24rpx" disabled="{{submitting}}" bindtap="submit">💾 沉淀并加入评测集</button>
+</view>
+
+<view class="card">
+  <view class="card-title">🗃 Replaycase 库({{cases.length}})</view>
+  <view wx:if="{{!cases.length}}" class="muted">暂无 case</view>
+  <view class="cse" wx:for="{{cases}}" wx:key="case_id">
+    <view class="row spread">
+      <text>{{item.case_id}}</text>
+      <text class="muted">{{item.label}}</text>
+    </view>
+    <view class="muted">{{item.title}}</view>
+  </view>
+</view>

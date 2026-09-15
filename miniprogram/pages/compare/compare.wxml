@@ -1,0 +1,41 @@
+<view class="card">
+  <view class="card-title">⚖️ 报告对比(回归守护)</view>
+  <view wx:if="{{reports.length < 2}}" class="muted">至少需要两份报告才能对比,先去「看板」运行评测</view>
+  <block wx:else>
+    <view class="muted">报告 A(基线)</view>
+    <picker mode="selector" range="{{reports}}" range-key="report_id" bindchange="onA">
+      <view class="picker">{{reports[aIdx].report_id}}({{reports[aIdx].version}} {{reports[aIdx].accText}})</view>
+    </picker>
+    <view class="muted" style="margin-top:14rpx">报告 B(对比)</view>
+    <picker mode="selector" range="{{reports}}" range-key="report_id" bindchange="onB">
+      <view class="picker">{{reports[bIdx].report_id}}({{reports[bIdx].version}} {{reports[bIdx].accText}})</view>
+    </picker>
+    <view class="row" style="margin-top:22rpx;gap:14rpx">
+      <button class="btn" style="flex:1" disabled="{{loading}}" bindtap="compare">对比</button>
+      <button class="btn btn-ghost" style="flex:1" bindtap="swap">⇄ 交换</button>
+    </view>
+  </block>
+</view>
+
+<block wx:if="{{out}}">
+  <view class="card">
+    <view class="chips">
+      <text class="chip2">A:{{out.a.version}} {{out.aDisp}}</text>
+      <text class="chip2">B:{{out.b.version}} {{out.bDisp}}</text>
+      <text class="chip2 good">新通过 {{out.newly_passed.length}}</text>
+      <text class="chip2 {{out.regressed.length ? 'warn' : 'good'}}">回归 {{out.regressed.length}}</text>
+    </view>
+  </view>
+  <view class="card">
+    <view class="card-title">逐 Case 差分({{out.rows.length}} 条)</view>
+    <view class="crow" wx:for="{{out.rows}}" wx:key="case_id">
+      <view class="row spread">
+        <text>{{item.case_id}} · {{item.label}}</text>
+        <view><text class="pill {{item.a_passed ? 'pass' : (item.a_passed === null ? 'na' : 'fail')}}">{{item.aText}}</text>
+          <text> → </text>
+          <text class="pill {{item.b_passed ? 'pass' : (item.b_passed === null ? 'na' : 'fail')}}">{{item.bText}}</text></view>
+      </view>
+      <view class="muted">{{item.title}}</view>
+    </view>
+  </view>
+</block>

@@ -1,0 +1,6 @@
+.bar-track { height: 14rpx; background: #edf0f8; border-radius: 999rpx; margin-top: 14rpx; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999rpx; background: linear-gradient(90deg, #4f46e5, #7c3aed); }
+.rep { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 24rpx; }
+.rep:last-child { border-bottom: 0; }
+.evo { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 24rpx; }
+.evo:last-child { border-bottom: 0; }

@@ -1,0 +1,19 @@
+{
+  "case_id": "rc-0008",
+  "title": "文昌桥饱和度应保留 2 位小数(1.01),基线取整成整数",
+  "label": "精度问题",
+  "dataset_name": "base",
+  "checks": [
+    {
+      "type": "metric",
+      "segment": "S-05",
+      "field": "saturation",
+      "expected": 1.01,
+      "tol": 0.005,
+      "keywords": []
+    }
+  ],
+  "source": "人工标注",
+  "created_at": "2026-08-31T00:44:00",
+  "notes": "饱和度取整后 0.85 变 1、1.01 变 1,级别判断与展示全乱。"
+}

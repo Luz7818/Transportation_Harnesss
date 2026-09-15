@@ -1,0 +1,27 @@
+{
+  "case_id": "rc-0001",
+  "title": "学府路(V/C 0.91)被按车速误判为「严重拥堵」",
+  "label": "阈值错误",
+  "dataset_name": "base",
+  "checks": [
+    {
+      "type": "classify",
+      "segment": "S-02",
+      "field": null,
+      "expected": "拥堵",
+      "tol": 0.01,
+      "keywords": []
+    },
+    {
+      "type": "metric",
+      "segment": "S-02",
+      "field": "saturation",
+      "expected": 0.91,
+      "tol": 0.01,
+      "keywords": []
+    }
+  ],
+  "source": "线上点踩",
+  "created_at": "2026-08-31T00:39:00",
+  "notes": "用户反馈:该路段饱和度已超 0.9,按 V/C 标准应为「拥堵」;基线只看车速直接判成严重拥堵。"
+}

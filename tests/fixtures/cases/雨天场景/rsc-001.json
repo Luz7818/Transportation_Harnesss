@@ -1,0 +1,27 @@
+{
+  "case_id": "rsc-001",
+  "title": "雨天学府路(V/C 1.02)应升级为「严重拥堵」",
+  "label": "雨天场景",
+  "dataset_name": "rain_peak",
+  "checks": [
+    {
+      "type": "classify",
+      "segment": "S-02",
+      "field": null,
+      "expected": "严重拥堵",
+      "tol": 0.01,
+      "keywords": []
+    },
+    {
+      "type": "metric",
+      "segment": "S-02",
+      "field": "saturation",
+      "expected": 1.02,
+      "tol": 0.01,
+      "keywords": []
+    }
+  ],
+  "source": "场景标定",
+  "created_at": "2026-09-05T09:00:00",
+  "notes": "降雨使通行能力下降 15%,同等级流量下 V/C 突破 1.0;恶劣天气预警必须覆盖该路段。"
+}

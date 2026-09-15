@@ -1,0 +1,27 @@
+{
+  "pages": [
+    "pages/dashboard/dashboard",
+    "pages/compare/compare",
+    "pages/analyze/analyze",
+    "pages/cases/cases"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#1c2537",
+    "navigationBarTitleText": "交通分析自进化 Harness",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f3f5fa"
+  },
+  "tabBar": {
+    "color": "#6b7686",
+    "selectedColor": "#4f46e5",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/dashboard/dashboard", "text": "评测看板" },
+      { "pagePath": "pages/compare/compare", "text": "版本对比" },
+      { "pagePath": "pages/analyze/analyze", "text": "分析提交" },
+      { "pagePath": "pages/cases/cases", "text": "Case 库" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

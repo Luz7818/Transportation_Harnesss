@@ -1,0 +1,4 @@
+.ipt { background: #fff; border: 1rpx solid #e7ebf3; border-radius: 14rpx; padding: 14rpx 20rpx; margin-top: 8rpx; }
+.picker { background: #fff; border: 1rpx solid #e7ebf3; border-radius: 14rpx; padding: 16rpx 20rpx; margin-top: 8rpx; }
+.cse { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 26rpx; }
+.cse:last-child { border-bottom: 0; }

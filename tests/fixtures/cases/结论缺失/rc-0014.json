@@ -1,0 +1,29 @@
+{
+  "case_id": "rc-0014",
+  "title": "用户点踩:学府路在早高峰的判定偏轻,该路段 V/C 已达 0.91,应判为拥堵而不是缓行,并且没",
+  "label": "结论缺失",
+  "dataset_name": "base",
+  "checks": [
+    {
+      "type": "classify",
+      "segment": "S-10",
+      "field": null,
+      "expected": "拥堵",
+      "tol": 0.01,
+      "keywords": [],
+      "min_score": 0.7
+    },
+    {
+      "type": "metric",
+      "segment": "S-10",
+      "field": "saturation",
+      "expected": 0.91,
+      "tol": 0.01,
+      "keywords": [],
+      "min_score": 0.7
+    }
+  ],
+  "source": "LLM 草稿·人工确认",
+  "created_at": "2026-09-15T03:36:28",
+  "notes": "用户点踩:学府路在早高峰的判定偏轻,该路段 V/C 已达 0.91,应判为拥堵而不是缓行,并且没有给出分流建议"
+}

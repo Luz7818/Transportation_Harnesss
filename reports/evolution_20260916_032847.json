@@ -1,0 +1,53 @@
+{
+  "evolution_id": "evolution_20260916_032847",
+  "evalset_id": "evalset_v1",
+  "total_cases": 13,
+  "baseline": {
+    "version": "v1",
+    "accuracy": 0.8462,
+    "passed_count": 11,
+    "total": 13,
+    "failures_by_label": {
+      "边界处理": [
+        "rc-0009 云龙大道 V/C 0.78 且车速比 0.28,应升级为「拥堵」"
+      ],
+      "指标计算错误": [
+        "rc-0010 全局拥堵指数应按流量加权 ≈ 0.7944,简单平均会低估主干道压力"
+      ]
+    }
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "version": "v2",
+      "version_name": "边界与聚合优化",
+      "changes": [
+        "边界升级规则:V/C ∈ [0.75, 0.8) 且速度比 < 0.35 时升级为「拥堵」",
+        "全局拥堵指数改为按流量加权(单点 V/C 以 1.2 封顶)",
+        "空数据集/零有效路段输出空结果集,全局指数为 null,不报错",
+        "拥堵路段按饱和度降序排列;单次遍历完成统计"
+      ],
+      "accuracy": 1.0,
+      "passed_count": 13,
+      "total": 13,
+      "improvement": 0.15380000000000005,
+      "newly_passed": [
+        "rc-0009",
+        "rc-0010"
+      ],
+      "regressed": [],
+      "remaining_failures": {}
+    }
+  ],
+  "pending_versions": [],
+  "stop_reason": "评测集已全部通过",
+  "iterations_used": 1,
+  "best": {
+    "version": "v2",
+    "accuracy": 1.0,
+    "passed_count": 13,
+    "total": 13
+  },
+  "md_report": "reports\\report_evolution_20260916_032847.md",
+  "timestamp": "20260916_032847"
+}

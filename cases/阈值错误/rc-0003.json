@@ -1,0 +1,29 @@
+{
+  "case_id": "rc-0003",
+  "title": "泉山南路(V/C 1.03)应为「严重拥堵」并出现在结论中",
+  "label": "阈值错误",
+  "dataset_name": "base",
+  "checks": [
+    {
+      "type": "classify",
+      "segment": "S-10",
+      "field": null,
+      "expected": "严重拥堵",
+      "tol": 0.01,
+      "keywords": []
+    },
+    {
+      "type": "conclusion_keyword",
+      "segment": null,
+      "field": null,
+      "expected": null,
+      "tol": 0.01,
+      "keywords": [
+        "严重拥堵"
+      ]
+    }
+  ],
+  "source": "人工标注",
+  "created_at": "2026-08-31T00:40:00",
+  "notes": "过饱和路段必须被识别为最高等级,且结论文字必须点明。"
+}

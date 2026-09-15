@@ -1,0 +1,38 @@
+<view class="card">
+  <view class="card-title">🧪 发起一次交通分析</view>
+  <view class="muted">管线版本</view>
+  <picker mode="selector" range="{{versions}}" range-key="version" bindchange="onVersion">
+    <view class="picker">{{versions[versionIdx] ? versions[versionIdx].version + " · " + versions[versionIdx].name : "加载中…"}}</view>
+  </picker>
+  <view class="muted" style="margin-top:16rpx">情景数据集</view>
+  <picker mode="selector" range="{{datasets}}" range-key="displayName" bindchange="onDataset">
+    <view class="picker">{{datasets[datasetIdx] ? datasets[datasetIdx].displayName : "加载中…"}}</view>
+  </picker>
+  <view class="hint" wx:if="{{datasets[datasetIdx] && datasets[datasetIdx].scenario}}">
+    📍 {{datasets[datasetIdx].scenario.insight}}
+  </view>
+  <button class="btn" style="margin-top:24rpx" disabled="{{loading}}" bindtap="analyze">▶ 分析</button>
+</view>
+
+<block wx:if="{{out}}">
+  <view class="card">
+    <view class="card-title">分析结论</view>
+    <text>{{out.summary}}</text>
+  </view>
+  <view class="card" wx:if="{{out.segments.length}}">
+    <view class="card-title">路段明细</view>
+    <view class="seg row spread" wx:for="{{out.segments}}" wx:key="segment_id">
+      <view>
+        <view>{{item.segment_id}} {{item.name}}</view>
+        <view class="muted">饱和度 {{item.saturation === null ? "—" : item.saturation}} · 状态 {{item.status}}</view>
+      </view>
+      <text class="badge">{{item.classification}}</text>
+    </view>
+  </view>
+  <view class="card" wx:if="{{out.recommendations.length}}">
+    <view class="card-title">🛠 处置建议</view>
+    <view class="seg" wx:for="{{out.recommendations}}" wx:key="segment_id">
+      <text>{{item.text}}</text>
+    </view>
+  </view>
+</block>

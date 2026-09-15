@@ -1,0 +1,8 @@
+.picker { background: #fff; border: 1rpx solid #e7ebf3; border-radius: 14rpx; padding: 16rpx 20rpx; margin-top: 8rpx; }
+.chips { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.chip2 { background: #eef1ff; color: #4f46e5; border-radius: 999rpx; padding: 4rpx 18rpx; font-size: 23rpx; }
+.chip2.good { background: #e8f8f1; color: #059669; }
+.chip2.warn { background: #feecec; color: #dc2626; }
+.crow { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 25rpx; }
+.crow:last-child { border-bottom: 0; }
+.pill.na { background: #f1f4f9; color: #6b7686; }

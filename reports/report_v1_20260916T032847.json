@@ -1,0 +1,343 @@
+{
+  "version": "v1",
+  "evalset_id": "evalset_v1",
+  "timestamp": "2026-09-16T03:28:47",
+  "total": 13,
+  "passed_count": 11,
+  "accuracy": 0.8462,
+  "label_stats": {
+    "阈值错误": {
+      "passed": 4,
+      "total": 4
+    },
+    "指标计算错误": {
+      "passed": 2,
+      "total": 3
+    },
+    "健壮性": {
+      "passed": 2,
+      "total": 2
+    },
+    "结论缺失": {
+      "passed": 1,
+      "total": 1
+    },
+    "精度问题": {
+      "passed": 1,
+      "total": 1
+    },
+    "边界处理": {
+      "passed": 0,
+      "total": 1
+    },
+    "回归保护": {
+      "passed": 1,
+      "total": 1
+    }
+  },
+  "results": [
+    {
+      "case_id": "rc-0001",
+      "title": "学府路(V/C 0.91)被按车速误判为「严重拥堵」",
+      "label": "阈值错误",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-02",
+          "expected": "拥堵",
+          "actual": "拥堵",
+          "passed": true,
+          "detail": "期望「拥堵」,实际「拥堵」"
+        },
+        {
+          "type": "metric",
+          "target": "S-02.saturation",
+          "expected": 0.91,
+          "actual": 0.91,
+          "passed": true,
+          "detail": "期望 0.91±0.01,实际 0.91"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.31
+    },
+    {
+      "case_id": "rc-0002",
+      "title": "解放西路(V/C 0.71)应为「缓行」,基线判成「拥堵」",
+      "label": "阈值错误",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-06",
+          "expected": "缓行",
+          "actual": "缓行",
+          "passed": true,
+          "detail": "期望「缓行」,实际「缓行」"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.36
+    },
+    {
+      "case_id": "rc-0003",
+      "title": "泉山南路(V/C 1.03)应为「严重拥堵」并出现在结论中",
+      "label": "阈值错误",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-10",
+          "expected": "严重拥堵",
+          "actual": "严重拥堵",
+          "passed": true,
+          "detail": "期望「严重拥堵」,实际「严重拥堵」"
+        },
+        {
+          "type": "conclusion_keyword",
+          "target": "summary",
+          "expected": [
+            "严重拥堵"
+          ],
+          "actual": "共分析 10 个路段(有效 10 个,数据缺失 0 个):按饱和度 V/C 五级划分,畅通 2、基本畅通 1、缓行 3、拥堵 2、严重拥堵 2;全局拥堵指数 0.685。",
+          "passed": true,
+          "detail": "结论覆盖全部关键词"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.45
+    },
+    {
+      "case_id": "rc-0004",
+      "title": "长江路饱和度按车道数折算后应为 0.85(基线漏乘车道数)",
+      "label": "指标计算错误",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "metric",
+          "target": "S-03.saturation",
+          "expected": 0.85,
+          "actual": 0.85,
+          "passed": true,
+          "detail": "期望 0.85±0.01,实际 0.85"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.26
+    },
+    {
+      "case_id": "rc-0005",
+      "title": "学府路延误指数应为 0.64(基线公式方向写反,输出 -0.64)",
+      "label": "指标计算错误",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "metric",
+          "target": "S-02.delay_index",
+          "expected": 0.64,
+          "actual": 0.64,
+          "passed": true,
+          "detail": "期望 0.64±0.02,实际 0.64"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.2
+    },
+    {
+      "case_id": "rc-0006",
+      "title": "云谷隧道流量传感器故障(volume 缺失)导致整个分析崩溃",
+      "label": "健壮性",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "no_crash",
+          "target": "-",
+          "expected": "无异常",
+          "actual": "正常返回",
+          "passed": true,
+          "detail": "管线正常返回"
+        },
+        {
+          "type": "classify",
+          "target": "S-09",
+          "expected": "数据缺失",
+          "actual": "数据缺失",
+          "passed": true,
+          "detail": "期望「数据缺失」,实际「数据缺失」"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.23
+    },
+    {
+      "case_id": "rc-0007",
+      "title": "拥堵路段没有任何处置建议,报告不可执行",
+      "label": "结论缺失",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "recommendations",
+          "target": "recommendations",
+          "expected": "全覆盖",
+          "actual": "缺 0 条",
+          "passed": true,
+          "detail": "每个拥堵/严重拥堵路段均有处置建议"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.2
+    },
+    {
+      "case_id": "rc-0008",
+      "title": "文昌桥饱和度应保留 2 位小数(1.01),基线取整成整数",
+      "label": "精度问题",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "metric",
+          "target": "S-05.saturation",
+          "expected": 1.01,
+          "actual": 1.01,
+          "passed": true,
+          "detail": "期望 1.01±0.005,实际 1.01"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.2
+    },
+    {
+      "case_id": "rc-0009",
+      "title": "云龙大道 V/C 0.78 且车速比 0.28,应升级为「拥堵」",
+      "label": "边界处理",
+      "version": "v1",
+      "passed": false,
+      "score": 0.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-11",
+          "expected": "拥堵",
+          "actual": "缓行",
+          "passed": false,
+          "detail": "期望「拥堵」,实际「缓行」"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.19
+    },
+    {
+      "case_id": "rc-0010",
+      "title": "全局拥堵指数应按流量加权 ≈ 0.7944,简单平均会低估主干道压力",
+      "label": "指标计算错误",
+      "version": "v1",
+      "passed": false,
+      "score": 0.0,
+      "checks": [
+        {
+          "type": "metric",
+          "target": "全局.global_congestion_index",
+          "expected": 0.7944,
+          "actual": 0.685,
+          "passed": false,
+          "detail": "期望 0.7944±0.005,实际 0.685"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.18
+    },
+    {
+      "case_id": "rc-0011",
+      "title": "城东大道(V/C 0.42)应为「基本畅通」,基线只看车速判成「畅通」",
+      "label": "阈值错误",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-01",
+          "expected": "基本畅通",
+          "actual": "基本畅通",
+          "passed": true,
+          "detail": "期望「基本畅通」,实际「基本畅通」"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.19
+    },
+    {
+      "case_id": "rc-0012",
+      "title": "上游数据管道故障返回空数据集时,分析应优雅降级而非崩溃",
+      "label": "健壮性",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "no_crash",
+          "target": "-",
+          "expected": "无异常",
+          "actual": "正常返回",
+          "passed": true,
+          "detail": "管线正常返回"
+        },
+        {
+          "type": "congested_empty",
+          "target": "congested_segments",
+          "expected": 0,
+          "actual": 0,
+          "passed": true,
+          "detail": "拥堵路段数 = 0,期望 0"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.16
+    },
+    {
+      "case_id": "rc-0013",
+      "title": "环北路(V/C 0.24)为「畅通」——回归保护用例",
+      "label": "回归保护",
+      "version": "v1",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-04",
+          "expected": "畅通",
+          "actual": "畅通",
+          "passed": true,
+          "detail": "期望「畅通」,实际「畅通」"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.19
+    }
+  ],
+  "duration_ms": 3.29,
+  "version_name": "算法修正",
+  "changes": [
+    "拥堵分级改为以饱和度 V/C 为主(0.4/0.6/0.8/1.0 五级),车速只作参考",
+    "修正饱和度公式:saturation = volume / (capacity_per_lane × lane_count)",
+    "修正延误指数公式:delay_index = max(0, (free_flow_speed - speed) / free_flow_speed)",
+    "volume 缺失的路段标记「数据缺失」并从聚合中剔除,不再崩溃",
+    "为拥堵/严重拥堵路段生成处置建议;指标统一保留 2 位小数"
+  ]
+}

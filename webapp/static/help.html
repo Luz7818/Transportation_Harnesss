@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>文档中心 · Transportation Harness</title>
+<link rel="icon" type="image/svg+xml" href="/static/assets/icon.svg">
+<style>
+:root {
+  --bg: #f5f6fa; --surface: #fff; --line: #e7eaf3; --line-2: #d8deeb;
+  --t1: #0f1728; --t2: #3f4c63; --t3: #69758c; --t4: #98a2b8;
+  --primary: #4f46e5; --primary-h: #4338ca; --primary-soft: #eef1ff;
+  --ok: #079455; --ok-soft: #e7f6ef; --warn: #b54708; --warn-soft: #fef4e6;
+  --bad: #b42318; --bad-soft: #feecea; --info: #175cd3; --info-soft: #eaf1fd;
+  --code-bg: #0c1322;
+  --shadow-xs: 0 1px 2px rgba(16,24,40,.05);
+  --shadow-sm: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.04);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--t1);
+       font: 14px/1.75 "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+       -webkit-font-smoothing: antialiased; }
+::selection { background: rgba(79,70,229,.18); }
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===== 顶栏 ===== */
+.doc-top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center;
+           justify-content: space-between; padding: 0 32px; height: 60px;
+           background: rgba(255,255,255,.85); backdrop-filter: blur(12px);
+           border-bottom: 1px solid var(--line); }
+.doc-top .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--t1); }
+.doc-top .brand img { width: 32px; height: 32px; border-radius: 8px; }
+.doc-top .brand small { color: var(--t3); font-weight: 500; margin-left: 8px; font-size: 12px; }
+.doc-top .actions { display: flex; gap: 9px; }
+.btn-top { display: inline-flex; align-items: center; gap: 6px; height: 33px; padding: 0 14px;
+           border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; text-decoration: none;
+           border: 1px solid var(--line-2); background: #fff; color: var(--t2); transition: background .15s; }
+.btn-top:hover { background: #f7f8fc; text-decoration: none; }
+.btn-top.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn-top.primary:hover { background: var(--primary-h); }
+
+/* ===== 布局 ===== */
+.doc-layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; gap: 36px; }
+.doc-toc { width: 210px; flex: none; position: sticky; top: 88px; align-self: flex-start;
+           max-height: calc(100vh - 120px); overflow-y: auto; }
+.doc-toc .toc-group { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; color: var(--t4);
+                      text-transform: uppercase; margin: 18px 0 6px; }
+.doc-toc .toc-group:first-child { margin-top: 4px; }
+.doc-toc a { display: block; padding: 4.5px 11px; border-radius: 8px; color: var(--t3);
+             font-size: 12.5px; margin-bottom: 1px; }
+.doc-toc a:hover { background: #fff; color: var(--t1); text-decoration: none; }
+.doc-toc a.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.doc-main { flex: 1; min-width: 0; }
+
+/* ===== 章节与排版 ===== */
+section.doc-sec { scroll-margin-top: 84px; margin-bottom: 52px; }
+section.doc-sec > h2 { font-size: 21px; font-weight: 800; letter-spacing: .2px; margin: 0 0 6px;
+                       padding-top: 8px; }
+section.doc-sec > .lead { color: var(--t3); font-size: 13.5px; margin: 0 0 18px; }
+h3.sec-h { font-size: 15.5px; font-weight: 700; margin: 30px 0 10px; }
+p { margin: 0 0 12px; color: var(--t2); font-size: 13.5px; }
+ul.plain { margin: 0 0 12px; padding-left: 20px; color: var(--t2); font-size: 13.5px; }
+ul.plain li { margin-bottom: 5px; }
+b, strong { color: var(--t1); }
+code.inline { background: #eef0f7; border: 1px solid var(--line); border-radius: 6px;
+              padding: 1px 6px; font-size: 12.5px; color: #3730a3;
+              font-family: Consolas, "Courier New", monospace; }
+
+.card-block { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+              box-shadow: var(--shadow-xs); padding: 18px 22px; margin-bottom: 16px; }
+
+/* ===== 表格 ===== */
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0 16px;
+        background: var(--surface); border-radius: 10px; overflow: hidden;
+        border: 1px solid var(--line); }
+th { text-align: left; padding: 9px 13px; color: var(--t3); font-weight: 600; font-size: 11px;
+     letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid var(--line-2);
+     background: #fafbfe; }
+td { padding: 9px 13px; border-bottom: 1px solid #f0f2f8; vertical-align: top; color: var(--t2); }
+tr:last-child td { border-bottom: 0; }
+td code, th code { font-size: 12px; }
+
+/* ===== 代码块 ===== */
+.code-block { position: relative; background: var(--code-bg); border-radius: 12px; margin: 10px 0 18px;
+              overflow: hidden; box-shadow: var(--shadow-sm); }
+.code-block .code-head { display: flex; align-items: center; justify-content: space-between;
+                         padding: 7px 14px; border-bottom: 1px solid rgba(255,255,255,.08);
+                         color: #8b98ad; font-size: 11.5px; letter-spacing: .05em; }
+.code-block .copy-btn { background: rgba(255,255,255,.08); border: 0; color: #aab6cc; font-size: 11px;
+                        padding: 3px 10px; border-radius: 6px; cursor: pointer; font-family: inherit; }
+.code-block .copy-btn:hover { background: rgba(255,255,255,.15); color: #fff; }
+.code-block pre { margin: 0; padding: 14px 16px; overflow-x: auto; color: #dbe4f5;
+                  font: 12.5px/1.7 Consolas, "Courier New", monospace; }
+.code-block pre .c { color: #64748b; }   /* 注释 */
+.code-block pre .s { color: #86efac; }   /* 字符串 */
+.code-block pre .k { color: #a5b4fc; }   /* 键/重点 */
+
+/* ===== 接口条目 ===== */
+.ep { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: var(--shadow-xs); margin-bottom: 18px; overflow: hidden; scroll-margin-top: 84px; }
+.ep-head { display: flex; align-items: center; gap: 12px; padding: 13px 20px; cursor: pointer;
+           user-select: none; }
+.ep-head:hover { background: #fafbfe; }
+.method { flex: none; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; border-radius: 7px;
+          padding: 3px 10px; font-family: Consolas, monospace; }
+.method.get { background: var(--info-soft); color: var(--info); }
+.method.post { background: var(--ok-soft); color: var(--ok); }
+.method.del { background: var(--bad-soft); color: var(--bad); }
+.ep-path { font: 13.5px Consolas, "Courier New", monospace; font-weight: 700; color: var(--t1); }
+.ep-name { color: var(--t3); font-size: 12.5px; margin-left: auto; text-align: right; }
+.ep-caret { color: var(--t4); flex: none; transition: transform .18s; font-size: 12px; }
+.ep.open .ep-caret { transform: rotate(90deg); }
+.ep-body { display: none; padding: 4px 20px 18px; border-top: 1px solid var(--line); }
+.ep.open .ep-body { display: block; animation: epIn .18s ease both; }
+@keyframes epIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.ep-body h4 { font-size: 12px; font-weight: 700; color: var(--t3); letter-spacing: .05em;
+              margin: 16px 0 6px; text-transform: uppercase; }
+.ep-body p { margin-bottom: 8px; }
+.auth-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700;
+             border-radius: 999px; padding: 2px 10px; }
+.auth-pill.yes { background: var(--warn-soft); color: var(--warn); }
+.auth-pill.no { background: var(--ok-soft); color: var(--ok); }
+
+/* ===== 概念卡 ===== */
+.concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin: 14px 0 18px; }
+.concept { background: var(--surface); border: 1px solid var(--line); border-radius: 13px;
+           padding: 16px 18px; box-shadow: var(--shadow-xs); }
+.concept .c-t { font-weight: 700; font-size: 13.5px; display: flex; align-items: center; gap: 8px; }
+.concept .c-t .dot-n { width: 22px; height: 22px; border-radius: 7px; background: var(--primary-soft);
+                       color: var(--primary); display: flex; align-items: center; justify-content: center;
+                       font-size: 11.5px; font-weight: 800; }
+.concept p { margin: 7px 0 0; font-size: 12.5px; color: var(--t3); line-height: 1.65; }
+
+.flow-steps { counter-reset: fs; margin: 14px 0 18px; padding: 0; list-style: none; }
+.flow-steps li { position: relative; padding: 0 0 16px 40px; color: var(--t2); font-size: 13.5px; }
+.flow-steps li::before { counter-increment: fs; content: counter(fs); position: absolute; left: 0; top: 0;
+                         width: 26px; height: 26px; border-radius: 50%; background: var(--primary-soft);
+                         color: var(--primary); font-weight: 800; font-size: 12.5px;
+                         display: flex; align-items: center; justify-content: center; }
+.flow-steps li::after { content: ""; position: absolute; left: 13px; top: 30px; bottom: 2px; width: 1.5px;
+                        background: var(--line-2); }
+.flow-steps li:last-child::after { display: none; }
+.flow-steps b { display: block; color: var(--t1); }
+
+.faq-item { background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+            padding: 14px 18px; margin-bottom: 10px; box-shadow: var(--shadow-xs); }
+.faq-item .q { font-weight: 700; font-size: 13.5px; margin-bottom: 5px; }
+.faq-item .a { color: var(--t2); font-size: 13px; }
+
+.back-top { position: fixed; right: 26px; bottom: 26px; width: 40px; height: 40px; border-radius: 12px;
+            background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-sm); cursor: pointer;
+            color: var(--t3); font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.back-top:hover { color: var(--primary); }
+
+@media (max-width: 900px) {
+  .doc-toc { display: none; }
+  .doc-layout { padding: 20px 16px 60px; }
+  .ep-name { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="doc-top">
+  <div class="brand"><img src="/static/assets/icon.svg" alt="">Transportation Harness<small>文档中心</small></div>
+  <div class="actions">
+    <a class="btn-top" href="/">← 返回工作台</a>
+    <a class="btn-top primary" href="/docs" target="_blank" rel="noopener">交互式 API(Swagger)</a>
+  </div>
+</header>
+
+<div class="doc-layout">
+<!-- ============ 目录 ============ -->
+<nav class="doc-toc" id="toc">
+  <div class="toc-group">上手</div>
+  <a href="#quickstart">快速开始</a>
+  <a href="#concepts">核心概念</a>
+  <a href="#workflow">六步工作流</a>
+  <div class="toc-group">接入</div>
+  <a href="#auth">鉴权方式</a>
+  <a href="#api-auth">API · 认证与会话</a>
+  <a href="#api-meta">API · 元数据</a>
+  <a href="#api-analyze">API · 交通分析</a>
+  <a href="#api-cases">API · Case 管理</a>
+  <a href="#api-eval">API · 评测与自进化</a>
+  <a href="#api-reports">API · 报告与对比</a>
+  <a href="#api-llm">API · LLM 智能层</a>
+  <div class="toc-group">参考</div>
+  <a href="#errors">错误码约定</a>
+  <a href="#clients">客户端集成示例</a>
+  <a href="#e2e">端到端完整示例</a>
+  <a href="#faq">常见问题</a>
+</nav>
+
+<!-- ============ 正文 ============ -->
+<main class="doc-main">
+
+<section class="doc-sec" id="quickstart">
+  <h2>快速开始</h2>
+  <p class="lead">三分钟跑通「启动服务 → 登录看板 → 完整自进化」的最小闭环。</p>
+  <div class="code-block"><div class="code-head"><span>终端</span><button class="copy-btn">复制</button></div>
+<pre><span class="c"># 1. 安装依赖(仅首次)</span>
+pip install -r requirements.txt
+
+<span class="c"># 2. 启动服务,默认 http://127.0.0.1:8765</span>
+python webapp/app.py
+
+<span class="c"># 3. (可选)重置种子数据 / 命令行跑一轮完整自进化</span>
+python scripts/seed_cases.py
+python -m harness.evolve
+
+<span class="c"># 4. 端到端不变量校验,预期输出 VERIFY PASS</span>
+python scripts/verify.py</pre></div>
+  <p>浏览器打开 <code class="inline">http://127.0.0.1:8765</code>,默认账号
+    <code class="inline">admin / harness123</code>(登录后请在左下角修改密码);
+    内网演示可设 <code class="inline">AUTH_MODE=open</code> 免登录。公网部署、Docker 与小程序接入见项目根目录 <code class="inline">DEPLOY.md</code>。</p>
+</section>
+
+<section class="doc-sec" id="concepts">
+  <h2>核心概念</h2>
+  <p class="lead">四个概念构成全部模型,其余都是围绕它们的工程化。</p>
+  <div class="concept-grid">
+    <div class="concept"><div class="c-t"><span class="dot-n">1</span>replaycase</div>
+      <p>可重放的最小评测单元 = 复现问题的<b>输入数据集</b> + <b>期望结论</b> + <b>判分规则</b>(checks)。按失败标签分目录存放在 <code class="inline">cases/</code>,一个 case 一个 JSON,可纳入 git 管理。</p></div>
+    <div class="concept"><div class="c-t"><span class="dot-n">2</span>评测集(evalset)</div>
+      <p>replaycase 的<b>版本化清单</b>,存放在 <code class="inline">evalsets/</code>。评测集与 case 分离:同一批 case 可以组成多套评测集(如全量集 / 雨天场景集),评测历史因此可追溯。</p></div>
+    <div class="concept"><div class="c-t"><span class="dot-n">3</span>管线版本</div>
+      <p>被测的交通分析算法,<code class="inline">pipeline/versions.py</code> 中 v0(基线)/v1/v2(两轮迭代)共存注册。版本只进不改 —— 出现新 badcase 时新增 v3,而不是修改 v2。</p></div>
+    <div class="concept"><div class="c-t"><span class="dot-n">4</span>自进化闭环</div>
+      <p><b>评测 → 定位失败 → 迭代 → 回归验证</b>的循环。迭代纪律固化在代码里:最多 2 轮、单轮提升 &lt;5% 即停(收益递减)、任何已通过案例回归则一票否决。</p></div>
+  </div>
+
+  <h3 class="sec-h">判分规则(checks)类型</h3>
+  <p>每条 case 的 <code class="inline">checks</code> 数组声明「什么样子算修好了」,由判分器执行:</p>
+  <table>
+    <thead><tr><th>type</th><th>语义</th><th>关键字段</th></tr></thead>
+    <tbody>
+      <tr><td><code class="inline">classify</code></td><td>某路段的拥堵等级应等于期望值</td><td><code class="inline">segment</code>, <code class="inline">expected</code></td></tr>
+      <tr><td><code class="inline">metric</code></td><td>指标在容差内近似相等;<code class="inline">segment</code> 缺省表示校验全局字段(如 global_congestion_index)</td><td><code class="inline">segment?</code>, <code class="inline">field</code>, <code class="inline">expected</code>, <code class="inline">tol</code></td></tr>
+      <tr><td><code class="inline">no_crash</code></td><td>管线必须正常返回、不抛异常(健壮性)</td><td>—</td></tr>
+      <tr><td><code class="inline">recommendations</code></td><td>每个拥堵/严重拥堵路段都必须给出处置建议</td><td>—</td></tr>
+      <tr><td><code class="inline">congested_empty</code></td><td>拥堵路段列表应为空(空数据集优雅降级)</td><td>—</td></tr>
+      <tr><td><code class="inline">conclusion_keyword</code></td><td>结论文本必须覆盖给定关键词(启发式 judge,可替换为真实 LLM)</td><td><code class="inline">keywords[]</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sec-h">replaycase 数据结构</h3>
+  <div class="code-block"><div class="code-head"><span>cases/阈值错误/rc-0001.json</span><button class="copy-btn">复制</button></div>
+<pre>{
+  <span class="k">"case_id"</span>: <span class="s">"rc-0001"</span>,
+  <span class="k">"title"</span>: <span class="s">"学府路(V/C 0.91)被按车速误判为「严重拥堵」"</span>,
+  <span class="k">"label"</span>: <span class="s">"阈值错误"</span>,            <span class="c">// 失败类别,用于聚类定位</span>
+  <span class="k">"dataset_name"</span>: <span class="s">"base"</span>,          <span class="c">// 复现所需数据集</span>
+  <span class="k">"checks"</span>: [
+    { <span class="k">"type"</span>: <span class="s">"classify"</span>, <span class="k">"segment"</span>: <span class="s">"S-02"</span>, <span class="k">"expected"</span>: <span class="s">"拥堵"</span> },
+    { <span class="k">"type"</span>: <span class="s">"metric"</span>, <span class="k">"segment"</span>: <span class="s">"S-02"</span>, <span class="k">"field"</span>: <span class="s">"saturation"</span>, <span class="k">"expected"</span>: 0.91, <span class="k">"tol"</span>: 0.01 }
+  ],
+  <span class="k">"source"</span>: <span class="s">"线上点踩"</span>,
+  <span class="k">"notes"</span>: <span class="s">"..."</span>
+}</pre></div>
+</section>
+
+<section class="doc-sec" id="workflow">
+  <h2>六步工作流</h2>
+  <p class="lead">每一步都有页面与 API 承接,这是本产品的标准使用路径。</p>
+  <ol class="flow-steps">
+    <li><b>收集反馈</b>线上点踩、人工抽检或外业巡查发现坏结果。</li>
+    <li><b>沉淀 replaycase</b>看板「Case 管理」填写表单,或调 <code class="inline">POST /api/cases</code>;保存到 <code class="inline">cases/&lt;标签&gt;/</code> 并自动加入当前评测集。</li>
+    <li><b>运行评测</b>看板点「运行评测 / 运行完整自进化循环」,或 <code class="inline">python -m harness.evolve</code>。</li>
+    <li><b>定位失败</b>评测看板按失败标签聚类展示通过率,剩余失败一目了然。</li>
+    <li><b>迭代管线</b>在 <code class="inline">pipeline/versions.py</code> 新增 v3 并注册,每轮只改一类问题。</li>
+    <li><b>回归验证</b>「版本对比」逐 case 差分 + <code class="inline">python scripts/verify.py</code> 不变量校验,通过才算合入。</li>
+  </ol>
+  <p>循环回到第 1 步:新的 badcase 持续回流,评测集随之增长,管线得分被一次次推向更高。</p>
+</section>
+
+<section class="doc-sec" id="auth">
+  <h2>鉴权方式</h2>
+  <p class="lead">三类身份,一套中间件:浏览器走会话 Cookie,机器客户端走令牌,内网演示全放行。</p>
+  <table>
+    <thead><tr><th>模式</th><th>启用方式</th><th>行为</th></tr></thead>
+    <tbody>
+      <tr><td><b>login</b>(默认)</td><td>不设置或 <code class="inline">AUTH_MODE=login</code></td><td>除 <code class="inline">/api/auth/*</code>、<code class="inline">/api/health</code>、<code class="inline">/help</code> 外,所有 <code class="inline">/api/*</code> 需要登录会话(HttpOnly Cookie);配置 <code class="inline">AUTH_TOKEN</code> 后也接受 <code class="inline">X-API-Token</code> 头。</td></tr>
+      <tr><td><b>open</b></td><td><code class="inline">AUTH_MODE=open</code></td><td>全部放行,以 <code class="inline">demo</code> 身份进入工作台。<b>仅限内网演示</b>。</td></tr>
+      <tr><td><b>令牌(机器客户端)</b></td><td><code class="inline">AUTH_TOKEN=&lt;强随机串&gt;</code></td><td>微信小程序 / 脚本以请求头 <code class="inline">X-API-Token: &lt;串&gt;</code> 访问,无需登录;令牌比较为时序安全。</td></tr>
+    </tbody>
+  </table>
+  <p>安全内建:口令 PBKDF2 哈希存储(12 万次迭代)、登录连续失败 5 次锁定 10 分钟、
+    HMAC 签名会话(7 天)、文件名白名单防路径穿越。</p>
+  <div class="code-block"><div class="code-head"><span>登录并携带会话</span><button class="copy-btn">复制</button></div>
+<pre><span class="c"># 登录,保存 Cookie</span>
+curl -c cookies.txt -X POST http://127.0.0.1:8765/api/auth/login \
+     -H <span class="s">"Content-Type: application/json"</span> \
+     -d <span class="s">'{"username":"admin","password":"harness123"}'</span>
+
+<span class="c"># 带 Cookie 访问受保护接口</span>
+curl -b cookies.txt http://127.0.0.1:8765/api/cases
+
+<span class="c"># 或:机器客户端用令牌头(需服务端设置 AUTH_TOKEN)</span>
+curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.0.1:8765/api/health</pre></div>
+</section>
+
+<!-- ============ API 参考 ============ -->
+<section class="doc-sec" id="api-auth">
+  <h2>API · 认证与会话</h2>
+  <p class="lead">除特别标注外,以下示例的 Base URL 均为 <code class="inline">http://127.0.0.1:8765</code>;响应均为 JSON,错误统一为 <code class="inline">{"detail": "..."}</code>。</p>
+
+  <div class="ep open">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/auth/login</span><span class="ep-name">登录,种会话 Cookie</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill no">公开接口</span> 连续失败 5 次锁定 10 分钟(429)。</p>
+      <h4>请求</h4>
+      <div class="code-block"><div class="code-head"><span>Body</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"username"</span>: <span class="s">"admin"</span>, <span class="k">"password"</span>: <span class="s">"harness123"</span> }</pre></div>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"ok"</span>: true, <span class="k">"username"</span>: <span class="s">"admin"</span> }   <span class="c">// 并 Set-Cookie: harness_session=... (HttpOnly)</span></pre></div>
+      <h4>错误</h4><p><code class="inline">401</code> 用户名或密码错误 · <code class="inline">429</code> 失败次数过多已锁定,附剩余秒数</p>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/auth/logout</span><span class="ep-name">登出并清除 Cookie</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body"><h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"ok"</span>: true }</pre></div></div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/auth/me</span><span class="ep-name">当前登录用户</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill no">公开接口</span> open 模式未登录时返回 <code class="inline">{"username":"demo"}</code>。</p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"username"</span>: <span class="s">"admin"</span> }</pre></div>
+      <h4>错误</h4><p><code class="inline">401</code> 未登录(login 模式)</p>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/auth/password</span><span class="ep-name">修改密码,会话自动续签</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录</span></p>
+      <h4>请求</h4>
+      <div class="code-block"><div class="code-head"><span>Body</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"old_password"</span>: <span class="s">"harness123"</span>, <span class="k">"new_password"</span>: <span class="s">"new-pass-2026"</span> }</pre></div>
+      <h4>响应 200</h4><div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"ok"</span>: true }   <span class="c">// 同时重签会话 Cookie,当前登录不中断</span></pre></div>
+      <h4>错误</h4><p><code class="inline">400</code> 原密码不正确 / 新密码长度需 6~64 位</p>
+    </div>
+  </div>
+</section>
+
+<section class="doc-sec" id="api-meta">
+  <h2>API · 元数据</h2>
+
+  <div class="ep open">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/health</span><span class="ep-name">健康检查(拨测用)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill no">公开接口</span></p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{
+  <span class="k">"status"</span>: <span class="s">"ok"</span>,
+  <span class="k">"auth_mode"</span>: <span class="s">"login"</span>,
+  <span class="k">"default_credentials"</span>: true,      <span class="c">// true = 仍在使用默认口令,应尽快修改</span>
+  <span class="k">"versions"</span>: [<span class="s">"v0"</span>, <span class="s">"v1"</span>, <span class="s">"v2"</span>],
+  <span class="k">"case_count"</span>: 16, <span class="k">"evalset_count"</span>: 2, <span class="k">"report_count"</span>: 3
+}</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/versions</span><span class="ep-name">管线版本与 CHANGELOG</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span></p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>[{
+  <span class="k">"version"</span>: <span class="s">"v1"</span>, <span class="k">"name"</span>: <span class="s">"算法修正"</span>,
+  <span class="k">"changes"</span>: [<span class="s">"拥堵分级改为以饱和度 V/C 为主(五级)…"</span>, <span class="s">"修正饱和度公式…"</span>]
+}]</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/datasets</span><span class="ep-name">情景数据集列表(含场景解读)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span></p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>[{
+  <span class="k">"name"</span>: <span class="s">"rain_peak"</span>,
+  <span class="k">"description"</span>: <span class="s">"雨天早高峰…"</span>,
+  <span class="k">"scenario"</span>: { <span class="k">"tag"</span>: <span class="s">"雨天早高峰"</span>, <span class="k">"insight"</span>: <span class="s">"通行能力 ×0.85、车速普降…"</span> }
+}]</pre></div>
+      <p>内置:<code class="inline">base</code> 常规早高峰 · <code class="inline">rain_peak</code> 雨天 · <code class="inline">incident</code> 事故占道 ·
+        <code class="inline">evening_peak</code> 晚高峰 · <code class="inline">missing_volume</code> 缺失数据 · <code class="inline">empty</code> 空数据。</p>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/segments/{dataset}</span><span class="ep-name">数据集内路段列表</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 供沉淀 case 时下拉选择路段。</p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"dataset"</span>: <span class="s">"base"</span>, <span class="k">"segments"</span>: [
+  { <span class="k">"segment_id"</span>: <span class="s">"S-01"</span>, <span class="k">"name"</span>: <span class="s">"城东大道"</span>, <span class="k">"volume"</span>: 3000, <span class="k">"speed"</span>: 45 }
+] }</pre></div>
+      <h4>错误</h4><p><code class="inline">400</code> 非法数据集名 · <code class="inline">404</code> 数据集不存在</p>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/evalsets</span><span class="ep-name">评测集清单列表</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span></p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>[{ <span class="k">"evalset_id"</span>: <span class="s">"evalset_v1"</span>, <span class="k">"description"</span>: <span class="s">"由 8 月底线上反馈沉淀的 13 条 replaycase 组成"</span>,
+   <span class="k">"created_at"</span>: <span class="s">"2026-08-31"</span>, <span class="k">"case_count"</span>: 13 }]</pre></div>
+    </div>
+  </div>
+</section>
+
+<section class="doc-sec" id="api-analyze">
+  <h2>API · 交通分析</h2>
+
+  <div class="ep open">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/analyze</span><span class="ep-name">用指定版本分析指定数据集</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span></p>
+      <h4>请求</h4>
+      <div class="code-block"><div class="code-head"><span>Body</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"version"</span>: <span class="s">"v2"</span>, <span class="k">"dataset_name"</span>: <span class="s">"rain_peak"</span> }</pre></div>
+      <h4>响应 200(管线输出统一结构)</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{
+  <span class="k">"version"</span>: <span class="s">"v2"</span>,
+  <span class="k">"segments"</span>: [{
+    <span class="k">"segment_id"</span>: <span class="s">"S-02"</span>, <span class="k">"name"</span>: <span class="s">"学府路"</span>,
+    <span class="k">"classification"</span>: <span class="s">"拥堵"</span>,        <span class="c">// 畅通|基本畅通|缓行|拥堵|严重拥堵|数据缺失</span>
+    <span class="k">"saturation"</span>: 0.91,               <span class="c">// V/C,保留 2 位小数;缺失时为 null</span>
+    <span class="k">"delay_index"</span>: 0.64, <span class="k">"speed_ratio"</span>: 0.36,
+    <span class="k">"status"</span>: <span class="s">"ok"</span>, <span class="k">"volume"</span>: 3100
+  }],
+  <span class="k">"congested_segments"</span>: [<span class="s">"S-05"</span>, <span class="s">"S-02"</span>],   <span class="c">// 按饱和度降序</span>
+  <span class="k">"global_congestion_index"</span>: 0.8213,          <span class="c">// 流量加权;无有效数据时为 null</span>
+  <span class="k">"recommendations"</span>: [{ <span class="k">"segment_id"</span>: <span class="s">"S-02"</span>, <span class="k">"text"</span>: <span class="s">"学府路:建议优化信号配时…"</span> }],
+  <span class="k">"summary"</span>: <span class="s">"共分析 10 个路段(有效 10 个,数据缺失 0 个)…"</span>
+}</pre></div>
+      <h4>错误</h4><p><code class="inline">400</code> 非法数据集名 · <code class="inline">404</code> 未知版本或数据集</p>
+    </div>
+  </div>
+</section>
+
+<section class="doc-sec" id="api-cases">
+  <h2>API · Case 管理</h2>
+
+  <div class="ep open">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/cases</span><span class="ep-name">沉淀 replaycase 并加入评测集</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> case_id 自动递增生成;沉淀与入集是原子操作。</p>
+      <h4>请求字段</h4>
+      <table>
+        <thead><tr><th>字段</th><th>类型</th><th>约束</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">title</code></td><td>str</td><td>1~80 字符</td><td>坏例标题</td></tr>
+          <tr><td><code class="inline">label</code></td><td>str</td><td>1~20 字符</td><td>失败标签(可自建新标签)</td></tr>
+          <tr><td><code class="inline">dataset_name</code></td><td>str</td><td>须存在</td><td>复现所需数据集</td></tr>
+          <tr><td><code class="inline">segment</code></td><td>str</td><td>须在该数据集内</td><td>路段 ID</td></tr>
+          <tr><td><code class="inline">expected_level</code></td><td>str</td><td>六级枚举</td><td>期望拥堵等级</td></tr>
+          <tr><td><code class="inline">expected_saturation</code></td><td>float?</td><td>0~3,可空</td><td>期望饱和度(可选,追加 metric 检查)</td></tr>
+          <tr><td><code class="inline">saturation_tol</code></td><td>float</td><td>0.0001~0.5,默认 0.01</td><td>饱和度容差</td></tr>
+          <tr><td><code class="inline">notes</code></td><td>str</td><td>≤200 字符</td><td>反馈原文 / 复现步骤</td></tr>
+          <tr><td><code class="inline">add_to_evalset</code></td><td>bool</td><td>默认 true</td><td>是否同时加入 evalset_v1</td></tr>
+        </tbody>
+      </table>
+      <div class="code-block"><div class="code-head"><span>Body 示例</span><button class="copy-btn">复制</button></div>
+<pre>{
+  <span class="k">"title"</span>: <span class="s">"学府路应判为拥堵而非严重拥堵"</span>,
+  <span class="k">"label"</span>: <span class="s">"阈值错误"</span>, <span class="k">"dataset_name"</span>: <span class="s">"base"</span>, <span class="k">"segment"</span>: <span class="s">"S-02"</span>,
+  <span class="k">"expected_level"</span>: <span class="s">"拥堵"</span>, <span class="k">"expected_saturation"</span>: 0.91,
+  <span class="k">"notes"</span>: <span class="s">"用户点踩:该路段 V/C 已超 0.9"</span>
+}</pre></div>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"saved"</span>: <span class="s">"cases/阈值错误/rc-0015.json"</span>, <span class="k">"added_to_evalset"</span>: true, <span class="k">"case"</span>: { … } }</pre></div>
+      <h4>错误</h4><p><code class="inline">400</code> 字段校验失败(标题长度/未知路段/非法等级等)· <code class="inline">404</code> 数据集不存在</p>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/cases</span><span class="ep-name">全部 replaycase</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body"><p><span class="auth-pill yes">需登录/令牌</span> 返回 ReplayCase 对象数组(结构见「核心概念」),按 case_id 排序。</p></div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method del">DELETE</span><span class="ep-path">/api/cases/{case_id}</span><span class="ep-name">删除 case,同步清理评测集</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 从磁盘删除并同时从<b>所有</b>评测集清单移除;已归档报告不受影响。</p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"deleted"</span>: <span class="s">"rc-0015"</span> }</pre></div>
+      <h4>错误</h4><p><code class="inline">404</code> case 不存在</p>
+    </div>
+  </div>
+</section>
+
+<section class="doc-sec" id="api-eval">
+  <h2>API · 评测与自进化</h2>
+
+  <div class="ep open">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/eval/run</span><span class="ep-name">单版本评测并归档报告</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 在指定评测集上重放全部 case,归档 <code class="inline">reports/report_&lt;版本&gt;_&lt;时间&gt;.json</code>。</p>
+      <h4>请求</h4>
+      <div class="code-block"><div class="code-head"><span>Body</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"version"</span>: <span class="s">"v2"</span>, <span class="k">"evalset"</span>: <span class="s">"evalset_v1"</span> }</pre></div>
+      <h4>响应 200(EvalResult)</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{
+  <span class="k">"report_id"</span>: <span class="s">"report_v2_20260915T021603"</span>,
+  <span class="k">"version"</span>: <span class="s">"v2"</span>, <span class="k">"evalset_id"</span>: <span class="s">"evalset_v1"</span>, <span class="k">"timestamp"</span>: <span class="s">"2026-09-15T02:16:03"</span>,
+  <span class="k">"total"</span>: 13, <span class="k">"passed_count"</span>: 13, <span class="k">"accuracy"</span>: 1.0,
+  <span class="k">"label_stats"</span>: { <span class="k">"阈值错误"</span>: { <span class="k">"passed"</span>: 4, <span class="k">"total"</span>: 4 } },
+  <span class="k">"results"</span>: [{ <span class="k">"case_id"</span>: <span class="s">"rc-0001"</span>, <span class="k">"passed"</span>: true, <span class="k">"score"</span>: 1.0, <span class="k">"checks"</span>: [ … ], <span class="k">"duration_ms"</span>: 1.8 }],
+  <span class="k">"duration_ms"</span>: 21.4
+}</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/evolve/run</span><span class="ep-name">一键自进化(基线 → 最多 2 轮)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 请求体可省略(兼容旧客户端,默认 evalset_v1);同一时刻仅允许一个循环(409)。</p>
+      <h4>请求</h4>
+      <div class="code-block"><div class="code-head"><span>Body(可选)</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"evalset"</span>: <span class="s">"evalset_scenario_rain"</span> }</pre></div>
+      <h4>响应 200(自进化摘要)</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{
+  <span class="k">"evolution_id"</span>: <span class="s">"evolution_20260915_021603"</span>,
+  <span class="k">"evalset_id"</span>: <span class="s">"evalset_v1"</span>, <span class="k">"total_cases"</span>: 13,
+  <span class="k">"baseline"</span>: { <span class="k">"version"</span>: <span class="s">"v0"</span>, <span class="k">"accuracy"</span>: 0.0769, <span class="k">"passed_count"</span>: 1, <span class="k">"total"</span>: 13, <span class="k">"failures_by_label"</span>: { … } },
+  <span class="k">"rounds"</span>: [{
+    <span class="k">"round"</span>: 1, <span class="k">"version"</span>: <span class="s">"v1"</span>, <span class="k">"version_name"</span>: <span class="s">"算法修正"</span>, <span class="k">"changes"</span>: [ … ],
+    <span class="k">"accuracy"</span>: 0.8462, <span class="k">"improvement"</span>: 0.7692,
+    <span class="k">"newly_passed"</span>: [<span class="s">"rc-0001"</span>, …], <span class="k">"regressed"</span>: [], <span class="k">"remaining_failures"</span>: { … }
+  }],
+  <span class="k">"stop_reason"</span>: <span class="s">"评测集已全部通过"</span>, <span class="k">"iterations_used"</span>: 2,
+  <span class="k">"best"</span>: { <span class="k">"version"</span>: <span class="s">"v2"</span>, <span class="k">"accuracy"</span>: 1.0, <span class="k">"passed_count"</span>: 13, <span class="k">"total"</span>: 13 },
+  <span class="k">"md_report"</span>: <span class="s">"reports/report_evolution_20260915_021603.md"</span>,
+  <span class="k">"timestamp"</span>: <span class="s">"20260915_021603"</span>
+}</pre></div>
+      <h4>错误</h4><p><code class="inline">404</code> 未知基线版本/评测集不存在 · <code class="inline">409</code> 自进化循环正在运行中</p>
+      <h4>基线与单轮上限</h4>
+      <p><code class="inline">baseline</code> 默认 <code class="inline">v0</code>(完整回放历史轨迹);登记新版本(如 v3)后,
+        传 <code class="inline">{"baseline": "v2"}</code> 即可增量验证。因单轮上限(<code class="inline">EVOLVE_MAX_ROUNDS</code>,
+        默认 2)未验证的版本会通过响应中的 <code class="inline">pending_versions</code> 显式返回,绝不静默丢弃。</p>
+    </div>
+  </div>
+</section>
+
+<section class="doc-sec" id="api-reports">
+  <h2>API · 报告与对比</h2>
+
+  <div class="ep open">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/reports</span><span class="ep-name">报告列表(时间倒序)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body"><p><span class="auth-pill yes">需登录/令牌</span></p>
+      <div class="code-block"><div class="code-head"><span>响应 200</span><button class="copy-btn">复制</button></div>
+<pre>[{ <span class="k">"report_id"</span>: <span class="s">"report_v2_20260915T021603"</span>, <span class="k">"version"</span>: <span class="s">"v2"</span>, <span class="k">"evalset_id"</span>: <span class="s">"evalset_v1"</span>,
+   <span class="k">"accuracy"</span>: 1.0, <span class="k">"passed_count"</span>: 13, <span class="k">"total"</span>: 13, <span class="k">"timestamp"</span>: <span class="s">"2026-09-15T02:16:03"</span> }]</pre></div></div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/reports/{report_id}</span><span class="ep-name">单份报告详情</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body"><p><span class="auth-pill yes">需登录/令牌</span> 返回与 <code class="inline">/api/eval/run</code> 相同的完整 EvalResult 结构。<code class="inline">404</code> 报告不存在。</p></div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/evolutions</span><span class="ep-path"></span><span class="ep-name">自进化运行记录(时间线)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body"><p><span class="auth-pill yes">需登录/令牌</span> 每次自进化归档一条 <code class="inline">reports/evolution_*.json</code>,此处返回其摘要列表(时间倒序),供看板时间线回放。</p></div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/evolutions/{evolution_id}</span><span class="ep-name">单次自进化完整记录</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body"><p><span class="auth-pill yes">需登录/令牌</span> <code class="inline">404</code> 记录不存在。</p></div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/compare?a=&b=</span><span class="ep-name">两份报告逐 case 差分</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 回归验证的核心接口:新通过(newly_passed)与回归(regressed)一目了然。</p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{
+  <span class="k">"a"</span>: { <span class="k">"report_id"</span>: <span class="s">"report_v0_…"</span>, <span class="k">"version"</span>: <span class="s">"v0"</span>, <span class="k">"accuracy"</span>: 0.0769 },
+  <span class="k">"b"</span>: { <span class="k">"report_id"</span>: <span class="s">"report_v2_…"</span>, <span class="k">"version"</span>: <span class="s">"v2"</span>, <span class="k">"accuracy"</span>: 1.0 },
+  <span class="k">"newly_passed"</span>: [<span class="s">"rc-0001"</span>, <span class="s">"rc-0002"</span>, …],
+  <span class="k">"regressed"</span>: [],
+  <span class="k">"rows"</span>: [{ <span class="k">"case_id"</span>: <span class="s">"rc-0001"</span>, <span class="k">"title"</span>: <span class="s">"…"</span>, <span class="k">"label"</span>: <span class="s">"阈值错误"</span>,
+            <span class="k">"a_passed"</span>: false, <span class="k">"b_passed"</span>: true, <span class="k">"a_score"</span>: 0.5, <span class="k">"b_score"</span>: 1.0 }]
+}</pre></div>
+    </div>
+  </div>
+</section>
+
+<section class="doc-sec" id="api-llm">
+  <h2>API · LLM 智能层</h2>
+  <p class="lead">LLM 只接在闭环的薄弱环节上:坏例沉淀加速、结论文本评分、失败诊断。未配置 <code class="inline">LLM_API_KEY</code> 时自动降级为离线确定性 Mock,零成本可复现。完整七维设计见仓库 <code class="inline">docs/LLM.md</code>。</p>
+
+  <div class="ep open">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/llm/status</span><span class="ep-name">LLM Runtime 状态与调用审计</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span></p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{
+  <span class="k">"kind"</span>: <span class="s">"mock"</span>,          <span class="c">// mock | openai-compatible</span>
+  <span class="k">"model"</span>: <span class="s">"mock-deterministic"</span>,
+  <span class="k">"configured"</span>: false,
+  <span class="k">"env"</span>: [<span class="s">"LLM_BASE_URL"</span>, <span class="s">"LLM_API_KEY"</span>, <span class="s">"LLM_MODEL"</span>],
+  <span class="k">"cache_count"</span>: 12,
+  <span class="k">"recent_runs"</span>: [{ <span class="k">"ts"</span>: <span class="s">"…"</span>, <span class="k">"purpose"</span>: <span class="s">"judge"</span>, <span class="k">"elapsed_ms"</span>: 0.8,
+                  <span class="k">"cache_hit"</span>: false, <span class="k">"usage"</span>: { … } }]
+}</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/llm/drafts</span><span class="ep-name">坏例沉淀助手:反馈 → 草稿</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 生成 pending 草稿,不直接入库 —— 必须人工确认(Human-in-the-loop)。</p>
+      <h4>请求</h4>
+      <div class="code-block"><div class="code-head"><span>Body</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"complaint"</span>: <span class="s">"用户点踩:学府路 V/C 0.91 被误判为缓行,应为拥堵"</span>,
+  <span class="k">"dataset_name"</span>: <span class="s">"base"</span>, <span class="k">"segment_id"</span>: <span class="s">"S-02"</span> }</pre></div>
+      <h4>响应 200(草稿)</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"draft_id"</span>: <span class="s">"draft-0001"</span>, <span class="k">"status"</span>: <span class="s">"pending"</span>,
+  <span class="k">"title"</span>: <span class="s">"…"</span>, <span class="k">"label"</span>: <span class="s">"阈值错误"</span>, <span class="k">"expected_level"</span>: <span class="s">"拥堵"</span>,
+  <span class="k">"expected_saturation"</span>: 0.91, <span class="k">"rationale"</span>: <span class="s">"…"</span>, <span class="k">"llm"</span>: { … } }</pre></div>
+      <h4>错误</h4><p><code class="inline">400</code> 输入/模型输出未过校验 · <code class="inline">404</code> 数据集不存在 · <code class="inline">502</code> LLM 调用失败</p>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/llm/drafts/{id}/confirm</span><span class="ep-name">人工确认草稿 → 正式 replaycase</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 请求体可携带编辑覆盖(title/label/expected_level/expected_saturation/notes);
+        确认后走与手工沉淀<b>完全相同</b>的校验与落盘路径,并自动加入评测集。</p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"saved"</span>: <span class="s">"cases/阈值错误/rc-0015.json"</span>, <span class="k">"added_to_evalset"</span>: true,
+  <span class="k">"case"</span>: { … }, <span class="k">"draft_id"</span>: <span class="s">"draft-0001"</span> }</pre></div>
+      <h4>错误</h4><p><code class="inline">400</code> 字段校验失败(人工编辑也不能绕过) · <code class="inline">404</code> 草稿不存在 · <code class="inline">409</code> 草稿已处理</p>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/llm/drafts</span><span class="ep-name">草稿列表</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body"><p><span class="auth-pill yes">需登录/令牌</span> 返回全部草稿(时间倒序),含 status(pending/confirmed/discarded)与确认后关联的 case_id。</p></div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method del">DELETE</span><span class="ep-path">/api/llm/drafts/{id}</span><span class="ep-name">丢弃草稿</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body"><p><span class="auth-pill yes">需登录/令牌</span> <code class="inline">404</code> 草稿不存在。</p></div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/llm/diagnose</span><span class="ep-name">失败诊断(分析者 + 评审者)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 重放评测后,按失败标签归因给出迭代建议;结果仅供参考,不自动改动任何资产。</p>
+      <h4>请求</h4>
+      <div class="code-block"><div class="code-head"><span>Body</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"version"</span>: <span class="s">"v2"</span>, <span class="k">"evalset"</span>: <span class="s">"evalset_v1"</span> }</pre></div>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"items"</span>: [{ <span class="k">"label"</span>: <span class="s">"阈值错误"</span>, <span class="k">"root_cause"</span>: <span class="s">"…"</span>,
+    <span class="k">"suggestions"</span>: [<span class="s">"…"</span>], <span class="k">"affected_cases"</span>: [<span class="s">"rc-0001"</span>] }],
+  <span class="k">"reviewer_notes"</span>: <span class="s">"评审者复核意见…"</span>,
+  <span class="k">"meta"</span>: { <span class="k">"version"</span>: <span class="s">"v2"</span>, <span class="k">"accuracy"</span>: 1.0, <span class="k">"failure_count"</span>: 0, <span class="k">"model"</span>: <span class="s">"…"</span> } }</pre></div>
+      <h4>错误</h4><p><code class="inline">400</code> 未知版本/评测集 · <code class="inline">502</code> LLM 调用失败</p>
+    </div>
+  </div>
+
+  <p style="margin-top:14px">另有 <code class="inline">conclusion_quality</code> 检查类型(LLM-as-Judge):
+    在 replaycase 的 checks 中声明
+    <code class="inline">{"type":"conclusion_quality","min_score":0.8}</code>,
+    评测时由 LLM 按评分细则(覆盖性/可执行性/简洁性)给结论文本打分,
+    分数与理由随报告持久化可复核。</p>
+</section>
+<section class="doc-sec" id="errors">
+  <h2>错误码约定</h2>
+  <p class="lead">所有错误返回统一 JSON 结构 <code class="inline">{"detail": "人类可读的中文说明"}</code>。</p>
+  <table>
+    <thead><tr><th>状态码</th><th>含义</th><th>典型场景</th></tr></thead>
+    <tbody>
+      <tr><td><code class="inline">400</code></td><td>参数校验失败</td><td>标题超长、路段不在数据集、期望等级非法、名称含路径字符</td></tr>
+      <tr><td><code class="inline">401</code></td><td>未登录或会话过期</td><td>login 模式下缺少 Cookie / 令牌,口令错误</td></tr>
+      <tr><td><code class="inline">404</code></td><td>资源不存在</td><td>未知版本 / 数据集 / 评测集 / 报告 / case</td></tr>
+      <tr><td><code class="inline">409</code></td><td>冲突</td><td>自进化循环正在运行,重复触发</td></tr>
+      <tr><td><code class="inline">429</code></td><td>请求被限流</td><td>登录连续失败 5 次,账号锁定 10 分钟</td></tr>
+      <tr><td><code class="inline">502</code></td><td>上游调用失败</td><td>LLM 端点不可用或输出未过校验(智能层接口)</td></tr>
+      <tr><td><code class="inline">500</code></td><td>服务器内部错误</td><td>未预期异常,响应含异常类型便于排查</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="doc-sec" id="clients">
+  <h2>客户端集成示例</h2>
+  <p class="lead">任何能发 HTTP 的端都可接入;机器客户端推荐令牌头方式。</p>
+
+  <h3 class="sec-h">Python(requests)</h3>
+  <div class="code-block"><div class="code-head"><span>python</span><button class="copy-btn">复制</button></div>
+<pre>import requests
+
+BASE = <span class="s">"http://127.0.0.1:8765"</span>
+H = {<span class="s">"X-API-Token"</span>: <span class="s">"&lt;你的令牌&gt;"</span>}   <span class="c"># 服务端启动时设置 AUTH_TOKEN</span>
+
+<span class="c"># 1) 用 v2 分析雨天情景</span>
+out = requests.post(<span class="k">f"{BASE}/api/analyze"</span>, headers=H, timeout=10,
+                    json={<span class="s">"version"</span>: <span class="s">"v2"</span>, <span class="s">"dataset_name"</span>: <span class="s">"rain_peak"</span>}).json()
+print(out[<span class="s">"summary"</span>])
+
+<span class="c"># 2) 沉淀一条 replaycase 并加入评测集</span>
+requests.post(<span class="k">f"{BASE}/api/cases"</span>, headers=H, timeout=10, json={
+    <span class="s">"title"</span>: <span class="s">"学府路应判为拥堵而非严重拥堵"</span>, <span class="s">"label"</span>: <span class="s">"阈值错误"</span>,
+    <span class="s">"dataset_name"</span>: <span class="s">"base"</span>, <span class="s">"segment"</span>: <span class="s">"S-02"</span>,
+    <span class="s">"expected_level"</span>: <span class="s">"拥堵"</span>, <span class="s">"expected_saturation"</span>: 0.91,
+})
+
+<span class="c"># 3) 跑一轮完整自进化</span>
+summary = requests.post(<span class="k">f"{BASE}/api/evolve/run"</span>, headers=H, timeout=120,
+                        json={<span class="s">"evalset"</span>: <span class="s">"evalset_v1"</span>}).json()
+print(summary[<span class="s">"best"</span>], summary[<span class="s">"stop_reason"</span>])</pre></div>
+
+  <h3 class="sec-h">微信小程序</h3>
+  <p>修改 <code class="inline">miniprogram/config.js</code> 的 <code class="inline">BASE_URL</code> 与 <code class="inline">TOKEN</code>(与服务端
+    <code class="inline">AUTH_TOKEN</code> 一致),<code class="inline">utils/api.js</code> 会自动为所有请求携带
+    <code class="inline">X-API-Token</code> 头。正式发布需 HTTPS + 备案域名,清单见 <code class="inline">DEPLOY.md</code>。</p>
+
+  <h3 class="sec-h">cURL</h3>
+  <div class="code-block"><div class="code-head"><span>bash</span><button class="copy-btn">复制</button></div>
+<pre><span class="c"># 健康拨测(公开)</span>
+curl http://127.0.0.1:8765/api/health
+
+<span class="c"># 令牌方式列出全部 case</span>
+curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.0.1:8765/api/cases</pre></div>
+</section>
+
+<section class="doc-sec" id="e2e">
+  <h2>端到端完整示例</h2>
+  <p class="lead">用一段脚本走完「沉淀 → 评测 → 自进化 → 对比」闭环,可直接作为接入模板。</p>
+  <div class="code-block"><div class="code-head"><span>bash</span><button class="copy-btn">复制</button></div>
+<pre>BASE=http://127.0.0.1:8765
+H=<span class="s">"X-API-Token: &lt;你的令牌&gt;"</span>
+J=<span class="s">"Content-Type: application/json"</span>
+
+<span class="c"># 1) 沉淀一条 badcase(自动加入评测集)</span>
+curl -s -X POST $BASE/api/cases -H <span class="s">"$H"</span> -H <span class="s">"$J"</span> -d <span class="s">'{
+  "title":"学府路应判为拥堵而非严重拥堵","label":"阈值错误",
+  "dataset_name":"base","segment":"S-02","expected_level":"拥堵"}'</span>
+
+<span class="c"># 2) 对 v2 跑单版本评测</span>
+curl -s -X POST $BASE/api/eval/run -H <span class="s">"$H"</span> -H <span class="s">"$J"</span> \
+     -d <span class="s">'{"version":"v2","evalset":"evalset_v1"}'</span>
+
+<span class="c"># 3) 一键自进化(基线 → 最多 2 轮 → 归档)</span>
+curl -s -X POST $BASE/api/evolve/run -H <span class="s">"$H"</span> -H <span class="s">"$J"</span> -d <span class="s">'{"evalset":"evalset_v1"}'</span>
+
+<span class="c"># 4) 取最近两份报告做回归差分(报告 ID 从 /api/reports 获取)</span>
+curl -s <span class="s">"$BASE/api/compare?a=report_v1_20260915T021603&b=report_v2_20260915T021603"</span> -H <span class="s">"$H"</span></pre></div>
+</section>
+
+<section class="doc-sec" id="faq">
+  <h2>常见问题</h2>
+  <div class="faq-item"><div class="q">LLM 用在哪里?没配 API Key 会怎样?</div>
+    <div class="a">LLM 只做规则判不了的三件事:坏例沉淀助手(草稿需人工确认)、结论文本质量评分(LLM-as-Judge)、失败诊断(分析者+评审者双智能体)。未配置 <code class="inline">LLM_API_KEY</code> 时自动降级为离线确定性 Mock —— 全功能可演示、零成本、可复现。配置三个环境变量即可接入任意 OpenAI 兼容端点,详见 <code class="inline">docs/LLM.md</code> 与「智能助手」页。</div></div>
+  <div class="faq-item"><div class="q">默认账号是什么?如何重置?</div>
+    <div class="a">首次启动自动创建 <b>admin / harness123</b>(可用环境变量 <code class="inline">ADMIN_USER / ADMIN_PASSWORD</code> 覆盖)。忘记密码:停止服务,删除 <code class="inline">webapp/auth.json</code> 后重启即重新生成。</div></div>
+  <div class="faq-item"><div class="q">如何新增管线版本 v3?</div>
+    <div class="a">在 <code class="inline">pipeline/versions.py</code> 实现 <code class="inline">analyze_v3(segments)</code> 并登记到 <code class="inline">PIPELINES</code> 与 <code class="inline">CHANGELOG</code>,看板/评测自动识别;自进化从基线起逐轮验证登记版本 —— 增量验证可传 <code class="inline">baseline: "v2"</code>(API)或 <code class="inline">--baseline v2</code>(CLI),单轮上限可用 <code class="inline">EVOLVE_MAX_ROUNDS</code> 调整。版本只进不改,历史可回放。</div></div>
+  <div class="faq-item"><div class="q">如何接入自己的数据?</div>
+    <div class="a">把路段快照写成 <code class="inline">pipeline/data/&lt;名称&gt;.json</code>(字段结构参照 <code class="inline">base.json</code>),即出现在「分析提交」与 Case 表单下拉中;评测集在 <code class="inline">evalsets/</code> 中建同名清单 JSON。</div></div>
+  <div class="faq-item"><div class="q">端口被占用 / 修改监听地址?</div>
+    <div class="a"><code class="inline">PORT=8766 HOST=0.0.0.0 python webapp/app.py</code>;公网部署务必同时设置 <code class="inline">AUTH_TOKEN</code>。</div></div>
+  <div class="faq-item"><div class="q">评测数据存在哪里?会不会丢?</div>
+    <div class="a">全部落盘本地:<code class="inline">cases/ evalsets/ reports/</code> 三个目录,拷贝即迁移;Docker 部署时以数据卷挂载,容器升级不丢资产。</div></div>
+  <div class="faq-item"><div class="q">判分能接入真实大模型吗?</div>
+    <div class="a">可以。继承 <code class="inline">harness/judge.py</code> 的 <code class="inline">BaseJudge</code> 实现打分逻辑,替换 <code class="inline">CompositeJudge</code> 成员即可,runner 与报告零改动;当前 <code class="inline">HeuristicJudge</code> 是离线确定性替身。</div></div>
+</section>
+
+</main>
+</div>
+
+<button class="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
+
+<script>
+"use strict";
+// 折叠/展开接口条目
+document.querySelectorAll(".ep-head").forEach(head => {
+  head.addEventListener("click", () => head.parentElement.classList.toggle("open"));
+});
+// 复制按钮
+document.querySelectorAll(".code-block").forEach(block => {
+  const btn = block.querySelector(".copy-btn");
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    const code = block.querySelector("pre");
+    try {
+      await navigator.clipboard.writeText(code.innerText);
+      btn.textContent = "已复制";
+    } catch { btn.textContent = "复制失败"; }
+    setTimeout(() => { btn.textContent = "复制"; }, 1600);
+  });
+});
+// 目录滚动高亮
+const tocLinks = [...document.querySelectorAll("#toc a")];
+const sections = tocLinks
+  .map(a => document.querySelector(a.getAttribute("href")))
+  .filter(Boolean);
+const spy = () => {
+  let current = sections[0];
+  for (const sec of sections) {
+    if (sec.getBoundingClientRect().top <= 110) current = sec;
+  }
+  tocLinks.forEach(a => a.classList.toggle(
+    "active", a.getAttribute("href") === "#" + current.id));
+};
+document.addEventListener("scroll", spy, { passive: true });
+spy();
+</script>
+</body>
+</html>

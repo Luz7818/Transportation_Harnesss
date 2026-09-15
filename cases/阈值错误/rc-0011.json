@@ -1,0 +1,19 @@
+{
+  "case_id": "rc-0011",
+  "title": "城东大道(V/C 0.42)应为「基本畅通」,基线只看车速判成「畅通」",
+  "label": "阈值错误",
+  "dataset_name": "base",
+  "checks": [
+    {
+      "type": "classify",
+      "segment": "S-01",
+      "field": null,
+      "expected": "基本畅通",
+      "tol": 0.01,
+      "keywords": []
+    }
+  ],
+  "source": "线上抽检",
+  "created_at": "2026-08-31T00:47:00",
+  "notes": "中低饱和度区段需要区分「畅通/基本畅通」两档。"
+}
