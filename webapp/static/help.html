@@ -542,6 +542,17 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
   </div>
 
   <div class="ep">
+    <div class="ep-head"><span class="method post">POST</span><span class="ep-path">/api/cases/batch-delete</span><span class="ep-name">批量删除(同步评测集)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 单次上限 200 条;单锁内逐个删除并同步所有评测集清单。</p>
+      <h4>请求 / 响应</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"ids"</span>: [<span class="s">"rc-0014"</span>, <span class="s">"rc-0015"</span>] }
+→ { <span class="k">"deleted"</span>: [<span class="s">"rc-0014"</span>, <span class="s">"rc-0015"</span>], <span class="k">"missing"</span>: [] }</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
     <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/cases</span><span class="ep-name">全部 replaycase</span><span class="ep-caret">▶</span></div>
     <div class="ep-body"><p><span class="auth-pill yes">需登录/令牌</span> 返回 ReplayCase 对象数组(结构见「核心概念」),按 case_id 排序。</p></div>
   </div>
@@ -642,7 +653,7 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
   <div class="ep">
     <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/compare?a=&b=</span><span class="ep-name">两份报告逐 case 差分</span><span class="ep-caret">▶</span></div>
     <div class="ep-body">
-      <p><span class="auth-pill yes">需登录/令牌</span> 回归验证的核心接口:新通过(newly_passed)与回归(regressed)一目了然。</p>
+      <p><span class="auth-pill yes">需登录/令牌</span> 回归验证的核心接口:新通过/回归一目了然;rows 每条 case 附 <code class="inline">check_diffs</code>(checks 级明细差分,status:fixed/regressed/changed/both_failed/added/removed),看板行内高亮展示。</p>
       <h4>响应 200</h4>
       <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
 <pre>{

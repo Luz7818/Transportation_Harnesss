@@ -241,6 +241,17 @@ checks 的 `type` 取值:
 | `congested_empty` | 拥堵路段列表应为空(空数据降级) | — |
 | `conclusion_keyword` | 结论文本须覆盖关键词(启发式 judge,可替换为 LLM) | `keywords[]` |
 
+### POST /api/cases/batch-delete — 批量删除
+
+单锁内逐个删除并同步所有评测集清单;单次上限 200 条。
+
+```jsonc
+// 请求
+{"ids": ["rc-0014", "rc-0015", "rc-9999"]}
+// 200
+{"deleted": ["rc-0014", "rc-0015"], "missing": ["rc-9999"]}
+```
+
 ### DELETE /api/cases/{case_id} — 删除 case
 
 从磁盘删除并同时从**所有**评测集清单移除(已归档报告不受影响)。
@@ -351,9 +362,15 @@ Markdown + JSON 报告。请求体可省略(兼容旧客户端,默认 baseline=v
   "newly_passed": ["rc-0001", "rc-0002"],
   "regressed": [],
   "rows": [{"case_id": "rc-0001", "title": "…", "label": "阈值错误",
-            "a_passed": false, "b_passed": true, "a_score": 0.5, "b_score": 1.0}]
+            "a_passed": false, "b_passed": true, "a_score": 0.5, "b_score": 1.0,
+            "check_diffs": [{"type": "classify", "target": "S-02", "expected": "拥堵",
+                             "status": "fixed",
+                             "a_detail": "期望「严重拥堵」…", "b_detail": "期望「拥堵」…"}]]
 }
 ```
+
+`check_diffs` 为 checks 级明细差分(按条目配对,只含变化项),status 取值
+fixed / regressed / changed / both_failed / added / removed,供前端行内高亮。
 
 评测集扩充后对比旧报告时,仅两轮共有的 case 参与回归判定。
 

@@ -310,6 +310,23 @@ def api_delete_case(case_id: str) -> dict:
     return {"deleted": case_id}
 
 
+class BatchDeleteBody(BaseModel):
+    ids: list[str]
+
+
+@app.post("/api/cases/batch-delete")
+def api_batch_delete_cases(body: BatchDeleteBody) -> dict:
+    """批量删除 replaycase(单锁内逐个删除并同步评测集清单);单次上限 200 条。"""
+    deleted, missing = [], []
+    with _CASE_LOCK:
+        for cid in body.ids[:200]:
+            if storage.delete_case(cid):
+                deleted.append(cid)
+            else:
+                missing.append(cid)
+    return {"deleted": deleted, "missing": missing}
+
+
 def _rel_to_root(path: Path) -> str:
     try:
         return str(path.relative_to(ROOT))
@@ -513,6 +530,37 @@ def api_report(report_id: str) -> dict:
         raise HTTPException(404, f"报告不存在 {report_id!r}") from exc
 
 
+def _pair_check_diffs(ra: dict, rb: dict) -> list[dict]:
+    """checks 级差分:同一 case 在两份报告中的判分明细逐条配对(按 index,同一 case
+    的 checks 顺序由其定义决定,两轮重放顺序一致)。只返回有变化的条目。"""
+    ca, cb = ra.get("checks") or [], rb.get("checks") or []
+    out = []
+    for i in range(max(len(ca), len(cb))):
+        a = ca[i] if i < len(ca) else None
+        b = cb[i] if i < len(cb) else None
+        if a is None or b is None:
+            status = "added" if b else "removed"
+        else:
+            a_pass, b_pass = bool(a.get("passed")), bool(b.get("passed"))
+            if a_pass and b_pass:
+                continue  # 无变化
+            if not a_pass and b_pass:
+                status = "fixed"
+            elif a_pass and not b_pass:
+                status = "regressed"
+            elif a.get("actual") == b.get("actual"):
+                status = "both_failed"
+            else:
+                status = "changed"
+        src = b or a
+        out.append({
+            "type": src.get("type"), "target": src.get("target"),
+            "expected": src.get("expected"), "status": status,
+            "a_detail": a and a.get("detail"), "b_detail": b and b.get("detail"),
+        })
+    return out
+
+
 @app.get("/api/compare")
 def api_compare(a: str, b: str) -> dict:
     try:
@@ -531,6 +579,8 @@ def api_compare(a: str, b: str) -> dict:
         "b_passed": rb[cid]["passed"] if cid in rb else None,
         "a_score": ra[cid]["score"] if cid in ra else None,
         "b_score": rb[cid]["score"] if cid in rb else None,
+        "check_diffs": (_pair_check_diffs(ra[cid], rb[cid])
+                        if cid in ra and cid in rb else []),
     } for cid in sorted(set(ra) | set(rb))]
     return {
         "a": {"report_id": a, "version": pa["version"], "accuracy": pa["accuracy"]},

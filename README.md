@@ -234,13 +234,14 @@ ruff check .                                              # 静态检查
 | POST | `/api/analyze` | 提交分析 `{version, dataset_name}` |
 | GET/POST | `/api/cases` | 列出 / 沉淀 replaycase(带完整输入校验) |
 | DELETE | `/api/cases/{id}` | 删除 case,并同步从所有评测集清单移除 |
+| POST | `/api/cases/batch-delete` | 批量删除(单锁同步评测集清单,单次 ≤200) |
 | GET | `/api/evalsets` | 评测集清单列表(含规模) |
 | GET | `/api/activity` | 最近动态:case/评测/自进化/LLM 草稿统一时间流 |
 | POST | `/api/eval/run` | 运行评测 `{version, evalset}` 并归档报告 |
 | POST | `/api/evolve/run` | **一键自进化** `{evalset?, baseline?}`(基线 → 逐登记版本验证 → 归档,返回逐轮摘要) |
 | GET | `/api/reports` / `/api/reports/{id}` | 报告列表 / 详情 |
 | GET | `/api/evolutions` / `/api/evolutions/{id}` | 自进化运行记录(时间线) |
-| GET | `/api/compare?a=&b=` | 两份报告逐 case 差分 |
+| GET | `/api/compare?a=&b=` | 两份报告逐 case 差分(含 checks 级明细 diff) |
 | GET | `/api/cases/{id}` | 单条 replaycase 详情(含判分规则) |
 | GET | `/api/llm/status` | LLM Runtime 状态(供应方/模型/缓存/调用审计) |
 | POST | `/api/llm/drafts` | 坏例沉淀助手:反馈原文 → replaycase 草稿(待人工确认) |

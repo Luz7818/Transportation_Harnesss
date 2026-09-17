@@ -182,3 +182,48 @@ class TestOpsApi:
     def test_evolve_unknown_baseline_404(self, authed_client, hermetic_storage):
         resp = authed_client.post("/api/evolve/run", json={"baseline": "v9"})
         assert resp.status_code == 404
+
+
+class TestBatchOpsAndDiff:
+    def test_compare_includes_check_diffs(self, authed_client, hermetic_storage):
+        """v0 → v2 对比应给出 checks 级差分:rc-0001 的判分明细从失败变通过。"""
+        authed_client.post("/api/eval/run", json={"version": "v0"})
+        authed_client.post("/api/eval/run", json={"version": "v2"})
+        reports = authed_client.get("/api/reports").json()
+        by_version = {r["version"]: r["report_id"] for r in reports}
+        body = authed_client.get(
+            f"/api/compare?a={by_version['v0']}&b={by_version['v2']}").json()
+        row = next(r for r in body["rows"] if r["case_id"] == "rc-0001")
+        assert row["check_diffs"], "变化的 case 应携带 checks 级差分"
+        assert any(d["status"] == "fixed" for d in row["check_diffs"])
+        fixed = next(d for d in row["check_diffs"] if d["status"] == "fixed")
+        assert fixed["type"] in ("classify", "metric")
+        assert fixed["b_detail"]  # 修复后的判分明细可展示
+
+    def test_compare_same_pass_has_empty_diffs(self, authed_client, hermetic_storage):
+        authed_client.post("/api/eval/run", json={"version": "v1"})
+        authed_client.post("/api/eval/run", json={"version": "v2"})
+        reports = authed_client.get("/api/reports").json()
+        by_version = {r["version"]: r["report_id"] for r in reports}
+        body = authed_client.get(
+            f"/api/compare?a={by_version['v1']}&b={by_version['v2']}").json()
+        passed_rows = [r for r in body["rows"]
+                       if r["a_passed"] and r["b_passed"] and r["case_id"] in
+                       {c["case_id"] for c in authed_client.get("/api/cases").json()
+                        if c["case_id"] <= "rc-0008"}]
+        assert all(not r["check_diffs"] for r in passed_rows[:3])
+
+    def test_batch_delete(self, authed_client, hermetic_storage):
+        """批量删除:存在的删除、不存在的进 missing;评测集清单同步收缩。"""
+        ids = []
+        for i in range(2):
+            ids.append(authed_client.post("/api/cases", json={
+                "title": f"批量{i}", "label": "批量测试", "dataset_name": "base",
+                "segment": "S-01", "expected_level": "畅通",
+            }).json()["case"]["case_id"])
+        body = authed_client.post("/api/cases/batch-delete",
+                                  json={"ids": ids + ["rc-9999"]}).json()
+        assert sorted(body["deleted"]) == sorted(ids)
+        assert body["missing"] == ["rc-9999"]
+        remaining = {c["case_id"] for c in authed_client.get("/api/cases").json()}
+        assert not set(ids) & remaining
