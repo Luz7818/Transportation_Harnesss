@@ -22,6 +22,10 @@ Human-in-the-loop / Multi-Agent / Evaluation & Governance / 工程化落地** �
 | **Case 管理** | **文档中心(/help)** |
 | ![Case 管理](docs/images/cases.png) | ![文档中心](docs/images/help.png) |
 
+**深色模式**:侧边栏一键切换、偏好持久化、文档中心自动跟随;趋势图悬停显示逐报告详情。
+
+![深色模式](docs/images/dashboard-dark.png)
+
 ## 为什么需要它
 
 线上算法系统最痛的不是「写出 v1」,而是:
@@ -132,17 +136,22 @@ python webapp/app.py                     # 启动看板 → http://127.0.0.1:876
 内网演示想免登录,启动时设 `AUTH_MODE=open`;机器客户端(小程序/脚本)配
 `AUTH_TOKEN=<串>` 后以 `X-API-Token` 请求头访问。
 
-### 当前部署状态(2026-09 真机版)
+### 当前部署状态(2026-09 公网版)
 
+- **公网 ECS**:阿里云杭州 `47.114.37.174`(Ubuntu 26.04,2C4G,Docker 29 + Compose V2),
+  容器 `transportation-harness` 常驻 `/opt/harness`(compose 托管,自动重启);
+  安全组已放行 TCP 8765,`/api/health` 公网可达;
 - **小程序 AppID**:`wx5455bfec9b610cd7`(个人主体,已写入 `miniprogram/project.config.json`),
   开发者工具登录后点"预览"即可真机调试;
-- **小程序 API 地址**:`http://192.168.0.110:8765`(电脑局域网 IP,手机需与电脑同一 Wi-Fi;
-  IP 变化时同步修改 `miniprogram/config.js`);
-- **机器客户端令牌**:`harness-mp-2026`(小程序 `config.js` 的 TOKEN 与后端 `AUTH_TOKEN` 保持一致);
-- **后端启动**:双击桌面 **`启动后端.bat`**(已内置令牌与 0.0.0.0 绑定,窗口保持开启即服务运行;
-  该脚本含真实令牌,已被 .gitignore 排除);或命令行
-  `AUTH_TOKEN=harness-mp-2026 HOST=0.0.0.0 python webapp/app.py`;
-- **手机首次进入**:小程序右上角"…" → 打开调试(放行局域网 http 请求)。
+- **小程序 API 地址**:`http://47.114.37.174:8765`(公网,手机任意网络可用;
+  备案域名 + HTTPS 就绪后替换,以满足正式发布要求);
+- **机器客户端令牌**:`harness-mp-2026`(小程序 `config.js` 的 TOKEN 与服务器 `.env` 的
+  `AUTH_TOKEN` 保持一致);
+- **服务器运维**:`ssh root@47.114.37.174`(公钥免密);日志 `docker logs transportation-harness`;
+  更新部署 = 本机打包 scp + 解压覆盖 + `docker compose up -d --build`;
+- **手机首次进入**:小程序右上角"…" → 打开调试(放行 http 请求);
+- **局域网备选**:本机 `python webapp/app.py`(桌面 `启动后端.bat`)仍可离线开发,
+  小程序地址切回 `http://192.168.0.110:8765` 即可。
 
 公网/小程序:
 
@@ -226,6 +235,7 @@ ruff check .                                              # 静态检查
 | GET/POST | `/api/cases` | 列出 / 沉淀 replaycase(带完整输入校验) |
 | DELETE | `/api/cases/{id}` | 删除 case,并同步从所有评测集清单移除 |
 | GET | `/api/evalsets` | 评测集清单列表(含规模) |
+| GET | `/api/activity` | 最近动态:case/评测/自进化/LLM 草稿统一时间流 |
 | POST | `/api/eval/run` | 运行评测 `{version, evalset}` 并归档报告 |
 | POST | `/api/evolve/run` | **一键自进化** `{evalset?, baseline?}`(基线 → 逐登记版本验证 → 归档,返回逐轮摘要) |
 | GET | `/api/reports` / `/api/reports/{id}` | 报告列表 / 详情 |

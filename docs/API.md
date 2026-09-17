@@ -135,6 +135,16 @@ curl -H "X-API-Token: <你的令牌>" http://127.0.0.1:8765/api/health
 
 错误:`400` 非法数据集名;`404` 数据集不存在。
 
+### GET /api/activity — 最近动态(统一时间流)
+
+case 沉淀、评测运行、自进化与 LLM 草稿聚合为倒序 feed,可选 `?limit=12`(1~50)。
+
+```jsonc
+[{"ts": "2026-09-16T03:28:47", "kind": "eval",    // case | eval | evolve | draft
+  "title": "评测 v2 → 100.0%", "detail": "13/13 通过 · evalset_v1",
+  "tag": "v2", "ref": "report_v2_20260916T032847"}]
+```
+
 ### GET /api/evalsets — 评测集清单列表
 
 ```jsonc

@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b1020">
+<script>
+try { document.documentElement.dataset.theme = localStorage.getItem("harness_theme") || "light"; }
+catch (e) { document.documentElement.dataset.theme = "light"; }
+</script>
 <title>文档中心 · Transportation Harness</title>
 <link rel="icon" type="image/svg+xml" href="/static/assets/icon.svg">
 <style>
@@ -16,7 +20,37 @@
   --code-bg: #0c1322;
   --shadow-xs: 0 1px 2px rgba(16,24,40,.05);
   --shadow-sm: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.04);
+  --topbar-bg: rgba(255,255,255,.85); --thead-bg: #fafbfe; --row-line: #f0f2f8;
+  --chip-bg: #f1f3f9; --surface-2: #f7f8fc; --row-hover: #f8faff;
 }
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b101e; --surface: #131a2e; --line: #222c48; --line-2: #2d3957;
+  --t1: #e8edf8; --t2: #c3cce1; --t3: #93a0bd; --t4: #5f6c8f;
+  --primary: #818cf8; --primary-h: #6d78f0; --primary-soft: rgba(99,102,241,.18);
+  --ok: #34d399; --ok-soft: rgba(52,211,153,.13); --warn: #fbbf24; --warn-soft: rgba(251,191,36,.13);
+  --bad: #f87171; --bad-soft: rgba(248,113,113,.13); --info: #6ea8fe; --info-soft: rgba(110,168,254,.13);
+  --topbar-bg: rgba(11,16,30,.8); --thead-bg: #16203a; --row-line: #1e2946;
+  --chip-bg: #1a2340; --surface-2: #1a2340; --row-hover: #182141;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.35);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.25);
+}
+html[data-theme="dark"] .doc-top { background: var(--topbar-bg); }
+html[data-theme="dark"] .btn-top { background: var(--surface); color: var(--t2); border-color: var(--line-2); }
+html[data-theme="dark"] .btn-top:hover { background: var(--surface-2); }
+html[data-theme="dark"] .btn-top.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+html[data-theme="dark"] .btn-top.primary:hover { background: var(--primary-h); }
+html[data-theme="dark"] th { background: var(--thead-bg); }
+html[data-theme="dark"] td { border-bottom-color: var(--row-line); }
+html[data-theme="dark"] tbody tr:hover { background: var(--row-hover); }
+html[data-theme="dark"] .ep-head:hover { background: var(--row-hover); }
+html[data-theme="dark"] .doc-toc a:hover { background: var(--surface); }
+html[data-theme="dark"] .doc-toc a.active { background: var(--primary-soft); }
+html[data-theme="dark"] .faq-item, html[data-theme="dark"] .concept,
+html[data-theme="dark"] .ep, html[data-theme="dark"] .card-block { background: var(--surface); }
+html[data-theme="dark"] .back-top { background: var(--surface); border-color: var(--line); }
+html[data-theme="dark"] code.inline { background: rgba(129,140,248,.14); border-color: var(--line);
+  color: #c7d2fe; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--bg); color: var(--t1);
@@ -29,7 +63,7 @@ a:hover { text-decoration: underline; }
 /* ===== 顶栏 ===== */
 .doc-top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center;
            justify-content: space-between; padding: 0 32px; height: 60px;
-           background: rgba(255,255,255,.85); backdrop-filter: blur(12px);
+           background: var(--topbar-bg); backdrop-filter: blur(12px);
            border-bottom: 1px solid var(--line); }
 .doc-top .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--t1); }
 .doc-top .brand img { width: 32px; height: 32px; border-radius: 8px; }
@@ -37,8 +71,8 @@ a:hover { text-decoration: underline; }
 .doc-top .actions { display: flex; gap: 9px; }
 .btn-top { display: inline-flex; align-items: center; gap: 6px; height: 33px; padding: 0 14px;
            border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; text-decoration: none;
-           border: 1px solid var(--line-2); background: #fff; color: var(--t2); transition: background .15s; }
-.btn-top:hover { background: #f7f8fc; text-decoration: none; }
+           border: 1px solid var(--line-2); background: var(--surface); color: var(--t2); transition: background .15s; }
+.btn-top:hover { background: var(--surface-2); text-decoration: none; }
 .btn-top.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
 .btn-top.primary:hover { background: var(--primary-h); }
 
@@ -78,8 +112,8 @@ table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0 
         border: 1px solid var(--line); }
 th { text-align: left; padding: 9px 13px; color: var(--t3); font-weight: 600; font-size: 11px;
      letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid var(--line-2);
-     background: #fafbfe; }
-td { padding: 9px 13px; border-bottom: 1px solid #f0f2f8; vertical-align: top; color: var(--t2); }
+     background: var(--thead-bg); }
+td { padding: 9px 13px; border-bottom: 1px solid var(--row-line); vertical-align: top; color: var(--t2); }
 tr:last-child td { border-bottom: 0; }
 td code, th code { font-size: 12px; }
 
@@ -151,7 +185,7 @@ td code, th code { font-size: 12px; }
 .faq-item .a { color: var(--t2); font-size: 13px; }
 
 .back-top { position: fixed; right: 26px; bottom: 26px; width: 40px; height: 40px; border-radius: 12px;
-            background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-sm); cursor: pointer;
+            background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm); cursor: pointer;
             color: var(--t3); font-size: 16px; display: flex; align-items: center; justify-content: center; }
 .back-top:hover { color: var(--primary); }
 
@@ -167,6 +201,7 @@ td code, th code { font-size: 12px; }
 <header class="doc-top">
   <div class="brand"><img src="/static/assets/icon.svg" alt="">Transportation Harness<small>文档中心</small></div>
   <div class="actions">
+    <button class="btn-top" id="theme-toggle" title="切换明暗主题" aria-label="切换明暗主题">◐</button>
     <a class="btn-top" href="/">← 返回工作台</a>
     <a class="btn-top primary" href="/docs" target="_blank" rel="noopener">交互式 API(Swagger)</a>
   </div>
@@ -412,6 +447,18 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
   { <span class="k">"segment_id"</span>: <span class="s">"S-01"</span>, <span class="k">"name"</span>: <span class="s">"城东大道"</span>, <span class="k">"volume"</span>: 3000, <span class="k">"speed"</span>: 45 }
 ] }</pre></div>
       <h4>错误</h4><p><code class="inline">400</code> 非法数据集名 · <code class="inline">404</code> 数据集不存在</p>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/activity</span><span class="ep-name">最近动态(统一时间流)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill yes">需登录/令牌</span> 可选 <code class="inline">?limit=12</code>(1~50)。</p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>[{ <span class="k">"ts"</span>: <span class="s">"2026-09-16T03:28:47"</span>, <span class="k">"kind"</span>: <span class="s">"eval"</span>,   <span class="c">// case | eval | evolve | draft</span>
+   <span class="k">"title"</span>: <span class="s">"评测 v2 → 100.0%"</span>, <span class="k">"detail"</span>: <span class="s">"13/13 通过 · evalset_v1"</span>,
+   <span class="k">"tag"</span>: <span class="s">"v2"</span>, <span class="k">"ref"</span>: <span class="s">"report_v2_20260916T032847"</span> }]</pre></div>
     </div>
   </div>
 
@@ -835,6 +882,17 @@ const spy = () => {
 };
 document.addEventListener("scroll", spy, { passive: true });
 spy();
+
+// 主题切换(与工作台共享偏好)
+const themeBtn = document.getElementById("theme-toggle");
+const syncThemeBtn = () => { themeBtn.textContent = document.documentElement.dataset.theme === "dark" ? "☀" : "☾"; };
+themeBtn.addEventListener("click", () => {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("harness_theme", next); } catch {}
+  syncThemeBtn();
+});
+syncThemeBtn();
 </script>
 </body>
 </html>

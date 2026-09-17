@@ -29,6 +29,7 @@ try:
 except ModuleNotFoundError as exc:
     sys.exit(f"缺少依赖 {exc.name!r}:请先在当前 Python 环境执行  pip install -r requirements.txt")
 
+from harness import activity as activity_mod
 from harness import report as report_mod
 from harness import storage
 from harness.evolve import run_evolution
@@ -248,6 +249,12 @@ def api_health() -> dict:
 def api_evalsets() -> list[dict]:
     """评测集清单列表(含规模),供看板/客户端选择评测范围。"""
     return storage.list_evalsets()
+
+
+@app.get("/api/activity")
+def api_activity(limit: int = 12) -> list[dict]:
+    """最近动态:case 沉淀/评测运行/自进化/LLM 草稿的统一时间流(倒序)。"""
+    return activity_mod.collect(limit, drafts=llm_store.list_drafts())
 
 
 @app.get("/api/versions")
