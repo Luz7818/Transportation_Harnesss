@@ -491,9 +491,6 @@ curl -s "$BASE/api/compare?a=report_v1_…&b=report_v2_…" -H "$H"
 ```python
 import requests
 
-```python
-import requests
-
 BASE = "http://127.0.0.1:8765"
 H = {"X-API-Token": "<你的令牌>"}
 

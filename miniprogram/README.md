@@ -14,14 +14,19 @@
 
 ## 使用步骤
 
-1. 用**微信开发者工具**导入 `miniprogram/` 目录(测试号 AppID 即可,`project.config.json` 已填 `touristappid`)。
-2. 修改 `config.js` 中的 `BASE_URL` 为你的后端地址:
+1. 用**微信开发者工具**导入 `miniprogram/` 目录。AppID 已接入
+   `wx5455bfec9b610cd7`(个人主体,已写入 `project.config.json`),登录后点「预览」即可真机调试;
+   如需换主体,替换为自己的 AppID 即可。
+2. 修改 `config.js` 中的 `BASE_URL` 为你的后端地址(当前指向公网 ECS `http://47.114.37.174:8765`,
+   手机任意网络可用):
    - 本机调试:`http://127.0.0.1:8765`(手机预览时改为电脑局域网 IP,如 `http://192.168.x.x:8765`,且手机与电脑同一 Wi-Fi);
-   - 公网:`https://你的域名`。
+   - 公网:`https://你的域名`(正式发布要求,见下)。
 3. **鉴权要求**:小程序端通过 `X-API-Token` 请求头访问(不走浏览器的登录 Cookie)。
    后端为默认登录模式时,必须设置环境变量 `AUTH_TOKEN=<串>`,并把同一个值填入
-   `config.js` 的 `TOKEN`;两者不一致会得到 401。网页侧账号(admin/harness123)仅用于浏览器登录。
-4. 开发阶段在开发者工具「详情 → 本地设置」勾选 **不校验合法域名、web-view(业务域名)、TLS 版本以及 HTTPS 证书**,即可用 HTTP/局域网地址调试。
+   `config.js` 的 `TOKEN`(当前公网部署为 `harness-mp-2026`,与服务器 `.env` 保持一致);
+   两者不一致会得到 401。网页侧账号(admin/harness123)仅用于浏览器登录。
+4. 开发阶段在开发者工具「详情 → 本地设置」勾选 **不校验合法域名、web-view(业务域名)、TLS 版本以及 HTTPS 证书**;
+   手机首次进入:小程序右上角「…」→ 打开调试,放行 http 请求。
 
 ## 正式发布的要求(重要)
 
@@ -30,7 +35,7 @@
 1. **HTTPS**:后端必须通过 HTTPS 对外提供服务(DEPLOY.md 的 Nginx + 证书方案);
 2. **备案域名**:request 合法域名必须是 ICP 备案过的域名;
 3. **配置合法域名**:小程序管理后台 → 开发设置 → 服务器域名 → `request` 合法域名,加入 `https://你的域名`;
-4. **AppID**:在 `project.config.json` 中把 `touristappid` 替换为你自己的 AppID;
+4. **AppID**:`project.config.json` 已接入个人主体 AppID `wx5455bfec9b610cd7`,换主体时替换即可;
 5. TabBar 图标:当前为纯文字 Tab(合法);如需图标,提供 81×81 PNG(普通/选中各一套)放入对应页面目录并配置 `app.json` 的 `iconPath`/`selectedIconPath`。
 
 > 替代方案:如果只是内部工具、不想走小程序发布流程,可以用**公众号 H5 / 企业微信自建应用**直接打开网页版看板,或保留网页 + 内网穿透使用。

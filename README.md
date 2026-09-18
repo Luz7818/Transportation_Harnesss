@@ -5,7 +5,8 @@
 **一句话定位**:把大模型时代「评测驱动迭代」的工程方法论,落地到交通分析领域 ——
 线上 badcase 沉淀为可重放的 replaycase,组成版本化评测集,用
 **「评测 → 定位失败 → 迭代 → 回归验证」** 的闭环驱动分析管线持续进化,
-实测将管线得分从 **7.7% 提升到 100%**。配套网页看板与微信小程序双客户端。
+实测将管线得分从 **7.7% 提升到 100%**。配套 PWA 网页看板与微信小程序双客户端,
+并提供官方 Python SDK 与 OpenAPI 规范供程序化接入。
 
 这个 harness 框架本身与「交通」无关:换成代码评审、医疗问答、客服话术,闭环同样成立 ——
 这正是它的应用前景所在。在此之上,项目按 **Runtime / Context & Memory / Tool & Workflow /
@@ -32,7 +33,7 @@ Human-in-the-loop / Multi-Agent / Evaluation & Governance / 工程化落地** �
 
 - **安装到设备**:浏览器地址栏「安装」或侧边栏 ⤓ 按钮 → 获得独立窗口、带图标的
   类原生应用(桌面 / Android 主屏;maskable 图标适配 Android 自适应蒙版);
-- **离线可用**:Service Worker 预缓存应用壳(``/`` 与 ``/help``),GET 类 API 数据
+- **离线可用**:Service Worker 预缓存应用壳(`/` 与 `/help`),GET 类 API 数据
   network-first + 缓存回退 —— 断网时仍可浏览最后一次加载的看板数据,恢复联网自动更新;
 - **更新机制**:SW 版本化缓存 + skipWaiting,新版本就绪时页面内提示「刷新生效」;
 - **安全上下文约束**(浏览器强制):公网 http IP 访问时 SW 自动不注册,页面功能不受影响;
@@ -179,7 +180,7 @@ docker compose up -d --build                              # 或容器化部署
 ```bash
 python scripts/run_eval.py --version v1 --md              # 单版本评测并输出 Markdown
 python scripts/verify.py --evalset evalset_scenario_rain  # 校验指定评测集
-pytest                                                    # 单元/接口测试(81 个)
+pytest                                                    # 单元/接口测试(144 个)
 ruff check .                                              # 静态检查
 ```
 
@@ -200,10 +201,11 @@ ruff check .                                              # 静态检查
 
 ## 质量保障
 
-- **117 个 pytest 用例**:models 序列化往返、storage 路径安全与清单一致性、judge 全部规则语义、
+- **144 个 pytest 用例**:models 序列化往返、storage 路径安全与清单一致性、judge 全部规则语义、
   runner 崩溃捕获、report 差分与渲染、evolve 完整闭环、管线三版本算法行为、
   auth 口令哈希/限流/令牌、Web API 鉴权与全端点、LLM 层(Runtime 缓存审计/judge/双工作流/
-  幻觉过滤/Human-in-the-loop 全链路)—— 测试用临时目录隔离,不污染真实评测资产,CI 免密钥;
+  幻觉过滤/Human-in-the-loop 全链路)、PWA(manifest/SW 预缓存与离线回退)、
+  Python SDK(强类型返回/命令行/全端点)—— 测试用临时目录隔离,不污染真实评测资产,CI 免密钥;
 - **ruff** 静态检查全绿(B/UP/SIM/C4/I 规则集);
 - **GitHub Actions CI**:Python 3.11/3.12 矩阵,lint + pytest + 端到端校验;
 - **端到端不变量校验**(`scripts/verify.py`):种子 case 行为冻结 + 通过集单调不减(无回归)+
@@ -295,17 +297,26 @@ Transportation_Harnesss/
 │   ├── seed_cases.py      # 沉淀首批 replaycase + 生成评测集清单
 │   ├── seed_scenario_cases.py  # 沉淀雨天场景评测集
 │   ├── run_eval.py        # 单版本评测 CLI
-│   └── verify.py          # 端到端不变量校验(对评测集增长鲁棒)
+│   ├── verify.py          # 端到端不变量校验(对评测集增长鲁棒)
+│   ├── backup.py          # 评测资产一键打包备份(cases/evalsets/reports)
+│   ├── export_openapi.py  # 导出机器可读 API 规范 → docs/openapi.json
+│   └── generate_pwa_icons.py   # SVG 母版栅格化 PWA 图标(resvg)
 ├── webapp/
 │   ├── app.py             # FastAPI 后端(登录鉴权/校验/一键自进化)
 │   ├── auth.py            # 本地账号与会话(PBKDF2 口令哈希 + HMAC 令牌 + 登录限流)
 │   └── static/
 │       ├── index.html     # 欢迎页 + 登录页 + 应用壳(单文件,无外部依赖)
-│       └── help.html      # 文档中心(核心概念/工作流/全量 API 参考,/help 访问)
+│       ├── help.html      # 文档中心(核心概念/工作流/全量 API 参考,/help 访问)
+│       ├── sw.js          # Service Worker(壳预缓存/SWR 静态/API network-first)
+│       └── manifest.webmanifest + assets/   # PWA 清单与图标四件套
 ├── docs/
-│   └── API.md             # API 参考手册(仓库版,与 /help 内容同构)
+│   ├── API.md             # API 参考手册(仓库版,与 /help 内容同构)
+│   ├── INTEGRATION.md     # 5 分钟接入指南(cURL → SDK → 原生 HTTP)
+│   ├── LLM.md             # LLM 智能层七维设计
+│   └── openapi.json       # OpenAPI 3.1 机器可读规范(28 路径,可导入 Postman/Apifox)
+├── sdk/                   # 官方 Python SDK(pip install ./sdk,导入名 harness_client)
 ├── miniprogram/           # 微信小程序客户端(评测看板/分析提交/Case 库/版本对比)
-├── tests/                 # 117 个 pytest 用例(单元 + 接口 + 闭环 + LLM 层;夹具用冻结种子快照)
+├── tests/                 # 144 个 pytest 用例(单元 + 接口 + 闭环 + LLM + PWA + SDK;夹具用冻结种子快照)
 ├── .github/workflows/ci.yml  # CI:ruff + pytest + verify(Python 3.11/3.12 矩阵)
 ├── Dockerfile             # 容器化(非 root 运行 + 健康检查;数据卷挂载,升级不丢评测资产)
 ├── docker-compose.yml

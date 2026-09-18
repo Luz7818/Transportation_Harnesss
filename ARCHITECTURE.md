@@ -104,8 +104,13 @@ CompositeJudge                       按 spec.type 路由,无主 judge 支持时
 - **Web 端单文件无构建**:index.html 零外部依赖(无 CDN/框架),克隆即用、内网可跑,
   换来的是演示与教学场景的零摩擦;复杂度换不出去的部分(状态管理)用「每 Tab 独立渲染函数」
   的约定隔离;
+- **PWA 是纯前端增强**:安装与离线能力(manifest + Service Worker)只在安全上下文注册,
+  http IP 访问时优雅降级、页面功能不受影响 —— 渐进增强不改变后端契约,也不成为部署的前置条件;
 - **小程序共用同一套 API**:机器客户端走 `X-API-Token`,浏览器走 Cookie 会话,服务端一条
-  中间件同时支持两种身份;小程序不引入登录页,符合「外业快速记录」的定位。
+  中间件同时支持两种身份;小程序不引入登录页,符合「外业快速记录」的定位;
+- **SDK 是 OpenAPI 的薄封装**:`sdk/`(harness_client)与 `docs/openapi.json` 由同一份
+  FastAPI 应用导出,方法与端点一一对应;规范先行保证 SDK、Postman 集合与 `/docs`
+  调试页不会互相漂移。
 
 ## 8. 测试策略:评测系统自己先要有测试
 
@@ -128,6 +133,8 @@ CompositeJudge                       按 spec.type 路由,无主 judge 支持时
 | README | 仓库 | 首次接触项目的人:定位/架构图/工作流/目标人群 |
 | ARCHITECTURE(本文) | 仓库 | 评审者与后续维护者:为什么这样设计 |
 | docs/API.md | 仓库 | 集成方:全量接口参考 |
+| docs/INTEGRATION.md | 仓库 | 外部系统:5 分钟接入(cURL → Python SDK → 原生 HTTP) |
+| docs/openapi.json | 仓库 | 机器:导入 Postman/Apifox 或生成客户端 |
 | `/help` 文档中心 | 运行实例(webapp/static/help.html) | 看板使用者:核心概念/工作流/接口/FAQ,无需登录 |
 | `/docs` | FastAPI 自动生成 | 开发者:交互式调试 |
 

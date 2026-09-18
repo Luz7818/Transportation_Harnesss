@@ -18,7 +18,7 @@
 | **Human-in-the-loop** | 草稿必须人工确认才成为 replaycase(且走与手工沉淀**完全相同**的校验/落盘路径);诊断结论仅供参考,不自动改任何资产;LLM 判分失败降级可见、可重跑 | `POST /api/llm/drafts/{id}/confirm`、`harness/judge.py` |
 | **Multi-Agent 协作** | 失败诊断 = 分析者(按标签归因)+ 评审者(复核、去重、风险提示)的 generator-critic 流水线;**刻意不做自主 Agent 群** —— 评测系统要求可复现,编排必须确定 | `llm/workflows.py:diagnose_failures` |
 | **Evaluation & Governance** | 模型输出全部过校验(等级枚举、case_id 防幻觉过滤、长度截断);一切调用进 `llm_runs.jsonl` 审计;响应缓存保证同输入同输出;LLM judge 的分数与理由随报告持久化可复核;成本可见(缓存命中/token 统计) | `llm/store.py`、`llm/judge.py`、`llm/workflows.py` |
-| **工程化落地** | 零新增依赖(stdlib urllib);未配 Key 自动降级 Mock,CI 与课堂演示离线可跑;26 个专项测试;环境变量三枚即可接入;Docker 卷持久化草稿与缓存 | `tests/test_llm.py`、`Dockerfile`、`docker-compose.yml` |
+| **工程化落地** | 零新增依赖(stdlib urllib);未配 Key 自动降级 Mock,CI 与课堂演示离线可跑;27 个专项测试;环境变量三枚即可接入;Docker 卷持久化草稿与缓存 | `tests/test_llm.py`、`Dockerfile`、`docker-compose.yml` |
 
 ## 1. Runtime:统一模型访问层
 
@@ -137,7 +137,7 @@ python webapp/app.py
 
 **零新增依赖**:HTTP 用 stdlib `urllib`,无 openai SDK 锁定 —— 换供应商只改环境变量。
 
-**测试**:`tests/test_llm.py` 覆盖 26 个用例 —— Runtime 配置/缓存/审计/JSON 解析容错、
+**测试**:`tests/test_llm.py` 覆盖 27 个用例 —— Runtime 配置/缓存/审计/JSON 解析容错、
 LLMJudge 打分与故障降级、草稿工作流(编号递增/校验拒绝)、诊断工作流(分标签归因/
 全通过短路/幻觉过滤)、API 全链路(草稿 → 确认 → 入库 → 重复确认 409 / 非法等级 400)。
 全程离线 Mock,CI 无需密钥。
