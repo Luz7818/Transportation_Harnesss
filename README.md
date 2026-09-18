@@ -221,6 +221,10 @@ ruff check .                                              # 静态检查
 **文档体系**:运行实例内置「文档中心」`/help`(核心概念 / 工作流 / 全量接口参考 / 错误码 /
 客户端集成示例,与网页同风格,无需登录),`/docs` 为交互式 OpenAPI 调试页;
 仓库内的人读参考是 [docs/API.md](docs/API.md) —— 三者内容同构。
+**平台化接入**:机器可读规范 [docs/openapi.json](docs/openapi.json)(OpenAPI 3.1,可导入
+Postman/Apifox)、[docs/INTEGRATION.md](docs/INTEGRATION.md)(《5 分钟接入指南》)、
+官方 Python SDK [sdk/](sdk/)(`pip install ./sdk`,导入名 `harness_client`,自带
+`harness-client` 命令行)。
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |

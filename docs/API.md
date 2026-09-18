@@ -484,7 +484,12 @@ curl -s "$BASE/api/compare?a=report_v1_…&b=report_v2_…" -H "$H"
 
 ## 客户端集成
 
-**Python(requests)**:
+**Python SDK(推荐)**:`pip install ./sdk` 后导入名 `harness_client`,
+方法与全部端点一一对应,评测结果/版本对比返回强类型模型,自带 `harness-client` 命令行;
+完整示例见 [INTEGRATION](INTEGRATION.md)。原生 HTTP 备选:
+
+```python
+import requests
 
 ```python
 import requests

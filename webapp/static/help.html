@@ -774,7 +774,11 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
   <h2>客户端集成示例</h2>
   <p class="lead">任何能发 HTTP 的端都可接入;机器客户端推荐令牌头方式。</p>
 
-  <h3 class="sec-h">Python(requests)</h3>
+  <h3 class="sec-h">Python SDK(推荐)</h3>
+<p><code>pip install ./sdk</code> 后 <code>from harness_client import TransportationHarnessClient</code>,
+方法与全部端点一一对应(评测结果/版本对比为强类型),并自带 <code>harness-client</code> 命令行;
+详见仓库 <code>docs/INTEGRATION.md</code>。</p>
+<h3 class="sec-h">Python(requests)</h3>
   <div class="code-block"><div class="code-head"><span>python</span><button class="copy-btn">复制</button></div>
 <pre>import requests
 

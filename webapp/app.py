@@ -143,7 +143,7 @@ class PasswordBody(BaseModel):
     new_password: str
 
 
-@app.post("/api/auth/login")
+@app.post("/api/auth/login", tags=["auth"])
 def api_login(body: LoginBody, response: Response) -> dict:
     locked = auth_mod.login_locked(body.username)
     if locked:
@@ -160,13 +160,13 @@ def api_login(body: LoginBody, response: Response) -> dict:
     return {"ok": True, "username": body.username}
 
 
-@app.post("/api/auth/logout")
+@app.post("/api/auth/logout", tags=["auth"])
 def api_logout(response: Response) -> dict:
     response.delete_cookie(COOKIE_NAME, path="/")
     return {"ok": True}
 
 
-@app.get("/api/auth/me")
+@app.get("/api/auth/me", tags=["auth"])
 def api_me(request: Request) -> dict:
     username = _session_user(request)
     if username:
@@ -176,7 +176,7 @@ def api_me(request: Request) -> dict:
     raise HTTPException(401, "未登录")
 
 
-@app.post("/api/auth/password")
+@app.post("/api/auth/password", tags=["auth"])
 def api_change_password(request: Request, body: PasswordBody) -> dict:
     username = _session_user(request)
     if not username:
@@ -220,18 +220,18 @@ def _validate_case_body(body: CaseBody, segments: list[dict]) -> None:
         raise HTTPException(400, "饱和度容差应在 0.0001~0.5 之间")
 
 
-@app.get("/")
+@app.get("/", tags=["pages"])
 def index() -> FileResponse:
     return FileResponse(ROOT / "webapp" / "static" / "index.html")
 
 
-@app.get("/help")
+@app.get("/help", tags=["pages"])
 def help_center() -> FileResponse:
     """文档中心:核心概念 / 工作流 / 全量 API 参考(人读版;交互式调试见 /docs)。"""
     return FileResponse(ROOT / "webapp" / "static" / "help.html")
 
 
-@app.get("/api/health")
+@app.get("/api/health", tags=["metadata"])
 def api_health() -> dict:
     return {
         "status": "ok",
@@ -245,30 +245,30 @@ def api_health() -> dict:
     }
 
 
-@app.get("/api/evalsets")
+@app.get("/api/evalsets", tags=["metadata"])
 def api_evalsets() -> list[dict]:
     """评测集清单列表(含规模),供看板/客户端选择评测范围。"""
     return storage.list_evalsets()
 
 
-@app.get("/api/activity")
+@app.get("/api/activity", tags=["metadata"])
 def api_activity(limit: int = 12) -> list[dict]:
     """最近动态:case 沉淀/评测运行/自进化/LLM 草稿的统一时间流(倒序)。"""
     return activity_mod.collect(limit, drafts=llm_store.list_drafts())
 
 
-@app.get("/api/versions")
+@app.get("/api/versions", tags=["metadata"])
 def api_versions() -> list[dict]:
     return [{"version": v, "name": meta["name"], "changes": meta["changes"]}
             for v, meta in CHANGELOG.items()]
 
 
-@app.get("/api/datasets")
+@app.get("/api/datasets", tags=["metadata"])
 def api_datasets() -> list[dict]:
     return storage.list_datasets()
 
 
-@app.get("/api/segments/{dataset}")
+@app.get("/api/segments/{dataset}", tags=["metadata"])
 def api_segments(dataset: str) -> dict:
     """返回数据集内全部路段,供前端下拉选择(免去手输路段 ID)。"""
     segments = _require_dataset(dataset)
@@ -278,7 +278,7 @@ def api_segments(dataset: str) -> dict:
                          for s in segments]}
 
 
-@app.post("/api/analyze")
+@app.post("/api/analyze", tags=["analysis"])
 def api_analyze(body: AnalyzeBody) -> dict:
     if body.version not in PIPELINES:
         raise HTTPException(404, f"未知版本 {body.version}(可选:{sorted(PIPELINES)})")
@@ -286,12 +286,12 @@ def api_analyze(body: AnalyzeBody) -> dict:
     return PIPELINES[body.version](segments)
 
 
-@app.get("/api/cases")
+@app.get("/api/cases", tags=["cases"])
 def api_cases() -> list[dict]:
     return [c.to_dict() for c in storage.load_cases()]
 
 
-@app.get("/api/cases/{case_id}")
+@app.get("/api/cases/{case_id}", tags=["cases"])
 def api_case(case_id: str) -> dict:
     """单条 replaycase 详情(含判分规则 checks)。"""
     case = storage.load_case(case_id)
@@ -300,7 +300,7 @@ def api_case(case_id: str) -> dict:
     return case.to_dict()
 
 
-@app.delete("/api/cases/{case_id}")
+@app.delete("/api/cases/{case_id}", tags=["cases"])
 def api_delete_case(case_id: str) -> dict:
     """删除误沉淀的 replaycase,并同步从所有评测集清单移除(评测集不悬空)。"""
     with _CASE_LOCK:
@@ -314,7 +314,7 @@ class BatchDeleteBody(BaseModel):
     ids: list[str]
 
 
-@app.post("/api/cases/batch-delete")
+@app.post("/api/cases/batch-delete", tags=["cases"])
 def api_batch_delete_cases(body: BatchDeleteBody) -> dict:
     """批量删除 replaycase(单锁内逐个删除并同步评测集清单);单次上限 200 条。"""
     deleted, missing = [], []
@@ -334,7 +334,7 @@ def _rel_to_root(path: Path) -> str:
         return str(path)
 
 
-@app.post("/api/cases")
+@app.post("/api/cases", tags=["cases"])
 def api_create_case(body: CaseBody) -> dict:
     """把一条线上反馈沉淀为 replaycase,并可立即加入当前评测集——反馈到评测集的最短路径。"""
     return _create_case_from_body(body)
@@ -381,13 +381,13 @@ class DiagnoseBody(BaseModel):
     evalset: str = "evalset_v1"
 
 
-@app.get("/api/llm/status")
+@app.get("/api/llm/status", tags=["llm"])
 def api_llm_status() -> dict:
     """LLM Runtime 状态:供应方(mock/真实端点)、模型、缓存与最近调用审计。"""
     return llm_runtime.status()
 
 
-@app.post("/api/llm/drafts")
+@app.post("/api/llm/drafts", tags=["llm"])
 def api_llm_draft(body: DraftBody) -> dict:
     """坏例沉淀助手:反馈原文 → 结构化 replaycase 草稿(待人工确认,不直接入库)。"""
     try:
@@ -400,19 +400,19 @@ def api_llm_draft(body: DraftBody) -> dict:
         raise HTTPException(502, f"LLM 调用失败:{exc}") from exc
 
 
-@app.get("/api/llm/drafts")
+@app.get("/api/llm/drafts", tags=["llm"])
 def api_llm_drafts() -> list[dict]:
     return llm_store.list_drafts()
 
 
-@app.delete("/api/llm/drafts/{draft_id}")
+@app.delete("/api/llm/drafts/{draft_id}", tags=["llm"])
 def api_llm_discard(draft_id: str) -> dict:
     if not llm_store.delete_draft(draft_id):
         raise HTTPException(404, f"草稿不存在:{draft_id!r}")
     return {"deleted": draft_id}
 
 
-@app.post("/api/llm/drafts/{draft_id}/confirm")
+@app.post("/api/llm/drafts/{draft_id}/confirm", tags=["llm"])
 def api_llm_confirm(draft_id: str, body: DraftConfirmBody) -> dict:
     """人工确认草稿 → 走与手工沉淀完全相同的校验/落盘路径(Human-in-the-loop)。"""
     draft = llm_store.load_draft(draft_id)
@@ -442,7 +442,7 @@ def api_llm_confirm(draft_id: str, body: DraftConfirmBody) -> dict:
             "case": result["case"], "draft_id": draft_id}
 
 
-@app.post("/api/llm/diagnose")
+@app.post("/api/llm/diagnose", tags=["llm"])
 def api_llm_diagnose(body: DiagnoseBody) -> dict:
     """失败诊断(分析者 + 评审者双角色):输出分标签根因与迭代建议,仅供参考。"""
     try:
@@ -467,7 +467,7 @@ def _load_evalset_or_404(name: str) -> tuple[dict, list]:
         raise HTTPException(400, str(exc)) from exc
 
 
-@app.post("/api/eval/run")
+@app.post("/api/eval/run", tags=["eval"])
 def api_eval_run(body: EvalRunBody) -> dict:
     """对指定版本跑一遍指定评测集,归档 JSON 报告并返回完整结果。"""
     if body.version not in PIPELINES:
@@ -480,7 +480,7 @@ def api_eval_run(body: EvalRunBody) -> dict:
     return payload
 
 
-@app.post("/api/evolve/run")
+@app.post("/api/evolve/run", tags=["eval"])
 def api_evolve_run(body: EvolveBody | None = None) -> dict:
     """一键自进化:基线 → 逐登记版本验证(提升且无回归)→ 归档报告,返回逐轮摘要。
 
@@ -499,18 +499,18 @@ def api_evolve_run(body: EvolveBody | None = None) -> dict:
         _EVOLVE_LOCK.release()
 
 
-@app.get("/api/reports")
+@app.get("/api/reports", tags=["reports"])
 def api_reports() -> list[dict]:
     return storage.list_reports()
 
 
-@app.get("/api/evolutions")
+@app.get("/api/evolutions", tags=["reports"])
 def api_evolutions() -> list[dict]:
     """自进化运行记录(时间倒序):看板时间线回放每次迭代的得分轨迹。"""
     return storage.list_evolutions()
 
 
-@app.get("/api/evolutions/{evolution_id}")
+@app.get("/api/evolutions/{evolution_id}", tags=["reports"])
 def api_evolution(evolution_id: str) -> dict:
     try:
         return storage.load_evolution(evolution_id)
@@ -520,7 +520,7 @@ def api_evolution(evolution_id: str) -> dict:
         raise HTTPException(404, f"进化记录不存在 {evolution_id!r}") from exc
 
 
-@app.get("/api/reports/{report_id}")
+@app.get("/api/reports/{report_id}", tags=["reports"])
 def api_report(report_id: str) -> dict:
     try:
         return storage.load_report(report_id)
@@ -561,7 +561,7 @@ def _pair_check_diffs(ra: dict, rb: dict) -> list[dict]:
     return out
 
 
-@app.get("/api/compare")
+@app.get("/api/compare", tags=["reports"])
 def api_compare(a: str, b: str) -> dict:
     try:
         pa, pb = storage.load_report(a), storage.load_report(b)

@@ -19,6 +19,8 @@ jobs:
           cache: pip
       - name: 安装依赖
         run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: 安装 Python SDK(harness_client,供 SDK 集成测试)
+        run: pip install ./sdk
       - name: 静态检查(ruff)
         run: ruff check .
       - name: 单元测试(pytest)

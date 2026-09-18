@@ -1,6 +1,6 @@
 [project]
 name = "transportation-harness"
-version = "1.3.0"
+version = "1.5.0"
 description = "交通分析自进化评测系统:badcase → replaycase → 版本化评测集 → 迭代 → 回归验证的闭环 harness"
 readme = "README.md"
 requires-python = ">=3.11"
