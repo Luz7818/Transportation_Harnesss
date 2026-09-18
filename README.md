@@ -1,6 +1,6 @@
 # Transportation Harness — 交通分析自进化评测系统
 
-[![CI](https://github.com/<your-name>/Transportation_Harnesss/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
+[![CI](https://github.com/Luz7818/Transportation_Harnesss/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
 
 **一句话定位**:把大模型时代「评测驱动迭代」的工程方法论,落地到交通分析领域 ——
 线上 badcase 沉淀为可重放的 replaycase,组成版本化评测集,用
