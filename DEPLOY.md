@@ -86,6 +86,11 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
+## PWA 生效条件
+
+网页的 Service Worker / 安装能力**仅在安全上下文生效**:localhost 调试可用;
+公网必须在完成 HTTPS(路线 B 的 certbot 步骤)后自动激活,http IP 访问时优雅降级。
+
 ## 路线 C:免费托管平台(Render / Fly.io)
 
 无需自己管服务器,适合小团队;免费档有休眠/限额,注意数据卷:

@@ -231,6 +231,12 @@ def help_center() -> FileResponse:
     return FileResponse(ROOT / "webapp" / "static" / "help.html")
 
 
+@app.get("/sw.js", tags=["pages"], include_in_schema=False)
+def service_worker() -> FileResponse:
+    """Service Worker 必须从根路径提供(SW 的作用域 = 脚本所在目录),否则无法控制页面。"""
+    return FileResponse(ROOT / "webapp" / "static" / "sw.js", media_type="application/javascript")
+
+
 @app.get("/api/health", tags=["metadata"])
 def api_health() -> dict:
     return {

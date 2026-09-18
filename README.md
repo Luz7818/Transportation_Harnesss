@@ -26,6 +26,20 @@ Human-in-the-loop / Multi-Agent / Evaluation & Governance / 工程化落地** �
 
 ![深色模式](docs/images/dashboard-dark.png)
 
+## PWA:可安装、可离线
+
+网页已按渐进式应用标准升级,在 **localhost 或 HTTPS 环境**下:
+
+- **安装到设备**:浏览器地址栏「安装」或侧边栏 ⤓ 按钮 → 获得独立窗口、带图标的
+  类原生应用(桌面 / Android 主屏;maskable 图标适配 Android 自适应蒙版);
+- **离线可用**:Service Worker 预缓存应用壳(``/`` 与 ``/help``),GET 类 API 数据
+  network-first + 缓存回退 —— 断网时仍可浏览最后一次加载的看板数据,恢复联网自动更新;
+- **更新机制**:SW 版本化缓存 + skipWaiting,新版本就绪时页面内提示「刷新生效」;
+- **安全上下文约束**(浏览器强制):公网 http IP 访问时 SW 自动不注册,页面功能不受影响;
+  域名 + HTTPS(已预置 Nginx + certbot)后全量生效 —— 部署切换见 [DEPLOY.md](DEPLOY.md)。
+
+图标资产由 `scripts/generate_pwa_icons.py` 从 SVG 母版栅格化(resvg),改图标后重跑即可。
+
 ## 为什么需要它
 
 线上算法系统最痛的不是「写出 v1」,而是:

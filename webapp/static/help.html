@@ -10,6 +10,8 @@ catch (e) { document.documentElement.dataset.theme = "light"; }
 </script>
 <title>文档中心 · Transportation Harness</title>
 <link rel="icon" type="image/svg+xml" href="/static/assets/icon.svg">
+<link rel="apple-touch-icon" href="/static/assets/apple-touch-icon-180.png">
+<link rel="manifest" href="/static/manifest.webmanifest">
 <style>
 :root {
   --bg: #f5f6fa; --surface: #fff; --line: #e7eaf3; --line-2: #d8deeb;
@@ -908,6 +910,11 @@ themeBtn.addEventListener("click", () => {
   syncThemeBtn();
 });
 syncThemeBtn();
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>

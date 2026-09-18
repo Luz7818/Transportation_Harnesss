@@ -1,0 +1,35 @@
+{
+  "id": "/",
+  "name": "交通分析自进化 Harness",
+  "short_name": "交通Harness",
+  "description": "把 badcase 沉淀为可重放评测集,用评测驱动迭代闭环让交通分析管线持续进化。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0b1020",
+  "background_color": "#0b1020",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "/static/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/static/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/static/assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "评测看板",
+      "short_name": "看板",
+      "url": "/",
+      "icons": [{ "src": "/static/assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "文档中心",
+      "short_name": "文档",
+      "url": "/help",
+      "icons": [{ "src": "/static/assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

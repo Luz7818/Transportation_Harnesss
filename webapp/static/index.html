@@ -12,7 +12,8 @@ try { document.documentElement.dataset.theme = localStorage.getItem("harness_the
 catch (e) { document.documentElement.dataset.theme = "light"; }
 </script>
 <link rel="icon" type="image/svg+xml" href="/static/assets/icon.svg">
-<link rel="apple-touch-icon" href="/static/assets/icon.svg">
+<link rel="apple-touch-icon" href="/static/assets/apple-touch-icon-180.png">
+<link rel="manifest" href="/static/manifest.webmanifest">
 <style>
 /* ================= 设计令牌 ================= */
 :root {
@@ -772,6 +773,7 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
     <div class="sys-status"><span class="dot" id="health-dot"></span><span id="health-text">连接中…</span></div>
     <div class="meta-row">
       <span id="side-ver">v1.5.0</span><span class="msep">·</span><span id="side-llm" title="LLM Runtime 模式">LLM:—</span>
+      <button id="pwa-install" class="theme-btn" title="安装到桌面 / 主屏幕" aria-label="安装应用" style="display:none">⤓</button>
       <button id="theme-toggle" class="theme-btn" title="切换明暗主题" aria-label="切换明暗主题"></button>
     </div>
     <div class="user-box" id="user-row" style="display:none">
@@ -2079,6 +2081,54 @@ $("#back-top").addEventListener("click", () => scrollArea.scrollTo({ top: 0, beh
 scrollArea.addEventListener("scroll", () => {
   $("#back-top").classList.toggle("show", scrollArea.scrollTop > 420);
 }, { passive: true });
+/* ============ PWA:Service Worker / 安装 / 离线提示 ============ */
+// beforeinstallprompt 可能在脚本执行早期触发,监听需最先挂上
+let _pwaInstallEvent = null;
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  _pwaInstallEvent = e;
+  const btn = $("#pwa-install");
+  if (btn) btn.style.display = "";
+});
+window.addEventListener("appinstalled", () => {
+  const btn = $("#pwa-install");
+  if (btn) btn.style.display = "none";
+  toast("已安装到设备,可从桌面 / 主屏幕打开");
+});
+(function setupPwa() {
+  const btn = $("#pwa-install");
+  if (btn) btn.addEventListener("click", async () => {
+    if (!_pwaInstallEvent) return;
+    _pwaInstallEvent.prompt();
+    const choice = await _pwaInstallEvent.userChoice;
+    if (choice.outcome === "accepted") btn.style.display = "none";
+    _pwaInstallEvent = null;
+  });
+  if (!("serviceWorker" in navigator)) return;
+  if (!window.isSecureContext) {
+    // 公网 http IP 属非安全上下文:浏览器禁用 SW,优雅降级,功能不受影响
+    console.info("[PWA] 非安全上下文(需 localhost / HTTPS),Service Worker 未注册。");
+    return;
+  }
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      reg.addEventListener("updatefound", () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener("statechange", () => {
+          if (sw.state === "installed" && navigator.serviceWorker.controller) {
+            toast("新版本已就绪,刷新页面即可生效");
+          }
+        });
+      });
+    } catch (err) {
+      console.info("[PWA] Service Worker 注册失败(不影响使用):", err);
+    }
+  });
+  window.addEventListener("offline", () => toast("网络已断开,展示的是离线缓存数据", true));
+  window.addEventListener("online", () => toast("网络已恢复"));
+})();
 boot();
 </script>
 </body>
