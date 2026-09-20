@@ -16,12 +16,18 @@ llm_cache/
 llm_runs.jsonl
 drafts/
 
+# AI 编码助手本地工作区
+.zcode/
+
 # 备份
 backups/
 
 # 运行期产物
 *.log
 .DS_Store
+
+# 打包产物(仅根目录 dist/;sdk/dist 的 wheel/sdist 按约定入库)
+/dist/
 
 # 本机真机部署产物(含真实令牌/二维码)
 启动后端.bat

@@ -1,6 +1,12 @@
 # Transportation Harness — 交通分析自进化评测系统
 
+![Transportation Harness · 交通分析自进化评测系统](webapp/static/assets/banner.svg)
+
 [![CI](https://github.com/Luz7818/Transportation_Harnesss/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+> 🗺️ **新人导读**:第一次接触本项目,请先读 [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) ——
+> 十分钟建立整体认知:项目是什么、分几个板块、每个板块在哪、常见任务改哪个文件。
 
 **一句话定位**:把大模型时代「评测驱动迭代」的工程方法论,落地到交通分析领域 ——
 线上 badcase 沉淀为可重放的 replaycase,组成版本化评测集,用
@@ -17,10 +23,14 @@ Human-in-the-loop / Multi-Agent / Evaluation & Governance / 工程化落地** �
 
 ## 界面一览
 
-| 评测看板(双栏:时间线 + 趋势图 / 评测操作 + 版本卡片) | 智能助手(LLM 层) |
+IDE 式三栏布局:左侧任务区(上下文列表)+ 中部工作区 + 右侧**常驻 AI 面板**(可展开/收起,
+任何页面随手调 LLM,原「智能助手」独立页已并入)。三栏宽度均可拖拽手柄调整(双击恢复默认,
+宽度自动记忆),窄宽度下文字图标自动省略适配。
+
+| 评测看板(AI 面板常驻右栏) | 智能助手面板(Runtime 状态 · 草稿沉淀 · 失败诊断) |
 | --- | --- |
 | ![评测看板](docs/images/dashboard.png) | ![智能助手](docs/images/assistant.png) |
-| **Case 管理** | **文档中心(/help)** |
+| **Case 管理(左:Case 库列表 / 中:详情与沉淀表单)** | **文档中心(/help)** |
 | ![Case 管理](docs/images/cases.png) | ![文档中心](docs/images/help.png) |
 
 **深色模式**:侧边栏一键切换、偏好持久化、文档中心自动跟随;趋势图悬停显示逐报告详情。
@@ -226,7 +236,7 @@ ruff check .                                              # 静态检查
   Human-in-the-loop 硬边界。
 
 配置(可选,三个环境变量):`LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL`,
-示例见 [.env.example](.env.example);看板「智能助手」页可实时查看 Runtime 状态与调用审计。
+示例见 [.env.example](.env.example);右侧「智能助手」面板可实时查看 Runtime 状态与调用审计。
 
 ## Web API
 
@@ -320,8 +330,10 @@ Transportation_Harnesss/
 ├── .github/workflows/ci.yml  # CI:ruff + pytest + verify(Python 3.11/3.12 矩阵)
 ├── Dockerfile             # 容器化(非 root 运行 + 健康检查;数据卷挂载,升级不丢评测资产)
 ├── docker-compose.yml
+├── PROJECT_OVERVIEW.md    # 项目整体说明:板块地图、位置安排、数据流、上手路径
 ├── DEPLOY.md              # 公网部署三条路线 + 小程序发布清单
-└── ARCHITECTURE.md        # 架构分层、关键设计决策与扩展点
+├── ARCHITECTURE.md        # 架构分层、关键设计决策与扩展点
+└── LICENSE                # MIT
 ```
 
 ## replaycase 数据结构
