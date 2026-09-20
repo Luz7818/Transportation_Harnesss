@@ -13,7 +13,7 @@
 
 "use strict";
 
-const SHELL_CACHE = "harness-shell-v1";
+const SHELL_CACHE = "harness-shell-v2";
 const API_CACHE = "harness-api-v1";
 
 const SHELL_ASSETS = [
@@ -23,6 +23,11 @@ const SHELL_ASSETS = [
   "/static/assets/icon-192.png",
   "/static/assets/icon-512.png",
   "/static/assets/icon-maskable-512.png",
+  "/static/assets/hero-bg.svg",
+  "/static/assets/hero-bg-light.svg",
+  "/static/assets/banner.svg",
+  "/static/assets/texture-light.svg",
+  "/static/assets/texture-dark.svg",
   "/static/manifest.webmanifest",
 ];
 

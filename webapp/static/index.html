@@ -71,9 +71,6 @@ html[data-theme="dark"] select {
 html[data-theme="dark"] .hint { color: #c7d2fe; }
 html[data-theme="dark"] .hint.ok { color: #6ee7b7; }
 html[data-theme="dark"] .hint.warn { color: #fca5a5; }
-html[data-theme="dark"] .login-card, html[data-theme="dark"] #view-welcome, html[data-theme="dark"] #view-login {
-  background-color: #070b17;
-}
 html[data-theme="dark"] .lv-a, html[data-theme="dark"] .lv-b, html[data-theme="dark"] .lv-c,
 html[data-theme="dark"] .lv-d, html[data-theme="dark"] .lv-e {
   filter: saturate(.85) brightness(1.05);
@@ -89,9 +86,10 @@ body, .card, .topbar, .kpi, .modal, .chip, th, td, .traj-chip, .round, .bar {
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
-body { margin: 0; overflow: hidden; background: var(--bg); color: var(--t1); display: flex;
+body { margin: 0; overflow: hidden; background: var(--bg) url("/static/assets/texture-light.svg") repeat; color: var(--t1); display: flex;
        font: 14px/1.6 "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
        -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+html[data-theme="dark"] body { background: var(--bg) url("/static/assets/texture-dark.svg") repeat; }
 ::selection { background: rgba(79,70,229,.18); }
 .num { font-variant-numeric: tabular-nums; }
 .ico-svg { display: block; flex: none; }
@@ -104,21 +102,24 @@ button { font: inherit; }
 ::-webkit-scrollbar-thumb:hover { background: var(--line-2); }
 
 /* ================= 侧边栏 ================= */
-.sidebar { width: 248px; flex: none; height: 100vh; display: flex; flex-direction: column;
+.sidebar { width: var(--pane-side, 248px); flex: none; height: 100vh; display: flex; flex-direction: column;
            background: linear-gradient(180deg, var(--side-1), var(--side-2)); color: #cdd5e6; }
 .brand { display: flex; align-items: center; gap: 11px; padding: 20px 18px 18px;
-         border-bottom: 1px solid rgba(255,255,255,.07); }
+         border-bottom: 1px solid rgba(255,255,255,.07); min-width: 0; }
 .brand img { width: 38px; height: 38px; border-radius: 10px; box-shadow: 0 6px 18px rgba(6,182,212,.25); }
-.brand .bt { line-height: 1.35; }
-.brand .bt b { display: block; font-size: 13.5px; font-weight: 700; color: #f2f5fb; letter-spacing: .2px; }
-.brand .bt span { font-size: 10.5px; color: #7d8aa5; letter-spacing: .4px; }
+.brand .bt { line-height: 1.35; min-width: 0; flex: 1; }
+.brand .bt b { display: block; font-size: 13.5px; font-weight: 700; color: #f2f5fb; letter-spacing: .2px;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brand .bt span { font-size: 10.5px; color: #7d8aa5; letter-spacing: .4px;
+                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-scroll { flex: 1; overflow-y: auto; padding: 14px 12px; }
 .nav-label { padding: 12px 12px 7px; font-size: 10.5px; font-weight: 600; letter-spacing: .14em; color: #5a6780; text-transform: uppercase; }
 .nav-item { position: relative; display: flex; align-items: center; gap: 11px; width: 100%;
             border: 0; cursor: pointer; background: transparent; color: #a7b2ca; font: inherit;
             text-align: left; padding: 9px 12px; border-radius: 10px; margin-bottom: 3px;
-            font-weight: 500; font-size: 13.5px;
+            font-weight: 500; font-size: 13.5px; min-width: 0;
             transition: background .15s, color .15s; }
+.nav-item .nv-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
 .nav-item.active { background: rgba(99,102,241,.18); color: #fff; }
 .nav-item.active::before { content: ""; position: absolute; left: -12px; top: 22%; height: 56%;
@@ -131,7 +132,7 @@ button { font: inherit; }
        box-shadow: 0 0 0 3px rgba(52,211,153,.16); animation: pulse 2.4s infinite; }
 .dot.off { background: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,.16); animation: none; }
 @keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(52,211,153,.16);} 50% { box-shadow: 0 0 0 5px rgba(52,211,153,.07);} }
-.meta-row { margin-top: 10px; display: flex; align-items: center; gap: 6px;
+.meta-row { margin-top: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
             font-size: 11px; color: #7d8aa5; font-variant-numeric: tabular-nums; }
 .meta-row .msep { opacity: .5; }
 .theme-btn { margin-left: auto; width: 26px; height: 26px; border-radius: 8px; border: 0;
@@ -157,15 +158,28 @@ button { font: inherit; }
           justify-content: space-between; gap: 16px; padding: 14px 32px;
           background: var(--topbar-bg); backdrop-filter: blur(12px);
           border-bottom: 1px solid var(--line); }
+.topbar > div:first-child { flex: 1; min-width: 0; }
 .topbar h2 { margin: 0; font-size: 16.5px; letter-spacing: .1px; font-weight: 700; }
-.topbar .sub { color: var(--t3); font-size: 12px; margin-top: 1px; }
+.topbar .sub { color: var(--t3); font-size: 12px; margin-top: 1px;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chipbar { display: flex; gap: 8px; align-items: center; font-size: 12px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--surface);
         border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px;
-        color: var(--t3); box-shadow: var(--shadow-xs); }
+        color: var(--t3); box-shadow: var(--shadow-xs); white-space: nowrap; }
 .chip .ico-svg { color: var(--t4); }
 
-main { padding: 24px 32px 64px; max-width: 1160px; width: 100%; margin: 0 auto; }
+main { padding: 24px 32px 64px; max-width: 1160px; width: 100%; margin: 0 auto;
+       container-type: inline-size; }
+/* 工作区被分栏拖拽/窗口压缩到很窄时,双栏卡片改为纵向堆叠,保证内容完整可读 */
+@container (max-width: 520px) {
+  .dash-grid { grid-template-columns: 1fr; }
+}
+/* 窄工作区:版本卡片转单列(minmax 230px 下限会溢出窄容器),卡片标题可收缩 */
+@container (max-width: 700px) {
+  .dash-col .grid { grid-template-columns: 1fr; }
+  .dash-col .vcard { min-width: 0; }
+}
+.vcard .vn { min-width: 0; }
 section.page { display: none; }
 section.page.active { display: block; animation: fadeUp .3s ease both; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -234,7 +248,8 @@ details.changes ul { margin: 7px 0 0; padding-left: 20px; color: var(--t3); font
 details.changes li { margin-bottom: 3px; }
 
 /* ================= KPI ================= */
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;
+        margin-bottom: 20px; container-type: inline-size; }
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
        box-shadow: var(--shadow-xs); padding: 16px 20px 15px; transition: box-shadow .15s; }
 .kpi:hover { box-shadow: var(--shadow-sm); }
@@ -242,26 +257,39 @@ details.changes li { margin-bottom: 3px; }
 .kpi .k-label { color: var(--t3); font-size: 12px; font-weight: 600; letter-spacing: .03em; }
 .kpi .k-ico { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center;
               justify-content: center; background: var(--primary-soft); color: var(--primary); }
-.kpi .k-value { font-size: 25px; font-weight: 800; margin-top: 8px; font-variant-numeric: tabular-nums;
+.kpi .k-value { font-size: 22px; font-weight: 800; margin-top: 8px; font-variant-numeric: tabular-nums;
                 letter-spacing: -.3px; }
 .kpi .k-value small { font-size: 13px; color: var(--t3); font-weight: 600; margin-left: 7px; }
 .kpi .k-value.grad { background: linear-gradient(90deg, #4f46e5, #0891b2);
                      -webkit-background-clip: text; background-clip: text; color: transparent; }
 .kpi .k-foot { color: var(--t3); font-size: 11.5px; margin-top: 3px; }
+/* 窄工作区(AI 面板展开等):KPI 收起图标,标签保持单行。置于组件规则之后以正确覆盖 */
+@container (max-width: 640px) {
+  .kpi .k-ico { display: none; }
+  .kpi .k-label { font-size: 11.5px; }
+}
 
 /* ================= 闭环 stepper ================= */
 .loop { display: flex; align-items: stretch; flex-wrap: nowrap; overflow-x: auto; padding: 8px 0 12px; }
-.step { flex: 1; min-width: 126px; text-align: center; padding: 10px 8px; border-radius: 12px;
+.step { flex: 1; min-width: 100px; text-align: center; padding: 7px 5px; border-radius: 12px;
         transition: background .15s; }
 .step:hover { background: var(--row-hover); }
-.step .s-ico { width: 40px; height: 40px; margin: 0 auto; border-radius: 12px; display: flex;
+.step .s-ico { width: 34px; height: 34px; margin: 0 auto; border-radius: 10px; display: flex;
                align-items: center; justify-content: center; color: var(--primary);
                background: var(--primary-soft); border: 1px solid var(--soft-line); }
 .step.click { cursor: pointer; }
 .step.click .s-ico { color: var(--primary); }
-.step .s-title { font-weight: 700; font-size: 13px; margin-top: 9px; }
-.step .s-sub { color: var(--t3); font-size: 11.5px; margin-top: 2px; line-height: 1.45; }
+.step .s-title { font-weight: 700; font-size: 12px; margin-top: 7px; }
+.step .s-sub { color: var(--t3); font-size: 10.5px; margin-top: 2px; line-height: 1.4; }
 .s-arrow { align-self: center; color: #c2cadb; flex: none; padding: 0 1px; }
+/* 闭环步骤条所在卡片作为容器:宽度不足时收起副标题,保证单行展示不横向滚动 */
+.card:has(> .loop) { container-type: inline-size; }
+@container (max-width: 760px) {
+  .step { min-width: 0; }
+  .step .s-sub { display: none; }
+  .step .s-title { font-size: 11.5px; margin-top: 6px; }
+  .step .s-ico { width: 32px; height: 32px; }
+}
 .loopback { position: relative; margin: 4px 30px 0; height: 30px;
             border: 1.5px dashed var(--loop-line); border-top: 0; border-radius: 0 0 14px 14px; }
 .loopback .lb-label { position: absolute; left: 50%; top: 9px; transform: translateX(-50%);
@@ -522,99 +550,144 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
                   text-transform: uppercase; color: var(--t3); }
 .drawer-body h4:first-child { margin-top: 0; }
 
-/* ================= 欢迎页 / 登录页 ================= */
+/* ================= 欢迎页 / 登录页(默认夜间;页内按钮可切晨光,独立于全局主题) ================= */
 .hidden { display: none !important; }
 .fullscreen { position: fixed; inset: 0; overflow-y: auto; z-index: 40; }
 #view-welcome, #view-login {
+  /* 欢迎页局部语义令牌:夜间为默认,晨光通过 .hero-light 类整体覆盖 */
+  --hv-text: #e8edf7; --hv-sub: #a6b2c9; --hv-faint: #8b98ad;
+  --hv-card: rgba(13,20,36,.66); --hv-card-strong: rgba(13,20,36,.82);
+  --hv-line: rgba(255,255,255,.09); --hv-soft-line: rgba(255,255,255,.06);
+  --hv-nav-bg: rgba(7,11,23,.55);
+  --hv-ghost-bg: rgba(255,255,255,.07); --hv-ghost-line: rgba(255,255,255,.14); --hv-ghost-text: #cbd5eb;
+  --hv-ghost-hover: rgba(255,255,255,.12);
+  --hv-chip-bg: rgba(99,102,241,.12); --hv-chip-text: #c7d2fe; --hv-chip-line: rgba(129,140,248,.35);
+  --hv-grad-a: #a5b4fc; --hv-grad-b: #67e8f9;
+  --hv-fico-bg: linear-gradient(135deg, rgba(99,102,241,.25), rgba(34,211,238,.18));
+  --hv-fico-text: #a5f3fc; --hv-fico-line: rgba(129,140,248,.3);
+  --hv-stat-bg: rgba(255,255,255,.055); --hv-stat-text: #9aa8c2;
+  --hv-yes: #b9e8d2; --hv-no: #74829e; --hv-ok-ico: #34d399; --hv-bad-ico: #f87171;
+  --hv-btn-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --hv-btn-shadow: 0 6px 18px -4px rgba(99,102,241,.55);
+  --hv-focus-ring: 0 0 0 3px rgba(103,232,249,.13);
+  --hv-card-shadow: 0 30px 90px rgba(0,0,0,.55);
   background: #070b17 url("/static/assets/hero-bg.svg") center / cover no-repeat fixed;
-  color: #e8edf7;
+  color: var(--hv-text);
+}
+#view-welcome.hero-light, #view-login.hero-light {
+  --hv-text: #16203a; --hv-sub: #42506b; --hv-faint: #64748b;
+  --hv-card: rgba(255,255,255,.78); --hv-card-strong: rgba(255,255,255,.92);
+  --hv-line: rgba(79,70,229,.16); --hv-soft-line: rgba(15,23,42,.08);
+  --hv-nav-bg: rgba(244,246,253,.72);
+  --hv-ghost-bg: rgba(255,255,255,.75); --hv-ghost-line: #c6cfe6; --hv-ghost-text: #3b4a66;
+  --hv-ghost-hover: rgba(79,70,229,.1);
+  --hv-chip-bg: rgba(79,70,229,.08); --hv-chip-text: #4338ca; --hv-chip-line: rgba(79,70,229,.32);
+  --hv-grad-a: #4f46e5; --hv-grad-b: #0891b2;
+  --hv-fico-bg: linear-gradient(135deg, rgba(79,70,229,.12), rgba(6,182,212,.12));
+  --hv-fico-text: #4f46e5; --hv-fico-line: rgba(79,70,229,.28);
+  --hv-stat-bg: rgba(255,255,255,.7); --hv-stat-text: #5b6a86;
+  --hv-yes: #067647; --hv-no: #8b95a9; --hv-ok-ico: #059669; --hv-bad-ico: #dc2626;
+  --hv-btn-primary: linear-gradient(135deg, #4f46e5, #7c3aed);
+  --hv-btn-shadow: 0 6px 18px -4px rgba(79,70,229,.45);
+  --hv-focus-ring: 0 0 0 3px rgba(79,70,229,.15);
+  --hv-card-shadow: 0 30px 90px rgba(15,23,42,.18);
+  background: #eef2fb url("/static/assets/hero-bg-light.svg") center / cover no-repeat fixed;
+  color: var(--hv-text);
 }
 .hero-nav { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between;
-            padding: 18px 40px; background: rgba(7,11,23,.55); backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,.06); }
+            padding: 18px 40px; background: var(--hv-nav-bg); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--hv-line); }
 .hero-nav .hn-brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 14.5px;
-                      color: #f2f5fb; letter-spacing: .2px; }
+                      color: var(--hv-text); letter-spacing: .2px; }
 .hero-nav .hn-brand img { width: 34px; height: 34px; border-radius: 9px; }
-.hero-nav .hn-brand span { color: #7d8aa5; font-weight: 500; font-size: 12px; margin-left: 8px; }
+.hero-nav .hn-brand span { color: var(--hv-faint); font-weight: 500; font-size: 12px; margin-left: 8px; }
 .hn-actions { display: flex; align-items: center; gap: 10px; }
+.hero-nav .theme-btn { margin-left: 0; width: 36px; height: 36px; border-radius: 9px;
+                       background: var(--hv-ghost-bg); color: var(--hv-ghost-text);
+                       border: 1px solid var(--hv-ghost-line); }
+.hero-nav .theme-btn:hover { background: var(--hv-ghost-hover); }
 .btn-hero { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 16px;
             border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
             transition: filter .15s, background .15s; }
-.btn-hero.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: 0;
-                    box-shadow: 0 6px 18px -4px rgba(99,102,241,.55); }
+.btn-hero.primary { background: var(--hv-btn-primary); color: #fff; border: 0;
+                    box-shadow: var(--hv-btn-shadow); }
 .btn-hero.primary:hover { filter: brightness(1.08); }
-.btn-hero.ghost { background: rgba(255,255,255,.07); color: #cbd5eb; border: 1px solid rgba(255,255,255,.14); }
-.btn-hero.ghost:hover { background: rgba(255,255,255,.12); }
+.btn-hero.ghost { background: var(--hv-ghost-bg); color: var(--hv-ghost-text); border: 1px solid var(--hv-ghost-line); }
+.btn-hero.ghost:hover { background: var(--hv-ghost-hover); }
 
 .hero { min-height: calc(100vh - 73px); display: flex; align-items: center; justify-content: center; padding: 56px 24px 72px; }
 .hero-inner { max-width: 1020px; text-align: center; }
-.hero-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(129,140,248,.35);
-             background: rgba(99,102,241,.12); color: #c7d2fe; border-radius: 999px; padding: 6px 16px;
+.hero-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--hv-chip-line);
+             background: var(--hv-chip-bg); color: var(--hv-chip-text); border-radius: 999px; padding: 6px 16px;
              font-size: 12.5px; font-weight: 600; letter-spacing: .04em; }
-.hero-chip .ico-svg { color: #a5f3fc; }
+.hero-chip .ico-svg { color: var(--hv-grad-b); }
 .hero h1 { font-size: 44px; margin: 22px 0 12px; letter-spacing: .5px; line-height: 1.22; font-weight: 800; }
-.hero h1 em { font-style: normal; background: linear-gradient(90deg, #a5b4fc, #67e8f9);
+.hero h1 em { font-style: normal; background: linear-gradient(90deg, var(--hv-grad-a), var(--hv-grad-b));
               -webkit-background-clip: text; background-clip: text; color: transparent; }
-.hero-slogan { color: #a6b2c9; font-size: 15px; max-width: 680px; margin: 0 auto 30px; line-height: 1.75; }
-.hero-slogan b { color: #dbe4f5; font-weight: 600; }
+.hero-slogan { color: var(--hv-sub); font-size: 15px; max-width: 680px; margin: 0 auto 30px; line-height: 1.75; }
+.hero-slogan b { color: var(--hv-text); font-weight: 600; }
 .hero-cta { display: flex; gap: 12px; justify-content: center; margin-bottom: 34px; }
 .btn-hero.lg { height: 46px; padding: 0 26px; font-size: 14.5px; border-radius: 11px; }
 .hero-stats { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 42px; }
-.hstat { background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.11);
-         backdrop-filter: blur(6px); border-radius: 14px; padding: 14px 30px; font-size: 12px; color: #9aa8c2; }
+.hstat { background: var(--hv-stat-bg); border: 1px solid var(--hv-line);
+         backdrop-filter: blur(6px); border-radius: 14px; padding: 14px 30px; font-size: 12px; color: var(--hv-stat-text); }
 .hstat b { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 24px;
-           color: #fff; font-variant-numeric: tabular-nums; margin-bottom: 2px; }
-.hstat .ico-svg { color: #67e8f9; }
+           color: var(--hv-text); font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+.hstat .ico-svg { color: var(--hv-grad-b); }
 .feature-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; text-align: left; }
-.feat { background: rgba(13,20,36,.66); border: 1px solid rgba(255,255,255,.09);
+.feat { background: var(--hv-card); border: 1px solid var(--hv-line);
         border-radius: 16px; padding: 22px 22px 20px; backdrop-filter: blur(8px);
         transition: transform .18s, border-color .18s; }
-.feat:hover { transform: translateY(-3px); border-color: rgba(129,140,248,.4); }
+.feat:hover { transform: translateY(-3px); border-color: var(--hv-chip-line); }
 .feat .f-ico { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center;
-               justify-content: center; background: linear-gradient(135deg, rgba(99,102,241,.25), rgba(34,211,238,.18));
-               color: #a5f3fc; border: 1px solid rgba(129,140,248,.3); }
-.feat .f-t { font-weight: 700; margin: 14px 0 6px; font-size: 14.5px; color: #f2f5fb; }
-.feat p { color: #9aa8c2; font-size: 12.5px; margin: 0; line-height: 1.7; }
+               justify-content: center; background: var(--hv-fico-bg);
+               color: var(--hv-fico-text); border: 1px solid var(--hv-fico-line); }
+.feat .f-t { font-weight: 700; margin: 14px 0 6px; font-size: 14.5px; color: var(--hv-text); }
+.feat p { color: var(--hv-sub); font-size: 12.5px; margin: 0; line-height: 1.7; }
 /* ---- 欢迎页对比表 ---- */
-.cmp-card { max-width: 920px; margin: 0 auto 34px; background: rgba(13,20,36,.8);
-            border: 1px solid rgba(255,255,255,.09); border-radius: 18px;
+.cmp-card { max-width: 920px; margin: 0 auto 34px; background: var(--hv-card-strong);
+            border: 1px solid var(--hv-line); border-radius: 18px;
             padding: 24px 26px 18px; text-align: left; }
 .cmp-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-.cmp-head b { font-size: 16px; color: #f2f5fb; }
-.cmp-head span { font-size: 12px; color: #8b98ad; }
+.cmp-head b { font-size: 16px; color: var(--hv-text); }
+.cmp-head span { font-size: 12px; color: var(--hv-faint); }
 .cmp { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-.cmp th { text-align: left; padding: 8px 12px; color: #8b98ad; font-weight: 600; font-size: 11px;
-          letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,.12); }
-.cmp td { padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,.06);
-          color: #a6b2c9; vertical-align: top; line-height: 1.55; }
+.cmp th { text-align: left; padding: 8px 12px; color: var(--hv-faint); font-weight: 600; font-size: 11px;
+          letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--hv-line); }
+.cmp td { padding: 9px 12px; border-bottom: 1px solid var(--hv-soft-line);
+          color: var(--hv-sub); vertical-align: top; line-height: 1.55; }
 .cmp tr:last-child td { border-bottom: 0; }
-.cmp td:first-child { color: #dbe4f5; font-weight: 600; white-space: nowrap; }
-.cmp td.no { color: #74829e; }
-.cmp td.yes { color: #b9e8d2; }
-.cmp td.yes::before { content: "✓ "; color: #34d399; font-weight: 800; }
-.cmp td.no::before { content: "✕ "; color: #f87171; font-weight: 800; }
+.cmp td:first-child { color: var(--hv-text); font-weight: 600; white-space: nowrap; }
+.cmp td.no { color: var(--hv-no); }
+.cmp td.yes { color: var(--hv-yes); }
+.cmp td.yes::before { content: "✓ "; color: var(--hv-ok-ico); font-weight: 800; }
+.cmp td.no::before { content: "✕ "; color: var(--hv-bad-ico); font-weight: 800; }
 
-.hero-foot { margin-top: 36px; color: #5a6780; font-size: 12px; display: flex; align-items: center;
+.hero-foot { margin-top: 36px; color: var(--hv-faint); font-size: 12px; display: flex; align-items: center;
              justify-content: center; gap: 8px; flex-wrap: wrap; }
 .hero-foot .sep { opacity: .4; }
 
 .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-.login-card { width: 400px; background: rgba(13,20,36,.82); border: 1px solid rgba(255,255,255,.11);
+.login-card { position: relative; width: 400px; background: var(--hv-card-strong); border: 1px solid var(--hv-line);
               border-radius: 20px; padding: 34px 34px 26px; backdrop-filter: blur(16px);
-              color: #e8edf7; box-shadow: 0 30px 90px rgba(0,0,0,.55); animation: fadeUp .3s ease both; }
+              color: var(--hv-text); box-shadow: var(--hv-card-shadow); animation: fadeUp .3s ease both; }
+.login-card .theme-btn { position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; border-radius: 9px;
+                         background: var(--hv-ghost-bg); color: var(--hv-ghost-text);
+                         border: 1px solid var(--hv-ghost-line); margin-left: 0; }
+.login-card .theme-btn:hover { background: var(--hv-ghost-hover); }
 .login-head { text-align: center; margin-bottom: 6px; }
 .login-head img { width: 60px; height: 60px; border-radius: 15px; box-shadow: 0 10px 30px rgba(6,182,212,.3); }
 .login-card h2 { margin: 14px 0 3px; font-size: 20px; }
-.login-card .muted { color: #8b98ad; }
-.login-card label { color: #93a0ba; }
-.login-card input { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.16); color: #fff; height: 41px; }
-.login-card input:focus { border-color: #67e8f9; box-shadow: 0 0 0 3px rgba(103,232,249,.13); }
+.login-card .muted { color: var(--hv-faint); }
+.login-card label { color: var(--hv-sub); }
+.login-card input { background: var(--hv-ghost-bg); border-color: var(--hv-ghost-line); color: var(--hv-text); height: 41px; }
+.login-card input:focus { border-color: var(--hv-grad-b); box-shadow: var(--hv-focus-ring); }
 .login-card .btn { width: 100%; height: 42px; margin-top: 18px; }
 .login-foot { text-align: center; margin-top: 16px; }
-.login-foot .linklike { color: #7d8aa5; }
-.login-foot .linklike:hover { color: #a5f3fc; }
-#login-hint { display: none; margin-top: 14px; background: rgba(99,102,241,.1); border: 1px solid rgba(129,140,248,.3);
-              color: #c7d2fe; border-radius: 10px; padding: 9px 13px; font-size: 12px; }
+.login-foot .linklike { color: var(--hv-faint); }
+.login-foot .linklike:hover { color: var(--hv-grad-a); }
+#login-hint { display: none; margin-top: 14px; background: var(--hv-chip-bg); border: 1px solid var(--hv-chip-line);
+              color: var(--hv-chip-text); border-radius: 10px; padding: 9px 13px; font-size: 12px; }
 
 /* ================= 弹窗 ================= */
 .app-shell { display: flex; width: 100%; height: 100vh; }
@@ -630,20 +703,136 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
 /* ================= 双栏工作台(压缩滚动长度) ================= */
-.dash-grid { display: grid; grid-template-columns: minmax(0, 58fr) minmax(0, 42fr); gap: 20px; align-items: start; }
-.dash-col { min-width: 0; }
+.dash-grid { display: grid; grid-template-columns: minmax(0, 58fr) minmax(0, 42fr); gap: 20px;
+             align-items: stretch; }
+.dash-col { min-width: 0; display: flex; flex-direction: column; }
+.dash-col .card { flex: 1; display: flex; flex-direction: column; }
 .dash-col .card:last-child { margin-bottom: 0; }
 @media (max-width: 1150px) { .dash-grid { grid-template-columns: 1fr; } }
 
 /* ================= 回到顶部 ================= */
-.back-top { position: fixed; right: 26px; bottom: 26px; width: 42px; height: 42px; border-radius: 12px;
+.back-top { position: fixed; right: 52px; bottom: 26px; width: 42px; height: 42px; border-radius: 12px;
             background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-md); cursor: pointer;
             color: var(--t3); font-size: 17px; display: flex; align-items: center; justify-content: center;
             z-index: 45; opacity: 0; pointer-events: none; transform: translateY(10px); transition: all .2s; }
 .back-top.show { opacity: 1; pointer-events: auto; transform: none; }
 .back-top:hover { color: var(--primary); }
 
+/* ================= IDE 布局:任务区(左) + 工作区(中) + AI 面板(右) ================= */
+.taskpanel { width: var(--pane-task, 272px); flex: none; height: 100vh; display: none; flex-direction: column;
+             background: var(--surface-2); border-right: 1px solid var(--line); min-height: 0; }
+#app.has-task .taskpanel { display: flex; }
+.tp-head { display: flex; align-items: center; gap: 8px; padding: 14px 12px 10px 14px; }
+.tp-head b { font-size: 13px; flex: 1; display: flex; align-items: center; gap: 7px; min-width: 0; }
+.tp-head .chip2 { padding: 2px 9px; font-size: 11px; }
+.tp-tools { padding: 0 10px 10px; }
+.tp-tools .chips { margin: 0; }
+.tp-tools .chip2 { padding: 2.5px 10px; font-size: 11px; }
+.tp-list { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 8px 14px; }
+.tp-item { position: relative; display: block; width: 100%; border: 1px solid transparent; background: transparent;
+           border-radius: 10px; padding: 8px 10px 7px; cursor: pointer; margin-bottom: 2px; font: inherit; text-align: left;
+           transition: background .13s, border-color .13s; }
+.tp-item:hover { background: var(--row-hover); }
+.tp-item.sel { background: var(--primary-soft); border-color: var(--soft-line); }
+.tp-item .ti-top { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+.tp-item .ti-id { flex: none; font-size: 11px; color: var(--t4); font-variant-numeric: tabular-nums; }
+.tp-item .ti-title { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600; color: var(--t1);
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-item .ti-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px;
+                    font-size: 11px; color: var(--t3); flex-wrap: wrap; }
+.tp-item .ti-meta .lv { font-size: 10.5px; padding: 1px 7px 1px 6px; }
+.tp-item .row-sel { margin-left: auto; }
+.tp-empty { padding: 24px 12px; text-align: center; color: var(--t3); font-size: 12px; }
+.tp-foot { padding: 10px 14px 13px; border-top: 1px solid var(--line); font-size: 11px; color: var(--t4); line-height: 1.5; }
+
+#ai-rail { width: 36px; flex: none; height: 100vh; border: 0; border-left: 1px solid var(--line);
+           background: var(--surface); color: var(--t3); cursor: pointer; display: flex; flex-direction: column;
+           align-items: center; gap: 10px; padding: 15px 0; font: inherit; font-size: 12px; font-weight: 600;
+           transition: background .15s, color .15s; }
+#ai-rail:hover { background: var(--surface-2); color: var(--t1); }
+#ai-rail.on { background: var(--primary-soft); color: var(--primary); }
+#ai-rail .ai-rail-txt { writing-mode: vertical-rl; letter-spacing: .25em; }
+.aipanel { width: 0; flex: none; height: 100vh; background: var(--bg); border-left: 1px solid var(--line);
+           overflow: hidden; transition: width .22s cubic-bezier(.2,.8,.25,1); }
+.aipanel.open { width: var(--pane-ai, 396px); }
+.ai-inner { width: calc(var(--pane-ai, 396px) - 1px); height: 100vh; display: flex; flex-direction: column; }
+.ai-head { display: flex; align-items: center; gap: 9px; padding: 13px 14px 12px 16px;
+           border-bottom: 1px solid var(--line); background: var(--surface); }
+.ai-head b { font-size: 13.5px; flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ai-head .h-ico { width: 26px; height: 26px; border-radius: 8px; flex: none; display: flex; align-items: center;
+                  justify-content: center; background: var(--primary-soft); color: var(--primary); }
+.ai-body { flex: 1; min-height: 0; overflow-y: auto; padding: 13px 13px 30px; }
+.ai-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+          box-shadow: var(--shadow-xs); padding: 13px 14px 15px; margin-bottom: 12px; }
+.ai-sec > h4 { margin: 0 0 2px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.ai-sec > h4 .ico-svg { color: var(--primary); }
+.ai-sec > .desc { color: var(--t3); font-size: 11.5px; margin: 0 0 6px; line-height: 1.55; }
+.aipanel label { margin: 9px 0 4px; font-size: 11.5px; }
+.aipanel input, .aipanel select, .aipanel textarea { height: 34px; font-size: 12.5px; border-radius: 9px; }
+.aipanel textarea { height: auto; }
+.aipanel .btn { height: 34px; font-size: 12.5px; border-radius: 9px; }
+.aipanel .btn.sm { height: 28px; font-size: 11.5px; }
+.aipanel .chips { margin: 8px 0 4px; }
+.aipanel .chip2 { font-size: 11px; padding: 3px 10px; }
+.ai-runs .ai-run { display: flex; align-items: center; gap: 7px; padding: 5.5px 0;
+                   border-bottom: 1px dashed var(--row-line); font-size: 11.5px; }
+.ai-runs .ai-run:last-child { border-bottom: 0; }
+.ai-run .rp-purpose { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-run .muted { font-size: 11px; }
+.ai-draft { border: 1px solid var(--soft-line); background: var(--round-bg); border-radius: 10px;
+            padding: 10px 12px 12px; margin-top: 10px; }
+
+/* ================= 面板宽度拖拽(三栏可调) ================= */
+.pane-resizer { width: 6px; flex: none; cursor: col-resize; position: relative; z-index: 30;
+                touch-action: none; margin: 0 -2px; }
+.pane-resizer::before { content: ""; position: absolute; left: 2px; top: 0; bottom: 0; width: 2px;
+                        border-radius: 2px; background: transparent; transition: background .15s; }
+.pane-resizer:hover::before, .pane-resizer.dragging::before { background: var(--primary); opacity: .65; }
+body.col-resizing { cursor: col-resize; user-select: none; }
+body.col-resizing .aipanel { transition: none; }
+#app:not(.ai-open) .pane-resizer[data-resize="ai"] { display: none; }
+
+/* ================= 看板入口磁贴 + 内容弹层 ================= */
+.entry-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px;
+             margin-bottom: 20px; }
+.entry-card { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+              background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+              box-shadow: var(--shadow-xs); padding: 13px 16px; cursor: pointer; font: inherit; color: inherit;
+              transition: border-color .15s, box-shadow .15s, transform .12s; }
+.entry-card:hover { border-color: var(--line-2); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.entry-card:active { transform: translateY(0) scale(.99); }
+.entry-card .e-ico { width: 38px; height: 38px; border-radius: 11px; flex: none; display: flex;
+                     align-items: center; justify-content: center;
+                     background: var(--primary-soft); color: var(--primary); }
+.entry-card .e-body { flex: 1; min-width: 0; }
+.entry-card .e-body b { display: block; font-size: 13.5px; }
+.entry-card .e-body small { display: block; color: var(--t3); font-size: 12px; margin-top: 1px;
+                            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.entry-card .e-arrow { color: var(--t4); flex: none; transition: transform .15s, color .15s; }
+.entry-card:hover .e-arrow { transform: translateX(2px); color: var(--primary); }
+
+.sheet-mask { position: fixed; inset: 0; background: rgba(8,12,24,.55); backdrop-filter: blur(4px);
+              z-index: 68; display: flex; align-items: center; justify-content: center;
+              padding: 24px; animation: fadeIn .15s ease both; }
+.sheet { width: min(720px, 100%); max-height: min(86vh, 780px); background: var(--surface);
+         border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-md);
+         display: flex; flex-direction: column; overflow: hidden;
+         animation: popIn .2s cubic-bezier(.2,.9,.3,1.15) both; }
+.sheet-head { display: flex; align-items: center; gap: 10px; padding: 15px 18px 13px;
+              border-bottom: 1px solid var(--line); }
+.sheet-head .h-ico { width: 30px; height: 30px; border-radius: 9px; flex: none; display: flex;
+                     align-items: center; justify-content: center;
+                     background: var(--primary-soft); color: var(--primary); }
+.sheet-head b { flex: 1; min-width: 0; font-size: 14.5px; overflow: hidden;
+                text-overflow: ellipsis; white-space: nowrap; }
+.sheet-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 18px 22px; }
+
 /* ================= 响应式 ================= */
+/* 三栏外壳下顶栏偏窄:搜索按钮只留图标 + 快捷键徽章 */
+@media (max-width: 1680px) {
+  .topbar-cmdk { font-size: 0; gap: 6px; }
+  .topbar-cmdk .kbd { font-size: 11px; }
+}
 @media (max-width: 960px) {
   body { overflow: auto; flex-direction: column; }
   .app-shell { flex-direction: column; height: auto; }
@@ -664,6 +853,17 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
   .step { min-width: 108px; }
   .hero-nav { padding: 14px 20px; }
   .hero h1 { font-size: 32px; }
+  /* 三栏在小屏的降级:任务区变为顶部横条,AI 面板改为覆盖式抽屉,侧轨悬停右缘 */
+  .pane-resizer { display: none; }
+  .taskpanel { width: 100%; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .tp-list { max-height: 30vh; padding-bottom: 8px; }
+  .tp-foot { display: none; }
+  #ai-rail { position: fixed; right: 0; top: 42%; z-index: 46; height: auto; padding: 13px 0;
+             border: 1px solid var(--line); border-right: 0; border-radius: 10px 0 0 10px;
+             box-shadow: var(--shadow-sm); }
+  .aipanel, .aipanel.open { position: fixed; top: 0; right: 0; bottom: 0; z-index: 47; width: 0; }
+  .aipanel.open { width: min(396px, 94vw); }
+  .ai-inner { width: min(396px, 94vw); }
 }
 @media (max-width: 640px) {
   .topbar { padding-top: 11px; padding-bottom: 11px; }
@@ -684,6 +884,7 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
   <div class="hero-nav">
     <div class="hn-brand"><img src="/static/assets/icon.svg" alt="">Transportation Harness<span>交通分析自进化评测系统</span></div>
     <div class="hn-actions">
+      <button class="theme-btn" data-hero-toggle title="切换欢迎页明暗(不影响工作台)" aria-label="切换欢迎页明暗"></button>
       <a class="btn-hero ghost" href="/help" target="_blank" rel="noopener">文档</a>
       <button class="btn-hero primary" onclick="enterApp()">进入系统</button>
     </div>
@@ -733,6 +934,7 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
 <div id="view-login" class="fullscreen hidden">
   <div class="login-wrap">
     <div class="login-card">
+      <button class="theme-btn" data-hero-toggle title="切换欢迎页明暗(不影响工作台)" aria-label="切换欢迎页明暗"></button>
       <div class="login-head">
         <img src="/static/assets/icon.svg" alt="logo">
         <h2>欢迎回来</h2>
@@ -759,22 +961,22 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
   </div>
   <div class="nav-scroll">
     <div class="nav-label">工作台</div>
-    <button class="nav-item active" data-tab="dashboard"><span class="nv-ico" data-ico="dashboard"></span>评测看板</button>
-    <button class="nav-item" data-tab="cases"><span class="nv-ico" data-ico="database"></span>Case 管理</button>
-    <button class="nav-item" data-tab="assistant"><span class="nv-ico" data-ico="spark"></span>智能助手</button>
+    <button class="nav-item active" data-tab="dashboard"><span class="nv-ico" data-ico="dashboard"></span><span class="nv-txt">评测看板</span></button>
+    <button class="nav-item" data-tab="cases"><span class="nv-ico" data-ico="database"></span><span class="nv-txt">Case 管理</span></button>
+    <button class="nav-item" id="nav-assistant" onclick="setAiOpen()" title="展开 / 收起右侧 AI 面板"><span class="nv-ico" data-ico="spark"></span><span class="nv-txt">智能助手</span></button>
     <div class="nav-label">评测资产</div>
-    <button class="nav-item" data-tab="compare"><span class="nv-ico" data-ico="scale"></span>版本对比</button>
-    <button class="nav-item" data-tab="analyze"><span class="nv-ico" data-ico="flask"></span>分析提交</button>
+    <button class="nav-item" data-tab="compare"><span class="nv-ico" data-ico="scale"></span><span class="nv-txt">版本对比</span></button>
+    <button class="nav-item" data-tab="analyze"><span class="nv-ico" data-ico="flask"></span><span class="nv-txt">分析提交</span></button>
     <div class="nav-label">其它</div>
-    <button class="nav-item" onclick="showWelcome()"><span class="nv-ico" data-ico="rocket"></span>欢迎页</button>
-    <a class="nav-item" href="/help" target="_blank" rel="noopener" style="text-decoration:none"><span class="nv-ico" data-ico="book"></span>文档中心</a>
+    <button class="nav-item" onclick="showWelcome()"><span class="nv-ico" data-ico="rocket"></span><span class="nv-txt">欢迎页</span></button>
+    <a class="nav-item" href="/help" target="_blank" rel="noopener" style="text-decoration:none"><span class="nv-ico" data-ico="book"></span><span class="nv-txt">文档中心</span></a>
   </div>
   <div class="side-foot">
     <div class="sys-status"><span class="dot" id="health-dot"></span><span id="health-text">连接中…</span></div>
     <div class="meta-row">
       <span id="side-ver">v1.5.0</span><span class="msep">·</span><span id="side-llm" title="LLM Runtime 模式">LLM:—</span>
       <button id="pwa-install" class="theme-btn" title="安装到桌面 / 主屏幕" aria-label="安装应用" style="display:none">⤓</button>
-      <button id="theme-toggle" class="theme-btn" title="切换明暗主题" aria-label="切换明暗主题"></button>
+      <button id="theme-toggle" class="theme-btn" data-theme-toggle title="切换明暗主题" aria-label="切换明暗主题"></button>
     </div>
     <div class="user-box" id="user-row" style="display:none">
       <div class="avatar" id="user-avatar">A</div>
@@ -786,6 +988,16 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
     </div>
   </div>
 </aside>
+
+<div class="pane-resizer" data-resize="side" title="拖动调整宽度 · 双击恢复默认"></div>
+
+<aside class="taskpanel" id="taskpanel" aria-label="任务区">
+  <div id="tp-head-slot"></div>
+  <div class="tp-list" id="tp-list"></div>
+  <div class="tp-foot" id="tp-foot" style="display:none"></div>
+</aside>
+
+<div class="pane-resizer" data-resize="task" title="拖动调整宽度 · 双击恢复默认"></div>
 
 <div class="main" id="scroll-area">
   <header class="topbar">
@@ -802,11 +1014,30 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
   <main>
     <section class="page active" id="tab-dashboard"></section>
     <section class="page" id="tab-cases"></section>
-    <section class="page" id="tab-assistant"></section>
     <section class="page" id="tab-compare"></section>
     <section class="page" id="tab-analyze"></section>
   </main>
 </div>
+
+<div class="pane-resizer" data-resize="ai" title="拖动调整宽度 · 双击恢复默认"></div>
+
+<aside class="aipanel" id="aipanel" aria-label="智能助手">
+  <div class="ai-inner">
+    <div class="ai-head">
+      <b><span class="h-ico" data-ico="spark" data-ico-size="15"></span>智能助手</b>
+      <span class="chip2 plain" id="ai-mode-chip">…</span>
+      <button class="icon-btn" onclick="setAiOpen(false)" aria-label="收起智能助手" style="width:30px;height:30px">✕</button>
+    </div>
+    <div class="ai-body" id="ai-body">
+      <div class="empty" style="padding-top:64px"><div class="e-ico" data-ico="spark"></div>
+        <div class="e-t">AI 面板待命</div><div class="e-s">起草坏例 · 诊断失败 · 查看调用审计</div></div>
+    </div>
+  </div>
+</aside>
+<button id="ai-rail" title="展开 / 收起智能助手" aria-label="展开或收起智能助手">
+  <span data-ico="spark" data-ico-size="16"></span>
+  <span class="ai-rail-txt">智能助手</span>
+</button>
 </div><!-- /#app -->
 
 <!-- ===== 修改密码弹窗 ===== -->
@@ -848,6 +1079,16 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
     </div>
   </div>
 </div>
+<div id="sheet-mask" class="sheet-mask hidden">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-head">
+      <span class="h-ico" id="sheet-ico-slot"></span>
+      <b id="sheet-title">—</b>
+      <button class="icon-btn" onclick="closeSheet()" aria-label="关闭" style="width:32px;height:32px">✕</button>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+</div>
 <div id="drawer-mask" class="drawer-mask hidden"></div>
 <aside id="drawer" class="drawer hidden" aria-label="报告详情">
   <div class="drawer-head">
@@ -862,14 +1103,15 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
 "use strict";
 /* ============ SVG 图标库(Lucide 风格,统一 24 viewBox 线性图标) ============ */
 const ICONS = {
-  dashboard: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>',
-  database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 5v14a9 3 0 0 1-18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>',
-  scale: '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
-  flask: '<path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/>',
-  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+  /* —— 核心语义图标(定制:信号灯 · 车道虚线 · 循环节点母题)—— */
+  dashboard: '<rect x="3.5" y="4" width="17" height="16" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="12" r="1.3" fill="currentColor" stroke="none" opacity=".55"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none" opacity=".3"/><path d="M13 16v-4.5"/><path d="M16.5 16v-7"/>',
+  database: '<path d="m12 3 9 4.5-9 4.5L3 7.5 12 3Z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16.5 9 4.5 9-4.5"/><path d="M9.5 7.5h5" stroke-dasharray="1.6 1.8"/>',
+  scale: '<rect x="3.5" y="4.5" width="7" height="12" rx="2.2"/><rect x="13.5" y="4.5" width="7" height="12" rx="2.2"/><circle cx="7" cy="8.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="7" cy="12.5" r="1.1"/><circle cx="17" cy="8.5" r="1.1"/><circle cx="17" cy="12.5" r="1.1" fill="currentColor" stroke="none"/><path d="M7 16.5v2M17 16.5v2"/><path d="M4.5 21h5"/><path d="M14.5 21h5"/>',
+  flask: '<path d="M9.5 3h5"/><path d="M10.5 3v5.2L5.6 17.5A2 2 0 0 0 7.4 20.5h9.2a2 2 0 0 0 1.8-3L13.5 8.2V3"/><path d="M8 15h8" stroke-dasharray="2 2.2"/>',
+  rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/><circle cx="14.5" cy="9.5" r="1.4"/>',
   filetext: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
   play: '<polygon points="6 3 20 12 6 21 6 3"/>',
-  cycle: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  cycle: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/>',
   plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
   trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
@@ -877,14 +1119,14 @@ const ICONS = {
   alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   trend: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
   clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><circle cx="12" cy="10.8" r="1.6" fill="currentColor" stroke="none"/>',
   lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   unlock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
   target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
   branch: '<line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
   swap: '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
   inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
-  activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
+  activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/><circle cx="2" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="22" cy="12" r="1.2" fill="currentColor" stroke="none"/>',
   layers: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
   chevR: '<path d="m9 18 6-6-6-6"/>',
   arrowR: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
@@ -892,11 +1134,11 @@ const ICONS = {
   tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
   gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
   key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
-  spark: '<path d="M12 3l1.9 5.7a1 1 0 0 0 .63.63L20.2 11.2a.57.57 0 0 1 0 1.08l-5.7 1.9a1 1 0 0 0-.63.63L12 20.4a.57.57 0 0 1-1.08 0l-1.9-5.7a1 1 0 0 0-.63-.63l-5.7-1.9a.57.57 0 0 1 0-1.08l5.7-1.9a1 1 0 0 0 .63-.63L11 3a.57.57 0 0 1 1 0z"/>',
+  spark: '<path d="M12 3l1.9 5.7a1 1 0 0 0 .63.63L20.2 11.2a.57.57 0 0 1 0 1.08l-5.7 1.9a1 1 0 0 0-.63.63L12 20.4a.57.57 0 0 1-1.08 0l-1.9-5.7a1 1 0 0 0-.63-.63l-5.7-1.9a.57.57 0 0 1 0-1.08l5.7-1.9a1 1 0 0 0 .63-.63L11 3a.57.57 0 0 1 1 0z"/><circle cx="11.7" cy="11.9" r="1.1" fill="currentColor" stroke="none"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
   moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
-  book: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+  book: '<path d="M12 7v14" stroke-dasharray="2.2 2.4"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
 };
 const icon = (name, size = 18) =>
   `<svg class="ico-svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ""}</svg>`;
@@ -970,38 +1212,64 @@ function runCountUps(scope = document) {
   });
 }
 
+const TASK_RENDERERS = { dashboard: renderDashboard, cases: renderCases };  // 需要「任务区(左) + 工作区(中)」协作的页面
 function switchTab(tab) {
+  try { sessionStorage.setItem("harness_tab", tab); } catch {}  // 刷新工作台后恢复所在页签
   $$(".nav-item[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   $$("main section").forEach(s => s.classList.toggle("active", s.id === "tab-" + tab));
   const [t, sub] = TITLES[tab];
   $("#page-title").textContent = t; $("#page-sub").textContent = sub;
   $("#scroll-area").scrollTo({ top: 0 });
-  renderers[tab]();
+  const hasTask = !!TASK_RENDERERS[tab];
+  $("#app").classList.toggle("has-task", hasTask);
+  if (hasTask) TASK_RENDERERS[tab]();  // 任务页:同时渲染左栏列表与中栏工作区
+  else renderers[tab]();
 }
 
 /* ============ 主题(明/暗) ============ */
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem("harness_theme", theme); } catch {}
-  const btn = $("#theme-toggle");
-  if (btn) btn.innerHTML = icon(theme === "dark" ? "sun" : "moon", 14);
+  $$("[data-theme-toggle]").forEach(btn => { btn.innerHTML = icon(theme === "dark" ? "sun" : "moon", 14); });
 }
-$("#theme-toggle").addEventListener("click",
-  () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+$$("[data-theme-toggle]").forEach(btn =>
+  btn.addEventListener("click",
+    () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")));
 applyTheme(document.documentElement.dataset.theme || "light");
+
+/* 欢迎页/登录页主题:独立于工作台,默认夜间 */
+function applyHeroTheme(theme) {
+  const light = theme === "light";
+  $("#view-welcome").classList.toggle("hero-light", light);
+  $("#view-login").classList.toggle("hero-light", light);
+  try { localStorage.setItem("harness_hero_theme", theme); } catch {}
+  $$("[data-hero-toggle]").forEach(btn => { btn.innerHTML = icon(light ? "moon" : "sun", 14); });
+}
+$$("[data-hero-toggle]").forEach(btn =>
+  btn.addEventListener("click", () =>
+    applyHeroTheme($("#view-welcome").classList.contains("hero-light") ? "dark" : "light")));
+let heroTheme = "dark";
+try { heroTheme = localStorage.getItem("harness_hero_theme") || "dark"; } catch {}
+applyHeroTheme(heroTheme);
 
 /* ============ 视图分流与登录 ============ */
 const views = { welcome: $("#view-welcome"), login: $("#view-login"), app: $("#app") };
-function showView(name) { for (const [k, el] of Object.entries(views)) el.classList.toggle("hidden", k !== name); }
+function showView(name) {
+  for (const [k, el] of Object.entries(views)) el.classList.toggle("hidden", k !== name);
+  try { sessionStorage.setItem("harness_view", name); } catch {}  // 供刷新后就地恢复
+}
 function showWelcome() { showView("welcome"); }
 function showLogin() { $("#login-err").innerHTML = ""; showView("login"); $("#login-user").focus(); }
 function showApp(username) {
-  localStorage.setItem("harness_seen", "1");
   $("#user-name").textContent = username;
   $("#user-avatar").textContent = (username[0] || "A").toUpperCase();
   $("#user-row").style.display = "";
   showView("app");
-  renderDashboard(); loadHealth();
+  let tab = null;
+  try { tab = sessionStorage.getItem("harness_tab"); } catch {}
+  // 走 switchTab 以统一挂载任务区布局;刷新后恢复上次所在页签
+  switchTab(tab === "cases" || tab === "compare" || tab === "analyze" ? tab : "dashboard");
+  loadHealth(); initAiPanel();
 }
 async function enterApp() {
   try { showApp((await api("/api/auth/me")).username); }
@@ -1009,10 +1277,19 @@ async function enterApp() {
 }
 async function boot() {
   loadHealth();
-  try { showApp((await api("/api/auth/me")).username); }
-  catch {
-    if (localStorage.getItem("harness_seen")) showLogin(); else showWelcome();
+  const who = async () => { try { return (await api("/api/auth/me")).username; } catch { return null; } };
+  // 刷新(同标签页重载):停在离开时的视图;全新打开:已登录 → 欢迎页,未登录 → 登录页
+  let navType = "navigate";
+  try { navType = (performance.getEntriesByType("navigation")[0] || {}).type || "navigate"; } catch {}
+  if (navType === "reload") {
+    let v = null;
+    try { v = sessionStorage.getItem("harness_view"); } catch {}
+    if (v === "welcome") return;
+    if (v === "login") return showLogin();
+    if (v === "app") { const u = await who(); if (u) return showApp(u); return showLogin(); }
   }
+  const u = await who();
+  if (u) showWelcome(); else showLogin();
 }
 async function doLogin(btn) {
   const old = btn.textContent; btn.disabled = true; btn.textContent = "登录中…";
@@ -1021,7 +1298,7 @@ async function doLogin(btn) {
     const out = await api("/api/auth/login", {
       username: $("#login-user").value.trim(), password: $("#login-pass").value,
     });
-    showApp(out.username); toast(`欢迎回来,${out.username}`);
+    showWelcome(); toast(`欢迎回来,${out.username}`);
   } catch (e) {
     $("#login-err").innerHTML = `<div id="login-hint" style="display:block;background:rgba(240,68,56,.12);border-color:rgba(240,68,56,.4);color:#fda29b">${esc(e.message)}</div>`;
   } finally { btn.disabled = false; btn.textContent = old; }
@@ -1081,7 +1358,15 @@ async function loadHealth() {
 let evalsetOptions = [];
 let currentEvalset = "evalset_v1";
 let currentBaseline = "v0";
+let dashMode = "overview";       // overview = 总览工作区,report = 选中报告详情
+let selectedReportId = null;
+let dashReportFilter = "全部";
+let reportSeq = 0;               // 详情请求序号:防快速连点导致乱序覆盖
+
+const verBadge = v => `b${parseInt(String(v).replace(/\D/g, ""), 10) % 4 || 0}`;
+
 async function renderDashboard() {
+  closeSheet();  // 看板重渲染(如评测完成)时,避免弹层内容与数据脱节
   $("#tab-dashboard").innerHTML =
     `<div class="skeleton" style="height:96px"></div><div class="skeleton" style="height:190px"></div>
      <div class="skeleton" style="height:220px"></div><div class="skeleton" style="height:130px"></div>`;
@@ -1096,31 +1381,102 @@ async function renderDashboard() {
   }
   evalsetOptions = evalsets;
   if (!evalsets.some(e => e.evalset_id === currentEvalset)) currentEvalset = evalsets[0]?.evalset_id || "evalset_v1";
+  window.__dashData = { versions, reports, evolutions, health, activity };
+  renderDashTaskPanel(reports);
+  renderDashWorkspace();
+}
+
+/* ---- 任务区:评测报告列表(按版本筛选),点选进工作区详情 ---- */
+function renderDashTaskPanel(reports) {
+  const filters = ["全部", ...new Set(reports.map(r => r.version))];
+  if (!filters.includes(dashReportFilter)) dashReportFilter = "全部";
+  const shown = reports.filter(r => dashReportFilter === "全部" || r.version === dashReportFilter);
+  $("#tp-head-slot").innerHTML = `
+    <div class="tp-head"><b>${icon("layers", 14)} 评测报告</b>
+      <span class="chip2 plain num">${reports.length}</span>
+      ${dashMode === "report" ? `<button class="btn sm secondary" onclick="dashOverview()">${icon("dashboard", 13)} 总览</button>` : ""}</div>`;
+  $("#tp-list").innerHTML = `
+    <div class="tp-tools"><div class="chips">${filters.map(f =>
+      `<span class="chip2 ${f === dashReportFilter ? "" : "plain"} click" onclick="setDashFilter('${esc(f)}')">${esc(f)}</span>`).join("")}</div></div>
+    ${shown.length ? shown.map(r => `
+      <div class="tp-item ${selectedReportId === r.report_id ? "sel" : ""}" onclick="selectReport('${esc(r.report_id)}')">
+        <div class="ti-top"><span class="ver-badge ${verBadge(r.version)}" style="font-size:10.5px;padding:1.5px 7px">${esc(r.version)}</span>
+          <span class="ti-title num" title="${esc(r.report_id)}">${esc(r.report_id)}</span></div>
+        <div class="ti-meta"><span class="num" style="font-weight:700;color:${r.accuracy === 1 ? "var(--ok)" : "var(--t1)"}">${pct(r.accuracy)}</span>
+          <span class="num">${r.passed_count}/${r.total}</span><span style="opacity:.5">·</span><span class="num">${esc(fmtTs(r.timestamp))}</span></div>
+      </div>`).join("") : `<div class="tp-empty">该版本暂无报告<br>在总览页运行评测即可生成</div>`}`;
+  $("#tp-foot").style.display = "";
+  $("#tp-foot").textContent = "报告按版本 × 评测时间归档;点选任意报告,在工作区查看分标签通过率与逐 case 明细。";
+}
+function setDashFilter(f) { dashReportFilter = f; renderDashTaskPanel((window.__dashData || {}).reports || []); }
+async function selectReport(id) {
+  dashMode = "report"; selectedReportId = id;
+  if (!window.__dashData) {
+    try { window.__dashData = { reports: await api("/api/reports") }; }
+    catch (e) { toast(e.message, true); return; }
+  }
+  renderDashTaskPanel(window.__dashData.reports);
+  renderDashWorkspace();
+}
+function dashOverview() {
+  dashMode = "overview"; selectedReportId = null;
+  const reports = (window.__dashData || {}).reports;
+  if (reports) renderDashTaskPanel(reports);
+  renderDashWorkspace();
+}
+
+/* ---- 工作区分发:总览 / 报告详情 ---- */
+function renderDashWorkspace() {
+  const d = window.__dashData;
+  if (!d) return;
+  if (dashMode === "report" && selectedReportId) { renderReportWorkspace(selectedReportId); return; }
+  renderDashOverview(d);
+}
+
+async function renderReportWorkspace(reportId) {
+  const seq = ++reportSeq;
+  $("#tab-dashboard").innerHTML =
+    `<div class="skeleton" style="height:130px"></div><div class="skeleton" style="height:260px"></div>`;
+  let rep;
+  try { rep = await api("/api/reports/" + encodeURIComponent(reportId)); }
+  catch (e) { if (seq === reportSeq) { toast(e.message, true); dashOverview(); } return; }
+  if (seq !== reportSeq) return;   // 已切换到别的报告/视图,丢弃本次结果
+  $("#tab-dashboard").innerHTML = `
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn sm secondary" onclick="dashOverview()">${icon("dashboard", 13)} 返回总览</button>
+        <b style="flex:1;min-width:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rep.report_id)}</b>
+      </div>
+      <p class="desc" style="margin-top:6px">评测集 ${esc(rep.evalset_id || "—")} · 归档于 ${esc(fmtTs(rep.timestamp || ""))}</p>
+      ${reportDetailHtml(rep)}
+    </div>`;
+}
+
+function renderDashOverview(d) {
+  const { versions, reports, evolutions, health, activity } = d;
   const evalsetSelect = `<select id="evalset-pick" style="width:100%" onchange="onEvalsetChange()">
-    ${evalsets.map(e => `<option value="${esc(e.evalset_id)}" ${e.evalset_id === currentEvalset ? "selected" : ""}>${esc(e.evalset_id)} · ${e.case_count} 条</option>`).join("")}
+    ${evalsetOptions.map(e => `<option value="${esc(e.evalset_id)}" ${e.evalset_id === currentEvalset ? "selected" : ""}>${esc(e.evalset_id)} · ${e.case_count} 条</option>`).join("")}
   </select>`;
   const baselineSelect = `<select id="baseline-pick" style="width:100%" onchange="onBaselineChange()">
     ${versions.map(v => `<option value="${esc(v.version)}" ${v.version === currentBaseline ? "selected" : ""}>${esc(v.version)} · ${esc(v.name)}</option>`).join("")}
   </select>`;
 
   /* --- KPI --- */
-  const latest = {};
-  for (const r of reports) if (!latest[r.version]) latest[r.version] = r;
   const lastEvo = evolutions[0] || null;
   const kpis = `
     <div class="kpis">
       <div class="kpi"><div class="k-top"><span class="k-label">当前最佳版本</span><span class="k-ico">${icon("target", 16)}</span></div>
         <div class="k-value grad">${lastEvo ? `${esc(lastEvo.best.version)} <small>${pct(lastEvo.best.accuracy)}</small>` : "—"}</div>
-        <div class="k-foot">${lastEvo ? `最近进化:${lastEvo.best.passed_count}/${lastEvo.best.total} 通过` : "尚未运行自进化"}</div></div>
+        <div class="k-foot">${lastEvo ? `最近 ${lastEvo.best.passed_count}/${lastEvo.best.total} 通过` : "尚未运行自进化"}</div></div>
       <div class="kpi"><div class="k-top"><span class="k-label">评测集规模</span><span class="k-ico">${icon("database", 16)}</span></div>
         <div class="k-value num" data-countup="${health.case_count}">0</div>
-        <div class="k-foot">${lastEvo ? `最近运行覆盖 ${lastEvo.total_cases} 条` : "在 Case 管理页沉淀"}</div></div>
+        <div class="k-foot">${lastEvo ? `覆盖 ${lastEvo.total_cases} 条` : "在 Case 管理页沉淀"}</div></div>
       <div class="kpi"><div class="k-top"><span class="k-label">自进化运行</span><span class="k-ico">${icon("cycle", 16)}</span></div>
         <div class="k-value num" data-countup="${evolutions.length}">0</div>
         <div class="k-foot">${lastEvo ? stopTag(lastEvo.stop_reason) : "闭环流程见下方"}</div></div>
       <div class="kpi"><div class="k-top"><span class="k-label">评测报告</span><span class="k-ico">${icon("filetext", 16)}</span></div>
-        <div class="k-value num" data-countup="${health.report_count}">0</div>
-        <div class="k-foot">每版本 × 每次评测自动归档</div></div>
+        <div class="k-value num" data-countup="${reports.length}">0</div>
+        <div class="k-foot">点左侧列表看明细</div></div>
     </div>`;
 
   /* --- 自进化闭环图 --- */
@@ -1135,7 +1491,7 @@ async function renderDashboard() {
   const loop = `
     <div class="card">
       <h3><span class="h-ico">${icon("cycle", 16)}</span>自进化运行闭环</h3>
-      <p class="desc">自进化的本质是一个永不停止的循环:新的 badcase 持续回流,评测集随之增长,管线被一次次推向更高得分。</p>
+      <p class="desc">新 badcase 持续回流 → 评测集增长 → 管线一次次被推向更高得分。</p>
       <div class="loop">${steps.map(([ico, t, sub, tab], i) =>
         `<div class="step ${tab ? "click" : ""}" ${tab ? `onclick="switchTab('${tab}')"` : ""}>
            <div class="s-ico">${icon(ico, 19)}</div>
@@ -1149,7 +1505,7 @@ async function renderDashboard() {
   const timeline = `
     <div class="card">
       <h3><span class="h-ico">${icon("activity", 16)}</span>进化时间线</h3>
-      <p class="desc">每次自进化运行的完整轨迹:得分逐轮爬升、每轮验证「提升且无回归」、达到停止条件即收束。</p>
+      <p class="desc">得分逐轮爬升,每轮验证「提升且无回归」,达标即收束。</p>
       ${evolutions.length ? `<div class="tl">${evolutions.map(e => {
         const chips = [`<span class="traj-chip"><span class="tv">${esc(e.baseline.version)}</span><b>${pct(e.baseline.accuracy)}</b></span>`];
         let prevAcc = e.baseline.accuracy;
@@ -1169,30 +1525,14 @@ async function renderDashboard() {
             <button class="btn sm secondary" style="margin-top:8px" onclick="quickCompareVersion('${esc(r.version)}')">${icon("scale", 13)} 与上一版本对比</button></details>`).join("")}
         </div>`;
       }).join("")}</div>`
-        : emptyBox("activity", "还没有进化记录", "点击下方「运行完整自进化循环」留下第一笔")}
-    </div>`;
-
-  /* --- 最近动态(统一时间流) --- */
-  const KIND_ICON = { case: "database", eval: "flask", evolve: "cycle", draft: "spark" };
-  const actCard = `
-    <div class="card">
-      <h3><span class="h-ico">${icon("activity", 16)}</span>最近动态</h3>
-      <p class="desc">case 沉淀、评测运行、自进化与 LLM 草稿的统一时间流 —— 闭环每一步都有迹可循。</p>
-      <div class="act-feed">${activity.map(a => `
-        <div class="act-item">
-          <span class="act-ico k-${esc(a.kind)}">${icon(KIND_ICON[a.kind] || "activity", 14)}</span>
-          <div class="act-body">
-            <div class="act-t">${esc(a.title)}${a.tag ? ` <span class="chip2 plain" style="padding:1px 9px;font-size:11px">${esc(a.tag)}</span>` : ""}</div>
-            <div class="act-d">${esc(a.detail)}</div>
-          </div>
-          <span class="act-time num">${esc(fmtTs(a.ts))}</span>
-        </div>`).join("") || `<div class="muted">暂无动态</div>`}
-      </div>
+        : emptyBox("activity", "还没有进化记录", "在右侧「评测与自进化」运行完整循环")}
     </div>`;
 
   /* --- 版本卡片 --- */
-  const verBadge = v => `b${parseInt(String(v).replace(/\D/g, ""), 10) % 4 || 0}`;
-  const cards = `<div class="grid">${versions.map(v => {
+  /* 版本卡片钉在卡片底部:双栏等高拉伸时填充视觉,不留空洞 */
+  const latest = {};
+  for (const r of reports) if (!latest[r.version]) latest[r.version] = r;
+  const cards = `<div class="grid" style="margin-top:auto;padding-top:14px">${versions.map(v => {
     const rep = latest[v.version], acc = rep ? rep.accuracy : null;
     return `<div class="vcard">
       <div class="ver">
@@ -1207,32 +1547,10 @@ async function renderDashboard() {
     </div>`;
   }).join("")}</div>`;
 
-  /* --- 得分趋势 --- */
-  const trendCard = reports.length >= 2 ? `
-    <div class="card">
-      <h3><span class="h-ico">${icon("trend", 16)}</span>评测得分趋势</h3>
-      <p class="desc">每次评测自动归档一份报告,连线即管线的成长曲线:迭代后应单调上升,回落即为回归信号。</p>
-      ${areaChart(reports)}
-    </div>` : "";
-
-  /* --- 报告归档 --- */
-  const reportsCard = `
-    <div class="card">
-      <h3><span class="h-ico">${icon("layers", 16)}</span>评测报告归档</h3>
-      ${reports.length ? `<div class="table-wrap scroll-tbl"><table>
-        <thead><tr><th>报告</th><th>版本</th><th>评测集</th><th class="num">得分</th><th class="num">通过</th><th class="num">时间</th></tr></thead>
-        <tbody>${reports.map(r => `<tr class="clickable" onclick="showReport('${esc(r.report_id)}')">
-          <td class="num">${esc(r.report_id)}</td><td>${esc(r.version)}</td><td>${esc(r.evalset_id || "—")}</td>
-          <td class="num"><b>${pct(r.accuracy)}</b></td><td class="num">${r.passed_count}/${r.total}</td><td class="num">${esc(fmtTs(r.timestamp))}</td></tr>`).join("")}
-        </tbody></table></div>`
-        : emptyBox("layers", "暂无报告", "点上方「运行评测」生成第一份")}
-      <div id="report-detail"></div>
-    </div>`;
-
   const evalCard = `
     <div class="card" style="padding-bottom:16px">
       <h3><span class="h-ico">${icon("play", 16)}</span>评测与自进化</h3>
-      <p class="desc">单版本重跑用于快速验证;完整循环会按「逐版本验证 + 收益递减」纪律自动收束。都在所选评测集上、从基线版本起逐轮验证。</p>
+      <p class="desc">单版本可快速重跑;完整循环按「逐版本验证 + 收益递减」自动收束。</p>
       <label style="margin-top:0">评测范围</label>
       ${evalsetSelect}
       <label>基线版本(增量验证新版本时选当前最佳)</label>
@@ -1241,16 +1559,68 @@ async function renderDashboard() {
       <div id="evolve-out"></div>
       ${cards}
     </div>`;
+
+  /* --- 入口磁贴:得分趋势 / 最近动态(点击弹层查看) --- */
+  const latestRep = reports[0] || null;
+  const trendSub = reports.length >= 2
+    ? `${reports.length} 份报告 · 最新 ${esc(latestRep.version)} ${pct(latestRep.accuracy)}`
+    : "报告不足两份,先运行评测生成趋势";
+  const actSub = activity.length ? `最新:${esc(activity[0].title)}` : "暂无动态";
+  const entries = `
+    <div class="entry-row">
+      <button class="entry-card" onclick="openSheet('trend')">
+        <span class="e-ico">${icon("trend", 18)}</span>
+        <span class="e-body"><b>评测得分趋势</b><small>${trendSub}</small></span>
+        <span class="e-arrow">${icon("chevR", 16)}</span>
+      </button>
+      <button class="entry-card" onclick="openSheet('act')">
+        <span class="e-ico">${icon("activity", 18)}</span>
+        <span class="e-body"><b>最近动态</b><small>${actSub}</small></span>
+        <span class="e-arrow">${icon("chevR", 16)}</span>
+      </button>
+    </div>`;
   $("#tab-dashboard").innerHTML = `
     ${kpis}
+    ${entries}
     ${loop}
     <div class="dash-grid">
-      <div class="dash-col">${timeline}${actCard}${trendCard}</div>
+      <div class="dash-col">${timeline}</div>
       <div class="dash-col">${evalCard}</div>
-    </div>
-    ${reportsCard}`;
+    </div>`;
   runCountUps($("#tab-dashboard"));
 }
+
+/* ---- 看板弹层:得分趋势 / 最近动态 ---- */
+const KIND_ICON = { case: "database", eval: "flask", evolve: "cycle", draft: "spark" };
+function activityFeedHtml(activity) {
+  return `<div class="act-feed">${activity.map(a => `
+    <div class="act-item">
+      <span class="act-ico k-${esc(a.kind)}">${icon(KIND_ICON[a.kind] || "activity", 14)}</span>
+      <div class="act-body">
+        <div class="act-t">${esc(a.title)}${a.tag ? ` <span class="chip2 plain" style="padding:1px 9px;font-size:11px">${esc(a.tag)}</span>` : ""}</div>
+        <div class="act-d">${esc(a.detail)}</div>
+      </div>
+      <span class="act-time num">${esc(fmtTs(a.ts))}</span>
+    </div>`).join("") || `<div class="muted">暂无动态</div>`}</div>`;
+}
+function openSheet(kind) {
+  const d = window.__dashData || {};
+  if (kind === "trend") {
+    const reports = d.reports || [];
+    $("#sheet-ico-slot").innerHTML = icon("trend", 16);
+    $("#sheet-title").textContent = "评测得分趋势";
+    $("#sheet-body").innerHTML = reports.length >= 2
+      ? `<p class="desc" style="margin:0 0 10px">连线即管线成长曲线:迭代后应单调上升,回落即为回归信号。</p>${areaChart(reports)}`
+      : emptyBox("trend", "报告不足两份,暂无趋势", "先在「评测与自进化」运行评测");
+  } else {
+    $("#sheet-ico-slot").innerHTML = icon("activity", 16);
+    $("#sheet-title").textContent = "最近动态";
+    $("#sheet-body").innerHTML = `<p class="desc" style="margin:0 0 10px">沉淀、评测、自进化与 LLM 草稿的统一时间流。</p>${activityFeedHtml(d.activity || [])}`;
+  }
+  $("#sheet-mask").classList.remove("hidden");
+}
+function closeSheet() { $("#sheet-mask").classList.add("hidden"); }
+$("#sheet-mask").addEventListener("click", e => { if (e.target === $("#sheet-mask")) closeSheet(); });
 
 function onEvalsetChange() { currentEvalset = $("#evalset-pick").value; }
 function onBaselineChange() { currentBaseline = $("#baseline-pick").value; }
@@ -1363,52 +1733,82 @@ async function runEvolve(btn) {
   });
 }
 
-async function showReport(reportId) {
-  try {
-    const rep = await api("/api/reports/" + reportId);
-    const labels = Object.entries(rep.label_stats).map(([label, st]) =>
-      `<tr><td>${esc(label)}</td><td class="num">${st.passed}/${st.total}</td><td class="num">${pct(st.passed / st.total)}</td></tr>`).join("");
-    const fails = rep.results.filter(r => !r.passed).map(r => {
-      const detail = r.checks.filter(c => !c.passed).map(c => esc(c.detail)).join("; ")
-        || (r.error ? "崩溃: " + esc(r.error) : "");
-      return `<tr><td class="num">${esc(r.case_id)}</td><td>${esc(r.label)}</td><td>${esc(r.title)}</td><td>${detail}</td></tr>`;
-    }).join("");
-    $("#report-detail").innerHTML = `
-      <div class="hint" style="margin-top:16px;flex-direction:column;gap:6px">
-        <div style="display:flex;gap:8px;align-items:center"><b>报告 ${esc(reportId)}</b>
-          <span class="chip2 plain">版本 ${esc(rep.version)}</span>
-          <span class="chip2 ${rep.accuracy === 1 ? "good" : ""} num">得分 ${pct(rep.accuracy)}</span>
-          <span class="chip2 plain num">耗时 ${rep.duration_ms} ms</span></div>
-        ${rep.changes && rep.changes.length ? `<div class="muted">优化内容:${rep.changes.map(esc).join(";")}</div>` : ""}
-        <div class="table-wrap"><table>
-          <thead><tr><th>失败标签</th><th class="num">通过/总数</th><th class="num">通过率</th></tr></thead><tbody>${labels}</tbody></table></div>
-        ${fails ? `<p style="margin:8px 0 2px;font-weight:700">未通过案例</p>
-          <div class="table-wrap"><table>
-            <thead><tr><th>Case</th><th>标签</th><th>标题</th><th>失败明细</th></tr></thead>
-            <tbody>${fails}</tbody></table></div>` : `<div>${icon("check", 14)} 全部案例通过</div>`}
-      </div>`;
-    $("#report-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
-  } catch (e) { toast(e.message, true); }
-}
-
 /* ============ Case 管理 ============ */
 let caseFilter = "全部";
 const caseSel = new Set();   // 批量操作选中的 case_id
+/* ---- Case 页:任务区(case 列表,左)+ 工作区(详情 / 沉淀表单,中) ---- */
+let caseWsMode = "form";      // form = 沉淀表单,detail = 选中 case 的详情
+let selectedCaseId = null;
+
 async function renderCases() {
   const [cases, datasets] = await Promise.all([api("/api/cases"), api("/api/datasets")]);
   window.__casesCache = cases;
+  window.__caseDatasets = datasets;
+  renderCaseTaskPanel(cases);
+  renderCaseWorkspace(cases);
+}
+function renderCaseTaskPanel(cases) {
   const labels = ["全部", ...new Set(cases.map(c => c.label))];
   if (!labels.includes(caseFilter)) caseFilter = "全部";
   const shown = cases.filter(c => caseFilter === "全部" || c.label === caseFilter);
+  $("#tp-head-slot").innerHTML = `
+    <div class="tp-head"><b>${icon("database", 14)} Case 库</b>
+      <span class="chip2 plain num">${cases.length}</span>
+      <button class="btn sm ${caseWsMode === "form" ? "" : "secondary"}" onclick="caseWsNew()">${icon("plus", 13)} 沉淀</button></div>`;
+  $("#tp-list").innerHTML = `
+    <div class="tp-tools"><div class="chips">${labels.map(l =>
+      `<span class="chip2 ${l === caseFilter ? "" : "plain"} click" onclick="setFilter('${esc(l)}')">${esc(l)}</span>`).join("")}</div></div>
+    ${shown.length ? shown.map(c => {
+      const lv = (c.checks || []).find(k => k.type === "classify");
+      return `<div class="tp-item ${selectedCaseId === c.case_id ? "sel" : ""}" onclick="selectCase('${esc(c.case_id)}')">
+        <div class="ti-top"><span class="ti-id">${esc(c.case_id)}</span>
+          <span class="ti-title" title="${esc(c.title)}">${esc(c.title)}</span></div>
+        <div class="ti-meta">${lv && lv.expected ? lvPill(lv.expected) : ""}<span>${esc(c.label)}</span>
+          <span style="opacity:.5">·</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.dataset_name)}</span>
+          <input type="checkbox" class="row-sel" title="加入批量选择" ${caseSel.has(c.case_id) ? "checked" : ""}
+            onclick="event.stopPropagation()" onchange="toggleSel('${esc(c.case_id)}', this.checked)"></div>
+      </div>`; }).join("")
+      : `<div class="tp-empty">该标签下暂无 case<br>切换标签,或点上方「沉淀」新建</div>`}`;
+  $("#tp-foot").style.display = "";
+  $("#tp-foot").textContent = "cases/ 按失败标签分目录,一个 case 一个 JSON 文件,可直接纳入 git 管理。";
+}
+function selectCase(id) {
+  caseWsMode = "detail"; selectedCaseId = id;
+  renderCaseTaskPanel(window.__casesCache || []);
+  renderCaseWorkspace(window.__casesCache || []);
+}
+function caseWsNew() {
+  caseWsMode = "form"; selectedCaseId = null;
+  renderCaseTaskPanel(window.__casesCache || []);
+  renderCaseWorkspace(window.__casesCache || []);
+}
+function setFilter(label) { caseFilter = label; renderCaseTaskPanel(window.__casesCache || []); }
+function refreshCasesIfVisible() {
+  if (!views.app.classList.contains("hidden") && $("#tab-cases").classList.contains("active")) renderCases();
+}
 
+function renderCaseWorkspace(cases) {
+  if (caseWsMode === "detail" && selectedCaseId) {
+    const c = cases.find(x => x.case_id === selectedCaseId);
+    if (c) { renderCaseDetail(c); return; }
+    caseWsMode = "form"; selectedCaseId = null;  // case 已被删除等:回退到沉淀表单
+    renderCaseTaskPanel(cases);
+  }
+  renderCaseForm();
+}
+function renderCaseForm() {
+  const datasets = window.__caseDatasets || [];
+  const labels = [...new Set((window.__casesCache || []).map(c => c.label))];
   $("#tab-cases").innerHTML = `
+    <div id="case-batch"></div>
     <div class="card">
       <h3><span class="h-ico">${icon("plus", 16)}</span>沉淀新的 replaycase</h3>
       <p class="desc">闭环第 1-2 步:把线上反馈转化为可重放的评测用例 —— 输入 + 期望结论 + 判分规则,保存后自动加入当前评测集。</p>
       <div class="row3">
         <div><label>标题</label><input id="c-title" maxlength="80" placeholder="例:学府路应判为拥堵而非严重拥堵"></div>
         <div><label>失败标签</label><input id="c-label" list="label-list" maxlength="20" placeholder="选择或输入新标签">
-          <datalist id="label-list">${labels.filter(l => l !== "全部").map(l => `<option value="${esc(l)}">`).join("")}</datalist></div>
+          <datalist id="label-list">${labels.map(l => `<option value="${esc(l)}">`).join("")}</datalist></div>
         <div><label>数据集</label><select id="c-dataset" onchange="onFormDatasetChange()">
           ${datasets.map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join("")}</select></div>
       </div>
@@ -1421,40 +1821,48 @@ async function renderCases() {
       <input id="c-notes" maxlength="200" placeholder="例:用户点踩,该路段 V/C 已超 0.9…">
       <div id="c-ref"></div>
       <p style="margin:16px 0 0"><button class="btn" onclick="createCase(this)">${icon("database", 15)} 沉淀为 replaycase 并加入评测集</button></p>
-    </div>
-    <div class="card">
-      <h3><span class="h-ico">${icon("database", 16)}</span>Replaycase 库<span class="chip2 plain" style="margin-left:4px">${cases.length} 条</span></h3>
-      <p class="desc">cases/ 按失败标签分目录存放,一个 case 一个 JSON 文件,可直接纳入 git 管理。</p>
-      <div class="chips">${labels.map(l =>
-        `<span class="chip2 ${l === caseFilter ? "" : "plain"} click" onclick="setFilter('${esc(l)}')">${esc(l)}</span>`).join("")}</div>
-      <div id="case-batch"></div>
-      ${shown.length ? `<div class="table-wrap scroll-tbl"><table>
-        <thead><tr><th class="col-sel"><input type="checkbox" class="row-sel" id="sel-all"
-          onchange="toggleSelAll(this.checked)" title="全选/全不选"></th>
-          <th>Case</th><th>标签</th><th>标题</th><th>数据集</th><th class="num">检查数</th><th>来源</th><th></th></tr></thead>
-        <tbody>${shown.map(c => `<tr>
-          <td class="col-sel"><input type="checkbox" class="row-sel" ${caseSel.has(c.case_id) ? "checked" : ""}
-            onchange="toggleSel('${esc(c.case_id)}', this.checked)"></td>
-          <td class="num">${esc(c.case_id)}</td><td>${esc(c.label)}</td><td>${esc(c.title)}</td>
-          <td>${esc(c.dataset_name)}</td><td class="num">${c.checks.length}</td><td>${esc(c.source)}</td>
-          <td style="width:36px"><button class="icon-btn" title="删除该 case" aria-label="删除该 case" onclick="deleteCase('${esc(c.case_id)}')">${icon("trash", 15)}</button></td></tr>`).join("")}
-        </tbody></table></div>`
-        : emptyBox("inbox", "该标签下暂无 case", "切换标签或沉淀新用例")}
     </div>`;
-  await onFormDatasetChange();
+  renderBatchBar();
+  onFormDatasetChange();
 }
-function setFilter(label) { caseFilter = label; renderCases(); }
+function renderCaseDetail(c) {
+  const checks = c.checks || [];
+  const lv = checks.find(k => k.type === "classify");
+  const rows = checks.map(k => {
+    const target = k.segment || k.field
+      || (k.type === "no_crash" || k.type.startsWith("conclusion") ? "summary" : "—");
+    const expect = k.type === "conclusion_keyword" ? (k.keywords || []).join(" / ")
+      : k.type === "conclusion_quality" ? `≥ ${k.min_score}` : (k.expected ?? "—");
+    return `<tr><td class="num">${esc(k.type)}</td><td>${esc(target)}</td>
+      <td>${esc(String(expect))}</td><td class="muted">${k.tol ? `容差 ±${k.tol}` : ""}</td></tr>`;
+  }).join("");
+  $("#tab-cases").innerHTML = `
+    <div id="case-batch"></div>
+    <div class="card">
+      <h3><span class="h-ico">${icon("database", 16)}</span>${esc(c.title)}
+        <span class="chip2 plain num" style="margin-left:4px">${esc(c.case_id)}</span></h3>
+      <p class="desc">标签 ${esc(c.label)} · 来源:${esc(c.source)} · 沉淀于 ${esc(c.created_at || "—")}</p>
+      <div class="chips">
+        ${lv && lv.expected ? lvPill(lv.expected) : ""}
+        <span class="chip2 plain">数据集:${esc(c.dataset_name)}</span>
+        <span class="chip2 plain num">${checks.length} 条判分规则</span>
+      </div>
+      ${c.notes ? `<div class="hint">${icon("bulb", 15)}<span>${esc(c.notes)}</span></div>` : ""}
+      <p style="margin:14px 0 6px;font-weight:700;font-size:13px">判分规则</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>类型</th><th>目标</th><th>期望</th><th>说明</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="4" class="muted">无</td></tr>`}</tbody></table></div>
+      <p style="display:flex;gap:10px;margin:16px 0 0">
+        <button class="btn secondary" onclick="caseWsNew()">${icon("plus", 14)} 再沉淀一条</button>
+        <button class="btn danger" onclick="deleteCase('${esc(c.case_id)}')">${icon("trash", 14)} 删除该 case</button>
+      </p>
+    </div>`;
+  renderBatchBar();
+}
+
 
 /* ---- Case 批量操作 ---- */
 function toggleSel(id, on) { on ? caseSel.add(id) : caseSel.delete(id); renderBatchBar(); }
-function toggleSelAll(on) {
-  $$("#tab-cases tbody .row-sel").forEach(cb => {
-    const id = cb.closest("tr").querySelector("td.num").textContent.trim();
-    cb.checked = on;
-    on ? caseSel.add(id) : caseSel.delete(id);
-  });
-  renderBatchBar();
-}
 function renderBatchBar() {
   const box = $("#case-batch");
   if (!box) return;
@@ -1651,109 +2059,128 @@ async function doAnalyze(btn) {
   });
 }
 
-/* ============ 智能助手(LLM 层) ============ */
+/* ============ AI 常驻右栏(智能助手:LLM 层,原独立页并入) ============ */
 let asstDatasets = [];
 let asstDraft = null;
-async function renderAssistant() {
-  $("#tab-assistant").innerHTML = `<div class="skeleton" style="height:110px"></div>
-    <div class="skeleton" style="height:280px"></div><div class="skeleton" style="height:220px"></div>`;
+
+function setAiOpen(open) {
+  const panel = $("#aipanel");
+  const willOpen = open === undefined ? !panel.classList.contains("open") : !!open;
+  panel.classList.toggle("open", willOpen);
+  $("#ai-rail").classList.toggle("on", willOpen);
+  $("#app").classList.toggle("ai-open", willOpen);   // 控制 AI 拖拽柄显隐
+  const nav = $("#nav-assistant");
+  if (nav) nav.classList.toggle("active", willOpen);
+  try { localStorage.setItem("harness_ai_open", willOpen ? "1" : "0"); } catch {}
+}
+function initAiPanel() {
+  let pref = null;
+  try { pref = localStorage.getItem("harness_ai_open"); } catch {}
+  setAiOpen(pref === null ? window.innerWidth >= 1440 : pref === "1");
+  renderAiPanel();
+}
+async function renderAiPanel() {
+  $("#ai-body").innerHTML = `<div class="skeleton" style="height:96px"></div>
+    <div class="skeleton" style="height:230px"></div><div class="skeleton" style="height:170px"></div>`;
   let status, versions, datasets;
   try {
     [status, versions, datasets] = await Promise.all([
       api("/api/llm/status"), api("/api/versions"), api("/api/datasets")]);
   } catch (e) {
-    $("#tab-assistant").innerHTML = `<div class="card">${emptyBox("alert", "加载失败", esc(e.message))}</div>`;
+    $("#ai-body").innerHTML = `<div class="ai-sec">${emptyBox("alert", "智能助手加载失败", esc(e.message))}</div>`;
     return;
   }
   asstDatasets = datasets;
   const evalsetOpts = evalsetOptions.length ? evalsetOptions
     : [{ evalset_id: "evalset_v1", case_count: "—" }];
+  $("#ai-mode-chip").textContent = status.configured ? "真实端点" : "离线 Mock";
   const prov = status.configured
-    ? `<span class="chip2 good">${icon("check", 13)} 已接入真实端点</span>`
+    ? `<span class="chip2 good">${icon("check", 12)} 已接入真实端点</span>`
     : `<span class="chip2 plain">离线 Mock(未配置 LLM_API_KEY,零成本可复现)</span>`;
-  $("#tab-assistant").innerHTML = `
-    <div class="card">
-      <h3><span class="h-ico">${icon("spark", 16)}</span>LLM Runtime 状态</h3>
-      <p class="desc">统一模型访问层:任意 OpenAI 兼容端点 · 结构化输出 · 响应缓存 · 调用审计 · 离线降级。七维设计详见文档中心。</p>
+  $("#ai-body").innerHTML = `
+    <div class="ai-sec">
+      <h4>${icon("activity", 14)} Runtime 状态</h4>
+      <p class="desc">统一模型访问层:任意 OpenAI 兼容端点 · 结构化输出 · 响应缓存 · 调用审计 · 离线降级。</p>
       <div class="chips">
         ${prov}
         <span class="chip2 plain">模型:${esc(status.model)}</span>
-        <span class="chip2 plain num">响应缓存 ${status.cache_count} 条</span>
+        <span class="chip2 plain num">缓存 ${status.cache_count} 条</span>
       </div>
-      ${status.recent_runs.length ? `<div class="table-wrap"><table>
-        <thead><tr><th>时间</th><th>用途</th><th class="num">耗时(ms)</th><th class="num">缓存</th><th class="num">tokens</th></tr></thead>
-        <tbody>${status.recent_runs.map(r => `<tr>
-          <td class="num">${esc(fmtTs(r.ts))}</td><td>${esc(r.purpose)}</td>
-          <td class="num">${r.elapsed_ms}</td><td>${r.cache_hit ? "命中" : "—"}</td>
-          <td class="num">${(r.usage && (r.usage.total_tokens || r.usage.estimated_prompt_tokens)) || "—"}</td></tr>`).join("")}
-        </tbody></table></div>` : `<div class="muted" style="margin-top:8px">还没有调用记录 —— 生成一个草稿或跑一次诊断试试。</div>`}
+      ${status.recent_runs.length ? `<div class="ai-runs">${status.recent_runs.slice(0, 6).map(r => `
+        <div class="ai-run"><span class="rp-purpose" title="${esc(r.purpose)}">${esc(r.purpose)}</span>
+          <span class="muted num">${r.elapsed_ms}ms</span>
+          <span class="muted num">${r.cache_hit ? "缓存" : "—"}</span>
+          <span class="muted num">${(r.usage && (r.usage.total_tokens || r.usage.estimated_prompt_tokens)) || "—"}</span>
+        </div>`).join("")}</div>`
+      : `<div class="muted">还没有调用记录 —— 生成一个草稿或跑一次诊断试试。</div>`}
     </div>
-    <div class="card">
-      <h3><span class="h-ico">${icon("plus", 16)}</span>坏例沉淀助手</h3>
-      <p class="desc">闭环第 1-2 步的加速器:粘贴用户反馈原文,LLM 结合数据集上下文起草 replaycase;草稿必须人工确认才会入库(Human-in-the-loop)。</p>
-      <label style="margin-top:0">反馈原文</label>
+    <div class="ai-sec">
+      <h4>${icon("plus", 14)} 坏例沉淀助手</h4>
+      <p class="desc">反馈原文 → LLM 结合数据集起草 replaycase 草稿;人工确认后才入库(Human-in-the-loop)。</p>
+      <label>反馈原文</label>
       <textarea id="asst-complaint" rows="3" maxlength="500"
         placeholder="例:用户点踩:学府路在雨天早高峰被误判,该路段 V/C 已达 0.91,应判为拥堵而不是缓行…"></textarea>
-      <div class="row3">
-        <div><label>数据集</label><select id="asst-dataset" onchange="onAsstDatasetChange()">
-          ${datasets.map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join("")}</select></div>
-        <div><label>指定路段(可选)</label><select id="asst-segment"></select></div>
-        <div style="display:flex;align-items:flex-end"><button class="btn" style="width:100%" onclick="llmDraft(this)">${icon("spark", 15)} 生成草稿</button></div>
-      </div>
+      <label>数据集</label>
+      <select id="asst-dataset" onchange="onAsstDatasetChange()">
+        ${datasets.map(d => `<option value="${esc(d.name)}">${esc(d.name)}</option>`).join("")}</select>
+      <label>指定路段(可选)</label>
+      <select id="asst-segment"></select>
+      <p style="margin:11px 0 0"><button class="btn" style="width:100%" onclick="llmDraft(this)">${icon("spark", 14)} 生成草稿</button></p>
       <div id="asst-editor"></div>
       <div id="asst-drafts"></div>
     </div>
-    <div class="card">
-      <h3><span class="h-ico">${icon("tool", 16)}</span>失败诊断(分析者 + 评审者)</h3>
-      <p class="desc">闭环第 4 步的加速器:对指定版本重放评测,分析者智能体按失败标签归因,评审者智能体复核收敛;结论仅供参考,不自动改动任何资产。</p>
-      <div class="row">
-        <div><label>管线版本</label><select id="asst-dg-version">
-          ${versions.map(v => `<option value="${esc(v.version)}"${v.version === "v2" ? " selected" : ""}>${esc(v.version)} · ${esc(v.name)}</option>`).join("")}</select></div>
-        <div><label>评测集</label><select id="asst-dg-evalset">
-          ${evalsetOpts.map(e => `<option value="${esc(e.evalset_id)}">${esc(e.evalset_id)}${e.case_count !== "—" ? ` · ${e.case_count} 条` : ""}</option>`).join("")}</select></div>
-      </div>
-      <p style="margin:14px 0 0"><button class="btn" onclick="llmDiagnose(this)">${icon("tool", 15)} 生成诊断</button></p>
+    <div class="ai-sec">
+      <h4>${icon("tool", 14)} 失败诊断(分析者 + 评审者)</h4>
+      <p class="desc">对指定版本重放评测并按失败标签归因;结论仅供参考,不自动改动任何资产。</p>
+      <label>管线版本</label>
+      <select id="asst-dg-version">
+        ${versions.map(v => `<option value="${esc(v.version)}"${v.version === "v2" ? " selected" : ""}>${esc(v.version)} · ${esc(v.name)}</option>`).join("")}</select>
+      <label>评测集</label>
+      <select id="asst-dg-evalset">
+        ${evalsetOpts.map(e => `<option value="${esc(e.evalset_id)}">${esc(e.evalset_id)}${e.case_count !== "—" ? ` · ${e.case_count} 条` : ""}</option>`).join("")}</select>
+      <p style="margin:11px 0 0"><button class="btn" style="width:100%" onclick="llmDiagnose(this)">${icon("tool", 14)} 生成诊断</button></p>
       <div id="asst-diagnosis"></div>
     </div>`;
   await onAsstDatasetChange();
   await renderAsstDrafts();
+}
+function showAsstEditor(d) {
+  asstDraft = d;
+  $("#asst-editor").innerHTML = `
+    <div class="ai-draft">
+      <div style="font-size:12px;font-weight:700">${icon("spark", 13)} 草稿 ${esc(d.draft_id)}
+        <span class="muted" style="font-weight:400"> · ${esc(d.llm.model)} 生成</span></div>
+      <div class="muted" style="margin-top:2px;font-size:11.5px">${esc(d.rationale)}</div>
+      <label>标题</label><input id="asst-t" maxlength="80" value="${esc(d.title)}">
+      <label>失败标签</label><input id="asst-l" maxlength="20" value="${esc(d.label)}">
+      <label>期望等级</label><select id="asst-lv">
+        ${LEVELS.map(l => `<option${l === d.expected_level ? " selected" : ""}>${l}</option>`).join("")}</select>
+      <p style="display:flex;gap:8px;margin:11px 0 0">
+        <button class="btn" style="flex:1" onclick="llmConfirmDraft(this)">${icon("check", 14)} 确认沉淀为 replaycase</button>
+        <button class="btn secondary" onclick="llmDiscardDraft('${esc(d.draft_id)}')" title="丢弃草稿">${icon("trash", 14)}</button>
+      </p>
+    </div>`;
+}
+async function renderAsstDrafts() {
+  const box = $("#asst-drafts");
+  if (!box) return;
+  const drafts = await api("/api/llm/drafts").catch(() => []);
+  box.innerHTML = drafts.length ? `
+    <p class="muted" style="margin:12px 0 2px;font-weight:700;font-size:11.5px">草稿记录(drafts/)</p>
+    ${drafts.map(d => `<div class="ai-run">
+      <span class="pill ${d.status === "confirmed" ? "pass" : d.status === "pending" ? "na" : "fail"}">${esc(d.status)}</span>
+      <span class="rp-purpose" title="${esc(d.title)} · 期望 ${esc(d.expected_level)}">${esc(d.title)}</span>
+      ${d.status === "pending"
+        ? `<button class="linklike" onclick="llmLoadDraft('${esc(d.draft_id)}')">编辑</button>`
+        : `<span class="muted num">${esc(d.confirmed_case_id || "")}</span>`}
+      <button class="icon-btn" style="width:24px;height:24px" title="删除草稿" onclick="llmDiscardDraft('${esc(d.draft_id)}')">${icon("trash", 13)}</button>
+    </div>`).join("")}` : "";
 }
 async function onAsstDatasetChange() {
   const ds = $("#asst-dataset").value;
   const { segments } = await api("/api/segments/" + ds);
   $("#asst-segment").innerHTML = `<option value="">让助手自动定位</option>` +
     segments.map(s => `<option value="${esc(s.segment_id)}">${esc(s.segment_id)} · ${esc(s.name)}</option>`).join("");
-}
-function showAsstEditor(d) {
-  asstDraft = d;
-  $("#asst-editor").innerHTML = `
-    <div class="hint">${icon("spark", 15)}<span><b>草稿 ${esc(d.draft_id)}</b>(${esc(d.llm.model)} 生成)—— ${esc(d.rationale)}</span></div>
-    <div class="row3">
-      <div><label>标题</label><input id="asst-t" maxlength="80" value="${esc(d.title)}"></div>
-      <div><label>失败标签</label><input id="asst-l" maxlength="20" value="${esc(d.label)}"></div>
-      <div><label>期望等级</label><select id="asst-lv">
-        ${LEVELS.map(l => `<option${l === d.expected_level ? " selected" : ""}>${l}</option>`).join("")}</select></div>
-    </div>
-    <p style="display:flex;gap:10px;margin:14px 0 0">
-      <button class="btn" onclick="llmConfirmDraft(this)">${icon("check", 15)} 确认沉淀为 replaycase</button>
-      <button class="btn secondary" onclick="llmDiscardDraft('${esc(d.draft_id)}')">${icon("trash", 15)} 丢弃</button>
-    </p>`;
-}
-async function renderAsstDrafts() {
-  const drafts = await api("/api/llm/drafts").catch(() => []);
-  $("#asst-drafts").innerHTML = drafts.length ? `
-    <p style="margin:18px 0 8px;font-weight:700;font-size:13px">草稿记录(drafts/)</p>
-    <div class="table-wrap scroll-tbl"><table>
-      <thead><tr><th>草稿</th><th>状态</th><th>标题</th><th>标签</th><th>等级</th><th>关联 Case</th><th></th></tr></thead>
-      <tbody>${drafts.map(d => `<tr>
-        <td class="num">${esc(d.draft_id)}</td>
-        <td><span class="pill ${d.status === "confirmed" ? "pass" : d.status === "pending" ? "na" : "fail"}">${esc(d.status)}</span></td>
-        <td>${esc(d.title)}</td><td>${esc(d.label)}</td><td>${lvPill(d.expected_level)}</td>
-        <td class="num">${esc(d.confirmed_case_id || "—")}</td>
-        <td style="white-space:nowrap">${d.status === "pending"
-          ? `<button class="linklike" onclick="llmLoadDraft('${esc(d.draft_id)}')">编辑</button> ` : ""}
-        <button class="icon-btn" title="删除草稿" onclick="llmDiscardDraft('${esc(d.draft_id)}')">${icon("trash", 15)}</button></td></tr>`).join("")}
-      </tbody></table></div>` : "";
 }
 async function llmDraft(btn) {
   await withBusy(btn, async () => {
@@ -1778,7 +2205,7 @@ async function llmConfirmDraft(btn) {
     toast(`已沉淀 ${out.case.case_id} 并加入评测集`);
     $("#asst-editor").innerHTML = `<div class="hint ok">${icon("check", 15)}<span>
       草稿已确认为 <b>${esc(out.case.case_id)}</b>,已加入评测集 —— 可回评测看板重跑自进化验证效果。</span></div>`;
-    asstDraft = null; await renderAsstDrafts(); loadHealth();
+    asstDraft = null; await renderAsstDrafts(); refreshCasesIfVisible(); loadHealth();
   });
 }
 async function llmDiscardDraft(id) {
@@ -1900,13 +2327,14 @@ async function cmdkActions() {
   const nav = [
     ["dashboard", "评测看板", "dashboard", "页面"],
     ["cases", "Case 管理", "database", "页面"],
-    ["assistant", "智能助手", "spark", "页面"],
     ["compare", "版本对比", "scale", "页面"],
     ["analyze", "分析提交", "flask", "页面"],
   ].map(([tab, name, ico, cat]) => ({
     ico, label: name, cat,
     run: () => { if (views.app.classList.contains("hidden")) enterApp().then(() => switchTab(tab)); else switchTab(tab); },
   }));
+  nav.push({ ico: "spark", label: "智能助手", cat: "页面",
+    run: () => { if (views.app.classList.contains("hidden")) enterApp().then(() => setAiOpen(true)); else setAiOpen(true); } });
   const cmds = [
     { ico: "cycle", label: "运行完整自进化循环", cat: "命令",
       run: () => { switchTab("dashboard"); setTimeout(() => { const b = $("#evolve-out") && [...document.querySelectorAll("button")].find(x => x.textContent.includes("运行完整自进化循环")); if (b) runEvolve(b); }, 300); } },
@@ -1969,34 +2397,43 @@ $("#cmdk-input").addEventListener("keydown", e => {
   $$("#cmdk-list .cmdk-item")[cmdkSel]?.scrollIntoView({ block: "nearest" });
 });
 
-/* ============ 报告详情抽屉 ============ */
-async function showReport(reportId) {
-  let rep;
-  try { rep = await api("/api/reports/" + reportId); }
-  catch (e) { toast(e.message, true); return; }
-  $("#drawer-title").textContent = reportId;
+/* ============ 报告详情:看板工作区 / 抽屉共用渲染 ============ */
+function reportDetailHtml(rep) {
   const labels = Object.entries(rep.label_stats).map(([label, st]) => `
     <tr><td>${esc(label)}</td><td class="num">${st.passed}/${st.total}</td><td class="num">${pct(st.passed / st.total)}</td></tr>`).join("");
   const perCase = rep.results.map(r => `
     <tr><td class="num">${esc(r.case_id)}</td><td>${esc(r.label)}</td><td>${pill(r.passed)}</td>
     <td class="num">${r.score.toFixed(2)}</td></tr>`).join("");
-  $("#drawer-body").innerHTML = `
+  return `
     <div class="chips" style="margin-top:0">
       <span class="chip2 plain">版本 ${esc(rep.version)}</span>
       <span class="chip2 ${rep.accuracy === 1 ? "good" : ""} num">得分 ${pct(rep.accuracy)}</span>
       <span class="chip2 plain num">${rep.passed_count}/${rep.total} 通过</span>
       <span class="chip2 plain num">耗时 ${rep.duration_ms} ms</span>
     </div>
-    ${rep.changes && rep.changes.length ? `<h4>优化内容</h4>
+    ${rep.changes && rep.changes.length ? `<p style="margin:12px 0 4px;font-weight:700;font-size:13px">优化内容</p>
       <ul style="margin:0;padding-left:18px;font-size:12.5px;color:var(--t3)">${rep.changes.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
-    <h4>分标签通过率</h4>
-    <table><thead><tr><th>标签</th><th class="num">通过/总数</th><th class="num">通过率</th></tr></thead>
-      <tbody>${labels}</tbody></table>
-    <h4>逐 case 结果</h4>
+    <p style="margin:12px 0 4px;font-weight:700;font-size:13px">分标签通过率</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>标签</th><th class="num">通过/总数</th><th class="num">通过率</th></tr></thead>
+      <tbody>${labels}</tbody></table></div>
+    <p style="margin:12px 0 4px;font-weight:700;font-size:13px">逐 case 结果</p>
     <div class="table-wrap"><table>
       <thead><tr><th>Case</th><th>标签</th><th>结果</th><th class="num">得分</th></tr></thead>
       <tbody>${perCase}</tbody></table></div>
-    <p style="margin:14px 0 0"><button class="btn sm secondary" onclick="quickCompare('${esc(reportId)}')">${icon("scale", 13)} 与最新版本对比</button></p>`;
+    <p style="margin:14px 0 0"><button class="btn sm secondary" onclick="quickCompare('${esc(rep.report_id)}')">${icon("scale", 13)} 与最新版本对比</button></p>`;
+}
+async function showReport(reportId) {
+  // 看板页:直接进工作区详情(不打断三栏布局);其他页面沿用抽屉
+  if (!views.app.classList.contains("hidden") && $("#tab-dashboard").classList.contains("active")) {
+    selectReport(reportId);
+    return;
+  }
+  let rep;
+  try { rep = await api("/api/reports/" + reportId); }
+  catch (e) { toast(e.message, true); return; }
+  $("#drawer-title").textContent = reportId;
+  $("#drawer-body").innerHTML = reportDetailHtml(rep);
   $("#drawer-mask").classList.remove("hidden");
   $("#drawer").classList.remove("hidden");
 }
@@ -2049,6 +2486,7 @@ document.addEventListener("keydown", e => {
     $("#cmdk-mask").classList.contains("hidden") ? openCmdk() : closeCmdk();
   } else if (e.key === "Escape") {
     if (!$("#cmdk-mask").classList.contains("hidden")) closeCmdk();
+    if (!$("#sheet-mask").classList.contains("hidden")) closeSheet();
     if (!$("#drawer").classList.contains("hidden")) closeDrawer();
   }
 });
@@ -2057,18 +2495,95 @@ document.addEventListener("keydown", e => {
 const TITLES = {
   dashboard: ["评测看板", "评测驱动迭代:基线 → 最多 2 轮 → 验证无回归 → 归档报告"],
   cases: ["Case 管理", "闭环第 1-2 步:把线上反馈沉淀为可重放的评测用例"],
-  assistant: ["智能助手", "LLM 智能层:草稿沉淀 · 失败诊断 · LLM-as-Judge(Runtime 可观测)"],
   compare: ["版本对比", "闭环第 6 步:守护每一次迭代不引入回归"],
   analyze: ["分析提交", "用任意版本的管线分析任意数据集"],
 };
-const renderers = { dashboard: renderDashboard, cases: renderCases, assistant: renderAssistant,
-                    compare: renderCompare, analyze: renderAnalyze };
+const renderers = { compare: renderCompare, analyze: renderAnalyze };
 // 图标注入(HTML 里用 data-ico 占位,避免重复书写长 SVG)
 $$("[data-ico]").forEach(el => { el.innerHTML = icon(el.dataset.ico, el.dataset.icoSize || 18); });
 document.querySelector(".nav-scroll").addEventListener("click", e => {
   const btn = e.target.closest("button[data-tab]");
   if (btn) switchTab(btn.dataset.tab);
 });
+// AI 右栏侧轨:任何页面都可展开 / 收起智能助手
+$("#ai-rail").addEventListener("click", () => setAiOpen());
+
+/* ============ 面板宽度拖拽(导航 / 任务区 / AI 面板,宽度记忆于 localStorage) ============ */
+const PANE_DEFS = {
+  side: { min: 200, max: 340, base: 248, delta: 1 },    // 拖右加宽
+  task: { min: 208, max: 400, base: 272, delta: 1 },
+  ai:   { min: 300, max: 560, base: 396, delta: -1 },   // 面板在右侧:拖左加宽
+};
+const PANE_STORE = "harness_pane_w";
+const WORKSPACE_MIN = 560;   // 中栏工作区保底宽度;再窄由容器查询转为纵向堆叠
+const FIXED_CHROME = 51;     // 三个拖拽柄 15px + AI 侧轨 36px,不随拖拽变化
+
+function panePx(name) {
+  // 宽度真值源 = CSS 变量;不读 getBoundingClientRect,避免展开动画未结束时取到中间值
+  const v = parseFloat(document.documentElement.style.getPropertyValue(`--pane-${name}`));
+  return Number.isNaN(v) ? PANE_DEFS[name].base : v;
+}
+function setPaneWidth(name, px, persist = true) {
+  const def = PANE_DEFS[name];
+  const aiOpen = $("#aipanel").classList.contains("open");
+  const others = Object.keys(PANE_DEFS)
+    .filter(n => n !== name && (n !== "ai" || aiOpen))
+    .reduce((sum, n) => sum + panePx(n), 0);
+  const max = Math.min(def.max, innerWidth - others - WORKSPACE_MIN - FIXED_CHROME);
+  const w = Math.round(Math.min(Math.max(px, def.min), Math.max(def.min, max)));
+  document.documentElement.style.setProperty(`--pane-${name}`, w + "px");
+  if (persist) {
+    const all = paneWidths(); all[name] = w;
+    try { localStorage.setItem(PANE_STORE, JSON.stringify(all)); } catch {}
+  }
+}
+function paneWidths() {
+  try { return JSON.parse(localStorage.getItem(PANE_STORE)) || {}; } catch { return {}; }
+}
+(function initPaneResize() {
+  const saved = paneWidths();
+  for (const name of Object.keys(PANE_DEFS)) {
+    if (typeof saved[name] === "number") setPaneWidth(name, saved[name], false);
+  }
+  $$(".pane-resizer").forEach(handle => {
+    const name = handle.dataset.resize;
+    let startX = 0, startW = 0;
+    handle.addEventListener("pointerdown", e => {
+      if (name === "ai" && !$("#aipanel").classList.contains("open")) return;
+      startX = e.clientX;
+      startW = panePx(name);
+      try { handle.setPointerCapture(e.pointerId); } catch {}  // 某些合成/触控环境会抛,不阻塞拖拽
+      handle.classList.add("dragging");
+      document.body.classList.add("col-resizing");
+    });
+    handle.addEventListener("pointermove", e => {
+      if (!handle.classList.contains("dragging")) return;
+      setPaneWidth(name, startW + (e.clientX - startX) * PANE_DEFS[name].delta);
+    });
+    const stop = () => {
+      handle.classList.remove("dragging");
+      document.body.classList.remove("col-resizing");
+    };
+    handle.addEventListener("pointerup", stop);
+    handle.addEventListener("pointercancel", stop);
+    handle.addEventListener("dblclick", () => {   // 双击恢复默认宽度
+      const all = paneWidths(); delete all[name];
+      try { localStorage.setItem(PANE_STORE, JSON.stringify(all)); } catch {}
+      document.documentElement.style.removeProperty(`--pane-${name}`);
+    });
+  });
+  // 窗口缩放后重新钳制:面板按已存宽度收敛,工作区不会被挤到显示不全
+  let resizeRaf = 0;
+  window.addEventListener("resize", () => {
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => {
+      const saved = paneWidths();
+      for (const name of Object.keys(PANE_DEFS)) {
+        if (typeof saved[name] === "number") setPaneWidth(name, saved[name], false);
+      }
+    });
+  });
+})();
 // 登录框回车提交
 $("#view-login").addEventListener("keydown", e => {
   if (e.key === "Enter" && document.activeElement && document.activeElement.tagName === "INPUT") {

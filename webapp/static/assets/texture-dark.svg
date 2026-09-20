@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320">
+  <!-- 工作台背景纹理(暗色):极淡路网拓扑,可无缝平铺 -->
+  <g fill="none" stroke="#67e8f9" stroke-width="1.4">
+    <path d="M0 160 C 107 120, 213 200, 320 160" opacity=".05"/>
+    <path d="M240 0 V 320" opacity=".045"/>
+    <path d="M0 64 H 320" stroke-dasharray="10 10" opacity=".045"/>
+    <path d="M0 320 L 320 0" stroke-width="1" opacity=".035"/>
+  </g>
+  <g fill="#67e8f9">
+    <circle cx="240" cy="64" r="3" opacity=".07"/>
+    <circle cx="78" cy="141" r="2.5" opacity=".06"/>
+    <circle cx="160" cy="24" r="2" opacity=".05"/>
+    <circle cx="286" cy="270" r="2.5" opacity=".05"/>
+  </g>
+</svg>

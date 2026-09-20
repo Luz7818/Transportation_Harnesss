@@ -1,4 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="160"
+ viewBox="0 0 680 160" role="img" aria-label="Transportation Harness · 交通分析自进化评测系统">
+  <defs>
+    <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f2f5fb"/>
+      <stop offset="1" stop-color="#a5b4fc"/>
+    </linearGradient>
+  </defs>
+  <svg x="16" y="16" width="128" height="128" viewBox="0 0 512 512">
   <!-- 交通分析自进化 Harness · 应用图标「信号灯 × 进化轨道 × 城市路网」
        绿灯大而亮 = 评测通过放行;倾斜轨道环 = 持续自进化;底部路网与天际线 = 交通领域 -->
   <defs>
@@ -111,4 +119,9 @@
     <circle cx="420" cy="318" r="5.5" fill="#67e8f9"/>
   </g>
   </g>
+</svg>
+  <text x="172" y="78" font-family="'Segoe UI','PingFang SC','Microsoft YaHei',system-ui,sans-serif"
+        font-size="42" font-weight="800" letter-spacing=".5" fill="url(#tg)">Transportation Harness</text>
+  <text x="174" y="118" font-family="'Segoe UI','PingFang SC','Microsoft YaHei',system-ui,sans-serif"
+        font-size="17" font-weight="500" letter-spacing="5" fill="#8b98ad">交通分析自进化评测系统</text>
 </svg>

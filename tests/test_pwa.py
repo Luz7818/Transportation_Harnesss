@@ -14,7 +14,8 @@ class TestServiceWorker:
         resp = client.get("/sw.js")
         assert resp.status_code == 200
         assert "javascript" in resp.headers["content-type"]
-        assert "harness-shell-v1" in resp.text  # 版本化缓存标识
+        import re
+        assert re.search(r'harness-shell-v\d+', resp.text), "缺少版本化缓存标识 harness-shell-vN"
 
     def test_sw_registered_by_pages(self, client):
         for path in ("/", "/help"):

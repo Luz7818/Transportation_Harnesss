@@ -9,8 +9,9 @@
 
 环境变量:
   LLM_BASE_URL  OpenAI 兼容端点,如 https://api.deepseek.com/v1、http://localhost:11434/v1
-  LLM_API_KEY   对应密钥(未设置即进入 Mock 模式)
+  LLM_API_KEY   对应密钥(未设置即进入 Mock 模式;无鉴权端点填 EMPTY 即可)
   LLM_MODEL     模型名,默认 gpt-4o-mini
+  LLM_EXTRA_BODY 可选,JSON 对象字符串,原样并入请求体(如 {"enable_thinking": false})
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ import os
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from llm import store
 
@@ -36,16 +37,30 @@ class LLMConfig:
     model: str
     timeout: float = 30.0
     temperature: float = 0.2
+    extra_body: dict = field(default_factory=dict)
 
 
 def load_config() -> LLMConfig | None:
-    """从环境变量读取配置;未配置完整(base_url + api_key)返回 None → 使用 Mock。"""
+    """从环境变量读取配置;未配置完整(base_url + api_key)返回 None → 使用 Mock。
+
+    LLM_EXTRA_BODY(JSON 对象字符串)原样并入请求体,用于供应商/模型专属参数,
+    如 {"enable_thinking": false} 关闭 Qwen3 思考模式;非法 JSON 直接报错,失败可见。
+    """
     base = os.getenv("LLM_BASE_URL", "").strip().rstrip("/")
     key = os.getenv("LLM_API_KEY", "").strip()
     model = os.getenv("LLM_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
     if not (base and key):
         return None
-    return LLMConfig(base_url=base, api_key=key, model=model)
+    extra: dict = {}
+    raw = os.getenv("LLM_EXTRA_BODY", "").strip()
+    if raw:
+        try:
+            extra = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise LLMError(f"LLM_EXTRA_BODY 不是合法 JSON:{exc}") from exc
+        if not isinstance(extra, dict):
+            raise LLMError("LLM_EXTRA_BODY 必须是 JSON 对象")
+    return LLMConfig(base_url=base, api_key=key, model=model, extra_body=extra)
 
 
 def _parse_json_content(content: str) -> dict:
@@ -87,13 +102,15 @@ class LLMRuntime:
             store.journal_append(purpose, self.config.model, 0.0, {}, cache_hit=True)
             return cached
 
-        payload = json.dumps({
+        body = {
             "model": self.config.model,
             "messages": [{"role": "system", "content": system},
                          {"role": "user", "content": user}],
             "temperature": self.config.temperature,
             "response_format": {"type": "json_object"},
-        }).encode("utf-8")
+        }
+        body.update(self.config.extra_body)  # 模型专属参数(如 enable_thinking)原样透传
+        payload = json.dumps(body).encode("utf-8")
 
         last_err: Exception | None = None
         for _attempt in range(2):  # 瞬时网络/5xx 重试一次
@@ -165,7 +182,7 @@ def status() -> dict:
         "kind": runtime.kind,
         "model": runtime.model,
         "configured": runtime.kind != "mock",
-        "env": ["LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL"],
+        "env": ["LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL", "LLM_EXTRA_BODY"],
         "cache_count": store.cache_count(),
         "recent_runs": store.journal_tail(5),
     }

@@ -19,7 +19,9 @@ catch (e) { document.documentElement.dataset.theme = "light"; }
   --primary: #4f46e5; --primary-h: #4338ca; --primary-soft: #eef1ff;
   --ok: #079455; --ok-soft: #e7f6ef; --warn: #b54708; --warn-soft: #fef4e6;
   --bad: #b42318; --bad-soft: #feecea; --info: #175cd3; --info-soft: #eaf1fd;
-  --code-bg: #0c1322;
+  --code-bg: #f7f9fd; --code-line: #e3e8f2; --code-text: #1e2a3d; --code-head: #64748b;
+  --code-btn-bg: #eceff7; --code-btn-text: #5b6a86; --code-btn-hover: #e0e6f2; --code-btn-hover-text: #1f2937;
+  --code-c: #9099ad; --code-s: #059669; --code-k: #4f46e5;
   --shadow-xs: 0 1px 2px rgba(16,24,40,.05);
   --shadow-sm: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.04);
   --topbar-bg: rgba(255,255,255,.85); --thead-bg: #fafbfe; --row-line: #f0f2f8;
@@ -34,6 +36,10 @@ html[data-theme="dark"] {
   --bad: #f87171; --bad-soft: rgba(248,113,113,.13); --info: #6ea8fe; --info-soft: rgba(110,168,254,.13);
   --topbar-bg: rgba(11,16,30,.8); --thead-bg: #16203a; --row-line: #1e2946;
   --chip-bg: #1a2340; --surface-2: #1a2340; --row-hover: #182141;
+  --code-bg: #0c1322; --code-line: rgba(255,255,255,.08); --code-text: #dbe4f5; --code-head: #8b98ad;
+  --code-btn-bg: rgba(255,255,255,.08); --code-btn-text: #aab6cc;
+  --code-btn-hover: rgba(255,255,255,.15); --code-btn-hover-text: #fff;
+  --code-c: #64748b; --code-s: #86efac; --code-k: #a5b4fc;
   --shadow-xs: 0 1px 2px rgba(0,0,0,.35);
   --shadow-sm: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.25);
 }
@@ -55,9 +61,10 @@ html[data-theme="dark"] code.inline { background: rgba(129,140,248,.14); border-
   color: #c7d2fe; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--t1);
+body { margin: 0; background: var(--bg) url("/static/assets/texture-light.svg") repeat; color: var(--t1);
        font: 14px/1.75 "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
        -webkit-font-smoothing: antialiased; }
+html[data-theme="dark"] body { background: var(--bg) url("/static/assets/texture-dark.svg") repeat; }
 ::selection { background: rgba(79,70,229,.18); }
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -79,7 +86,10 @@ a:hover { text-decoration: underline; }
 .btn-top.primary:hover { background: var(--primary-h); }
 
 /* ===== 布局 ===== */
-.doc-layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 28px 24px 80px; gap: 36px; }
+.brand-banner { max-width: 1200px; margin: 20px auto 0; padding: 0 24px; }
+.brand-banner img { display: block; width: 100%; border-radius: 16px; border: 1px solid var(--line);
+                    box-shadow: var(--shadow-sm); }
+.doc-layout { display: flex; max-width: 1200px; margin: 0 auto; padding: 24px 24px 80px; gap: 36px; }
 .doc-toc { width: 210px; flex: none; position: sticky; top: 88px; align-self: flex-start;
            max-height: calc(100vh - 120px); overflow-y: auto; }
 .doc-toc .toc-group { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; color: var(--t4);
@@ -119,20 +129,21 @@ td { padding: 9px 13px; border-bottom: 1px solid var(--row-line); vertical-align
 tr:last-child td { border-bottom: 0; }
 td code, th code { font-size: 12px; }
 
-/* ===== 代码块 ===== */
-.code-block { position: relative; background: var(--code-bg); border-radius: 12px; margin: 10px 0 18px;
+/* ===== 代码块(明暗主题自适应) ===== */
+.code-block { position: relative; background: var(--code-bg); border: 1px solid var(--code-line);
+              border-radius: 12px; margin: 10px 0 18px;
               overflow: hidden; box-shadow: var(--shadow-sm); }
 .code-block .code-head { display: flex; align-items: center; justify-content: space-between;
-                         padding: 7px 14px; border-bottom: 1px solid rgba(255,255,255,.08);
-                         color: #8b98ad; font-size: 11.5px; letter-spacing: .05em; }
-.code-block .copy-btn { background: rgba(255,255,255,.08); border: 0; color: #aab6cc; font-size: 11px;
+                         padding: 7px 14px; border-bottom: 1px solid var(--code-line);
+                         color: var(--code-head); font-size: 11.5px; letter-spacing: .05em; }
+.code-block .copy-btn { background: var(--code-btn-bg); border: 0; color: var(--code-btn-text); font-size: 11px;
                         padding: 3px 10px; border-radius: 6px; cursor: pointer; font-family: inherit; }
-.code-block .copy-btn:hover { background: rgba(255,255,255,.15); color: #fff; }
-.code-block pre { margin: 0; padding: 14px 16px; overflow-x: auto; color: #dbe4f5;
+.code-block .copy-btn:hover { background: var(--code-btn-hover); color: var(--code-btn-hover-text); }
+.code-block pre { margin: 0; padding: 14px 16px; overflow-x: auto; color: var(--code-text);
                   font: 12.5px/1.7 Consolas, "Courier New", monospace; }
-.code-block pre .c { color: #64748b; }   /* 注释 */
-.code-block pre .s { color: #86efac; }   /* 字符串 */
-.code-block pre .k { color: #a5b4fc; }   /* 键/重点 */
+.code-block pre .c { color: var(--code-c); }   /* 注释 */
+.code-block pre .s { color: var(--code-s); }   /* 字符串 */
+.code-block pre .k { color: var(--code-k); }   /* 键/重点 */
 
 /* ===== 接口条目 ===== */
 .ep { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
@@ -208,6 +219,10 @@ td code, th code { font-size: 12px; }
     <a class="btn-top primary" href="/docs" target="_blank" rel="noopener">交互式 API(Swagger)</a>
   </div>
 </header>
+
+<div class="brand-banner">
+  <img src="/static/assets/banner.svg" alt="Transportation Harness · 交通分析自进化评测系统">
+</div>
 
 <div class="doc-layout">
 <!-- ============ 目录 ============ -->
@@ -845,7 +860,7 @@ curl -s <span class="s">"$BASE/api/compare?a=report_v1_20260915T021603&b=report_
 <section class="doc-sec" id="faq">
   <h2>常见问题</h2>
   <div class="faq-item"><div class="q">LLM 用在哪里?没配 API Key 会怎样?</div>
-    <div class="a">LLM 只做规则判不了的三件事:坏例沉淀助手(草稿需人工确认)、结论文本质量评分(LLM-as-Judge)、失败诊断(分析者+评审者双智能体)。未配置 <code class="inline">LLM_API_KEY</code> 时自动降级为离线确定性 Mock —— 全功能可演示、零成本、可复现。配置三个环境变量即可接入任意 OpenAI 兼容端点,详见 <code class="inline">docs/LLM.md</code> 与「智能助手」页。</div></div>
+    <div class="a">LLM 只做规则判不了的三件事:坏例沉淀助手(草稿需人工确认)、结论文本质量评分(LLM-as-Judge)、失败诊断(分析者+评审者双智能体)。未配置 <code class="inline">LLM_API_KEY</code> 时自动降级为离线确定性 Mock —— 全功能可演示、零成本、可复现。配置三个环境变量即可接入任意 OpenAI 兼容端点,详见 <code class="inline">docs/LLM.md</code> 与右侧常驻的「智能助手」面板。</div></div>
   <div class="faq-item"><div class="q">默认账号是什么?如何重置?</div>
     <div class="a">首次启动自动创建 <b>admin / harness123</b>(可用环境变量 <code class="inline">ADMIN_USER / ADMIN_PASSWORD</code> 覆盖)。忘记密码:停止服务,删除 <code class="inline">webapp/auth.json</code> 后重启即重新生成。</div></div>
   <div class="faq-item"><div class="q">如何新增管线版本 v3?</div>

@@ -54,12 +54,21 @@ def hermetic_storage(tmp_path, monkeypatch):
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
-    """Web API 测试客户端:auth.json 指向临时文件,避免动到真实凭据。"""
+    """Web API 测试客户端:auth.json 指向临时文件,避免动到真实凭据。
+
+    app 在 import 时会加载仓库根目录 .env(可能含本机真实 LLM 配置),
+    这里统一清除并重置运行时,保证 API 级测试始终走离线确定性 Mock。
+    """
     import webapp.auth as auth_mod
 
     monkeypatch.setattr(auth_mod, "AUTH_FILE", tmp_path / "auth.json")
 
     import webapp.app as app_mod
+    for key in ("LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL", "LLM_EXTRA_BODY"):
+        monkeypatch.delenv(key, raising=False)
+    from llm import runtime as llm_runtime
+    llm_runtime.reset_runtime()
+
     from fastapi.testclient import TestClient
 
     with TestClient(app_mod.app) as tc:

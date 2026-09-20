@@ -18,7 +18,7 @@
 | **Human-in-the-loop** | 草稿必须人工确认才成为 replaycase(且走与手工沉淀**完全相同**的校验/落盘路径);诊断结论仅供参考,不自动改任何资产;LLM 判分失败降级可见、可重跑 | `POST /api/llm/drafts/{id}/confirm`、`harness/judge.py` |
 | **Multi-Agent 协作** | 失败诊断 = 分析者(按标签归因)+ 评审者(复核、去重、风险提示)的 generator-critic 流水线;**刻意不做自主 Agent 群** —— 评测系统要求可复现,编排必须确定 | `llm/workflows.py:diagnose_failures` |
 | **Evaluation & Governance** | 模型输出全部过校验(等级枚举、case_id 防幻觉过滤、长度截断);一切调用进 `llm_runs.jsonl` 审计;响应缓存保证同输入同输出;LLM judge 的分数与理由随报告持久化可复核;成本可见(缓存命中/token 统计) | `llm/store.py`、`llm/judge.py`、`llm/workflows.py` |
-| **工程化落地** | 零新增依赖(stdlib urllib);未配 Key 自动降级 Mock,CI 与课堂演示离线可跑;27 个专项测试;环境变量三枚即可接入;Docker 卷持久化草稿与缓存 | `tests/test_llm.py`、`Dockerfile`、`docker-compose.yml` |
+| **工程化落地** | 零新增依赖(stdlib urllib);未配 Key 自动降级 Mock,CI 与课堂演示离线可跑;27 个专项测试;环境变量两枚即可接入(另有 LLM_EXTRA_BODY 可选透传模型专属参数);.env 零依赖自动加载;Docker 卷持久化草稿与缓存 | `tests/test_llm.py`、`Dockerfile`、`docker-compose.yml` |
 
 ## 1. Runtime:统一模型访问层
 
@@ -117,23 +117,27 @@ LLMRuntime(配置:LLM_BASE_URL/LLM_API_KEY/LLM_MODEL,环境变量)
 | 输出合法性 | 等级枚举校验、数值范围钳制、长度截断;非法输出直接拒绝(400),不落盘 |
 | 防幻觉 | 诊断结果中的 case_id 与真实失败集求交,引用不存在 id 的项被替换为真实失败集(有测试) |
 | 可复现 | 响应缓存按「模型+用途+提示词」哈希寻址;Mock 模式输出纯确定性 |
-| 可审计 | `llm_runs.jsonl` 追加写每次调用:时间/用途/模型/耗时/token/缓存命中;`/api/llm/status` 与智能助手页直接可查 |
+| 可审计 | `llm_runs.jsonl` 追加写每次调用:时间/用途/模型/耗时/token/缓存命中;`/api/llm/status` 与常驻「智能助手」面板直接可查 |
 | 可复核 | LLM judge 的分数与评分理由随 CheckResult 进入评测报告,人工可逐条申诉 |
 | 成本可控 | 缓存命中零成本;超长输入截断;调用次数 = 工作流步数(固定),无 Agent 循环失控风险 |
 | 可降级 | 无 Key → Mock;真实端点故障 → 重试 1 次 → 明确报错;judge 故障 → 检查降级为未通过且原因可见 |
 
 ## 7. 工程化落地
 
-**接入真实模型(三枚环境变量)**:
+**接入真实模型(两枚环境变量)**:
 
 ```bash
 LLM_BASE_URL=https://api.deepseek.com/v1   # 或 OpenAI/vLLM/Ollama 等任意兼容端点
-LLM_API_KEY=sk-xxx
+LLM_API_KEY=sk-xxx                          # 无鉴权端点可填 EMPTY
 LLM_MODEL=deepseek-chat
+LLM_EXTRA_BODY={"enable_thinking": false}   # 可选:JSON 对象,原样并入请求体(如关闭 Qwen3 思考模式)
 python webapp/app.py
 ```
 
-未配置时一切照常(Mock),`智能助手`页与 `/api/llm/status` 会明确标注当前模式。
+`webapp/app.py` 启动时会自动加载仓库根目录的 `.env`(零依赖实现,已存在的环境变量优先于文件),
+也可在 Docker/启动脚本里直接注入环境变量。
+
+未配置时一切照常(Mock),常驻右侧的「智能助手」面板与 `/api/llm/status` 会明确标注当前模式。
 
 **零新增依赖**:HTTP 用 stdlib `urllib`,无 openai SDK 锁定 —— 换供应商只改环境变量。
 
