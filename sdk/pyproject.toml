@@ -28,7 +28,7 @@ dev = ["pytest>=8.0"]
 harness-client = "harness_client.cli:main"
 
 [project.urls]
-Documentation = "https://github.com/your-name/Transportation_Harnesss/blob/main/docs/INTEGRATION.md"
+Documentation = "https://github.com/Luz7818/Transportation_Harnesss/blob/main/docs/INTEGRATION.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["harness_client"]
