@@ -49,3 +49,6 @@ ignore = [
 testpaths = ["tests"]
 addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning"]
+# 裸 `pytest`(CI 与 README 的调用法)不会把根目录放进 sys.path,`python -m pytest` 才会;
+# 少了这一行,tests/ 全部模块在收集期 ModuleNotFoundError,退出码 2。
+pythonpath = ["."]
