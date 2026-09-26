@@ -8,29 +8,34 @@
 > 交互式 API 参考:服务运行时访问 `/docs`(Swagger UI)与 `/help`(网页文档中心);
 > 机器可读规范:`docs/openapi.json`(可导入 Postman / Apifox)。
 
-## 1. 服务地址与令牌
+## 1. 服务地址与凭据
 
 | 环境 | Base URL | 说明 |
 | --- | --- | --- |
 | 本地开发 | `http://127.0.0.1:8765` | `python webapp/app.py` 启动 |
-| 云端(当前) | `http://47.114.37.174:8765` | 阿里云 ECS,Docker 常驻 |
-| 生产(规划) | `https://<备案域名>` | Nginx + HTTPS 已预置 |
+| 云服务器 | `http://<你的服务器地址>:8765` | 自己的公网 IP 或域名;Docker 常驻部署见 [DEPLOY.md](../DEPLOY.md) |
+| 正式发布 | `https://<你的备案域名>` | Nginx + HTTPS(小程序合法域名要求),见 DEPLOY.md 路线 B |
 
-令牌双通道,二者其一即可通过鉴权:
+> 仓库与文档里不出现任何真实地址、令牌或口令:上面这些尖括号占位符,
+> 请换成**你自己部署时填的值**(地址在服务器 `.env` 的 `HOST`/反代域名里,
+> 令牌在 `.env` 的 `AUTH_TOKEN` 里)。
+
+凭据三选一即可通过鉴权(受保护的 `/api/*`;`/api/health` 与 `/api/auth/*` 免鉴权):
 
 1. **机器令牌**(推荐给脚本/CI/外部系统):服务端启动时设置环境变量
-   `AUTH_TOKEN=<串>`,请求携带 `X-API-Token: <串>` 请求头;
-2. **登录会话**:调 `POST /api/auth/login`(默认账号 admin/harness123),
-   后续请求自动携带会话 Cookie(HttpOnly,7 天有效)。
+   `AUTH_TOKEN=<强随机串>`,请求携带 `X-API-Token: <串>` 请求头;
+2. **Bearer 会话令牌**(小程序等带不了 Cookie 的客户端):调 `POST /api/auth/login`
+   (用户名默认 `admin`;初始口令首次启动时在服务器控制台打印一次,或由 `ADMIN_PASSWORD` 指定),
+   取响应体的 `token`,之后每次带 `Authorization: Bearer <token>`(同一枚令牌 7 天内有效);
+3. **会话 Cookie**(网页):同一个登录接口自动 `Set-Cookie: harness_session`(HttpOnly,7 天)。
 
-`/api/health` 与 `/api/auth/*` 始终免鉴权,可用于拨测。
 内网演示可设 `AUTH_MODE=open` 完全放行(仅限内网)。
 
 ## 2. 30 秒验证(cURL)
 
 ```bash
-BASE=http://47.114.37.174:8765
-TOKEN=<你的令牌>
+BASE=http://<你的服务器地址>:8765     # 本地跑就是 http://127.0.0.1:8765
+TOKEN=<AUTH_TOKEN 的值>              # 服务端启动时设的那串;没设就没有这条通道
 
 curl -s $BASE/api/health
 curl -s -H "X-API-Token: $TOKEN" $BASE/api/versions
@@ -50,8 +55,8 @@ pip install ./sdk                                  # 从仓库安装(构建产�
 ```python
 from harness_client import TransportationHarnessClient
 
-with TransportationHarnessClient(base_url="http://47.114.37.174:8765",
-                                 token="你的令牌") as client:
+with TransportationHarnessClient(base_url="http://<你的服务器地址>:8765",
+                                 token="<AUTH_TOKEN 的值>") as client:
     out = client.analyze(version="v2", dataset_name="base")   # 也可选 rain_peak/incident/evening_peak
     print(out["summary"])
     for seg in out["segments"]:
@@ -99,17 +104,26 @@ import httpx                                    # 或 requests,模式相同
 with httpx.Client(base_url=BASE, headers={"X-API-Token": TOKEN}) as client:
     result = client.post("/api/eval/run", json={"version": "v2"}).json()
     assert result["accuracy"] == 1.0
+
+# 拿不到 AUTH_TOKEN、只有账号密码时(例如小程序侧的同款做法):用 Bearer 会话令牌
+token = httpx.post(f"{BASE}/api/auth/login",
+                   json={"username": "admin", "password": "<你的口令>"}
+                   ).json()["token"]             # 响应里同时有 expires_at(unix 秒)
+with httpx.Client(base_url=BASE,
+                  headers={"Authorization": f"Bearer {token}"}) as client:
+    assert client.get("/api/cases").status_code == 200
 ```
 
 要点:所有请求/响应均为 JSON;错误统一 `{"detail": "..."}`;
-鉴权失败的响应码恒为 401。
+鉴权失败为 401(凭据缺失/无效/过期),`/api/settings` 的准入拒绝为 403。
 
 ## 5. 错误码约定
 
 | 状态码 | 含义 | 典型原因 |
 | --- | --- | --- |
-| 400 | 请求参数不合法 | 路径不存在于数据集 / 等级枚举外 / ID 不存在 |
-| 401 | 未授权 | 令牌缺失或与 `AUTH_TOKEN` 不一致;会话过期 |
+| 400 | 请求参数不合法 | 路径不存在于数据集 / 等级枚举外 / ID 不存在 / `.env` 值非法 |
+| 401 | 未授权 | 三种凭据(X-API-Token / Bearer 会话令牌 / Cookie)都缺失或不正确;会话过期 |
+| 403 | 已识别但无权 | 仅 `/api/settings`:总开关未开启,或既非本机直连也无已鉴权会话 |
 | 404 | 资源不存在 | 未知版本 / 评测集 / 报告 ID |
 | 409 | 冲突 | 一键自进化正在运行(互斥锁) |
 | 429 | 登录限流 | 10 分钟内连续 5 次登录失败 |
@@ -121,8 +135,8 @@ with httpx.Client(base_url=BASE, headers={"X-API-Token": TOKEN}) as client:
 
 ## 6. OpenAPI 与代码生成
 
-- 规范文件:仓库内 `docs/openapi.json`(OpenAPI 3.1,28 路径,按
-  auth/metadata/analysis/cases/eval/reports/llm 分组),由
+- 规范文件:仓库内 `docs/openapi.json`(OpenAPI 3.1,29 路径,按
+  auth/metadata/analysis/cases/eval/reports/llm/settings 分组),由
   `python scripts/export_openapi.py` 重新生成;
 - Postman/Apifox:Import → 选择该 JSON,即可获得全部端点的可调试集合;
 - 代码生成:`openapi-generator generate -i docs/openapi.json -g <语言>` 可产出

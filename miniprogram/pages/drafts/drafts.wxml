@@ -1,0 +1,84 @@
+<view class="card" wx:if="{{!loaded}}"><text class="muted">加载中…</text></view>
+
+<block wx:if="{{loaded}}">
+  <view class="card">
+    <view class="row spread">
+      <view class="card-title">🤖 LLM 状态</view>
+      <text class="pill {{llm && llm.configured ? 'pass' : 'tag'}}">{{llm ? (llm.configured ? "真实端点" : "离线 Mock") : "…"}}</text>
+    </view>
+    <view class="muted" wx:if="{{llm}}">模型 {{llm.model}} · 缓存 {{llm.cache_count}} 条 · 降级路径:Key 未配置或调用失败时自动回退 Mock</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">✏️ 坏例沉淀助手(反馈 → 草稿)</view>
+    <view class="muted">粘贴线上反馈原文,AI 起草 replaycase;<text class="strong">人工确认后才入库</text>。</view>
+    <textarea class="ipt ta" value="{{complaint}}" bindinput="onComplaint" maxlength="500"
+              placeholder="例:学府路和文荟路交叉口早高峰应该判为拥堵,系统却判成基本畅通(至少 5 个字)" />
+    <view class="muted" style="margin-top:14rpx">数据集</view>
+    <picker mode="selector" range="{{datasets}}" range-key="displayName" bindchange="onDataset">
+      <view class="picker">{{datasets[datasetIdx] ? datasets[datasetIdx].displayName : "加载中…"}}</view>
+    </picker>
+    <view class="muted" style="margin-top:12rpx">路段(可选)</view>
+    <picker mode="selector" range="{{segments}}" range-key="name" bindchange="onSegment">
+      <view class="picker">{{segments[segmentIdx] ? segments[segmentIdx].name : "自动选择(LLM 判定)"}}</view>
+    </picker>
+    <button class="btn" style="margin-top:20rpx" disabled="{{generating}}" bindtap="generate">🪄 生成草稿</button>
+  </view>
+
+  <view class="card">
+    <view class="card-title">📥 草稿列表({{drafts.length}})</view>
+    <view wx:if="{{!drafts.length}}" class="muted">暂无草稿,上方生成第一条</view>
+    <view class="draft" wx:for="{{drafts}}" wx:key="key">
+      <view class="row spread">
+        <text class="strong">{{item.draft_id}}</text>
+        <text class="pill {{item.status === 'pending' ? 'warn' : 'pass'}}">{{item.status === "pending" ? "待确认" : "已入库 " + item.confirmed_case_id}}</text>
+      </view>
+      <view class="muted" style="margin-top:6rpx">原始反馈:{{item.complaint}}</view>
+      <view class="muted" wx:if="{{item.rationale}}">AI 理由:{{item.rationale}}</view>
+      <view class="muted">{{item.dataset_name}}<text wx:if="{{item.segment_id}}"> · {{item.segment_id}}</text></view>
+
+      <block wx:if="{{item.status === 'pending'}}">
+        <view class="muted" style="margin-top:12rpx">标题</view>
+        <input class="ipt" value="{{item.editTitle}}" data-id="{{item.draft_id}}" data-field="editTitle" bindinput="onDraftField" maxlength="80" />
+        <view class="muted" style="margin-top:10rpx">失败标签</view>
+        <input class="ipt" value="{{item.editLabel}}" data-id="{{item.draft_id}}" data-field="editLabel" bindinput="onDraftField" maxlength="20" />
+        <view class="muted" style="margin-top:10rpx">期望拥堵等级</view>
+        <picker mode="selector" range="{{levels}}" value="{{item.levelIdx}}" data-id="{{item.draft_id}}" bindchange="onDraftLevel">
+          <view class="picker">{{levels[item.levelIdx]}}</view>
+        </picker>
+        <view class="row" style="margin-top:18rpx">
+          <button class="btn" style="flex:1" size="mini" data-id="{{item.draft_id}}" bindtap="confirmDraft">✓ 确认入库</button>
+          <button class="btn btn-ghost danger-ghost" style="flex:1" size="mini" data-id="{{item.draft_id}}" bindtap="delDraft">🗑 丢弃</button>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">🩺 失败诊断(双角色分析)</view>
+    <view class="muted">重放评测集 → 按失败标签归因 → 评审复核,输出迭代建议(仅供参考)。</view>
+    <view class="row" style="margin-top:14rpx">
+      <picker style="flex:1" mode="selector" range="{{versions}}" range-key="version" bindchange="onVersion">
+        <view class="picker">版本:{{versions[versionIdx] ? versions[versionIdx].version : "…"}}</view>
+      </picker>
+      <picker style="flex:1" mode="selector" range="{{evalsets}}" range-key="evalset_id" bindchange="onEvalset">
+        <view class="picker">评测集:{{evalsets[evalsetIdx] ? evalsets[evalsetIdx].evalset_id : "…"}}</view>
+      </picker>
+    </view>
+    <button class="btn" style="margin-top:20rpx" disabled="{{diagnosing}}" bindtap="diagnose">🔍 开始诊断</button>
+
+    <block wx:if="{{diag}}">
+      <view class="muted" style="margin-top:16rpx">得分 {{diag.meta.passed}}/{{diag.meta.total}}({{diag.accText}})· 模型 {{diag.meta.model}}</view>
+      <view class="hint" wx:if="{{diag.reviewer_notes}}">👩‍⚖️ 评审意见:{{diag.reviewer_notes}}</view>
+      <view class="ditem" wx:for="{{diag.items}}" wx:key="key">
+        <view class="row spread">
+          <text class="badge">{{item.label}}</text>
+          <text class="muted">影响 {{item.affected_cases.length}} 条</text>
+        </view>
+        <view style="margin-top:8rpx">{{item.root_cause}}</view>
+        <view class="muted" wx:for="{{item.suggestions}}" wx:for-item="s" wx:key="*this" style="margin-top:6rpx">· {{s}}</view>
+        <view class="muted" wx:if="{{item.affected}}" style="margin-top:6rpx">涉及:{{item.affected}}</view>
+      </view>
+    </block>
+  </view>
+</block>

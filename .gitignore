@@ -12,15 +12,17 @@ webapp/auth.json
 .env
 
 # LLM 运行期产物(缓存/审计日志/AI 草稿)
-llm_cache/
-llm_runs.jsonl
-drafts/
+# 前导斜杠限定只匹配仓库根:无斜杠的 `drafts/` 会连带吞掉
+# miniprogram/pages/drafts/,导致该页面 4 个文件从未入库而 app.json 却注册了它。
+/llm_cache/
+/llm_runs.jsonl
+/drafts/
 
 # AI 编码助手本地工作区
-.zcode/
+/.zcode/
 
 # 备份
-backups/
+/backups/
 
 # 运行期产物
 *.log
@@ -31,6 +33,7 @@ backups/
 
 # 本机真机部署产物(含真实令牌/二维码)
 启动后端.bat
+miniprogram/config.js
 miniprogram/preview_qr.png
 miniprogram/preview_info.json
 harness_service*.log

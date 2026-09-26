@@ -4,12 +4,13 @@
 
     from harness_client import TransportationHarnessClient
 
-    with TransportationHarnessClient(base_url="http://47.114.37.174:8765",
-                                     token="your-token") as client:
+    with TransportationHarnessClient(base_url="http://<你的服务器地址>:8765",
+                                    token="<AUTH_TOKEN 的值>") as client:
         result = client.run_eval(version="v2")
         print(result.accuracy, result.report_id)
 
-鉴权双通道:传 ``token`` 走 X-API-Token 请求头(机器客户端);
+服务端对受保护的 /api/* 认可三种凭据(X-API-Token → Bearer 会话令牌 → 会话 Cookie);
+本 SDK 用其中两条:传 ``token`` 走 X-API-Token 请求头(机器客户端),
 传 ``username``/``password`` 则自动登录并持有会话 Cookie(交互脚本)。
 """
 

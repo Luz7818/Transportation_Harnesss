@@ -36,7 +36,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │  客户端:webapp/static(PWA 看板) · miniprogram(小程序) · scripts(CLI) │
 ├─────────────────────────────────────────────────────────────┤
-│  HTTP API 层:webapp/app.py(FastAPI,28 路径)+ webapp/auth.py(鉴权)      │
+│  HTTP API 层:webapp/app.py(FastAPI)+ auth.py(鉴权)+ settings.py(配置)  │
 ├──────────────────────────────┬──────────────────────────────┤
 │  harness/(评测框架,领域无关) │  llm/(LLM 智能层,可选、可降级)        │
 │  models / storage / runner    │  runtime / judge / workflows      │
@@ -69,7 +69,7 @@
 | `sdk/` | **官方 Python SDK** | `pip install ./sdk`,导入名 `harness_client`,带 CLI | `pip install ./sdk` 后 `harness-client --help` |
 | `miniprogram/` | **微信小程序客户端** | 4 Tab:评测看板 / 分析提交 / Case 库 / 版本对比,外业现场提交 badcase | `config.js`(API 地址与令牌) |
 | `scripts/` | **CLI 工具箱** | 种子沉淀、评测、校验、备份、OpenAPI 导出、图标生成 | 逐个见 §6 |
-| `tests/` | **测试** | 144 个 pytest 用例:单元 + 接口 + 闭环 + LLM + PWA + SDK | `pytest` 一键运行,夹具用临时目录隔离 |
+| `tests/` | **测试** | 190 个 pytest 用例:单元 + 接口 + 闭环 + LLM + PWA + SDK | `pytest` 一键运行,夹具用临时目录隔离(含 .env) |
 | `docs/` | **文档中心(仓库版)** | API 参考、接入指南、LLM 设计、OpenAPI 规范 | 与运行实例 `/help` 内容同构 |
 | `cases/` | **评测资产:case 库** | 16 条 replaycase,按失败标签分目录(阈值错误/健壮性/精度问题…) | 一 case 一 JSON,可直接阅读 |
 | `evalsets/` | **评测资产:评测集** | 版本化清单:evalset_v1(13 条)+ evalset_scenario_rain(雨天 3 条) | 纯 case_id 列表 |
@@ -92,8 +92,9 @@
 
 | 文件 | 职责 |
 | --- | --- |
-| `app.py` | FastAPI 全部端点:鉴权 / 分析提交 / case 沉淀 / 评测 / 一键自进化 / 对比 / LLM |
-| `auth.py` | 本地账号体系:PBKDF2 口令哈希 + HMAC 会话令牌 + 登录失败限流 |
+| `app.py` | FastAPI 全部端点:鉴权 / 分析提交 / case 沉淀 / 评测 / 一键自进化 / 对比 / LLM / 运行时配置 |
+| `auth.py` | 本地账号体系:PBKDF2 口令哈希 + HMAC 会话令牌(Cookie 或 Bearer)+ 登录失败限流 |
+| `settings.py` | 运行时配置(.env)读写:键元数据、密钥掩码、值校验、原子写 + 写前备份 |
 | `static/index.html` | 应用壳(单文件、零外部依赖):欢迎页 + 登录 + 三栏工作台 + 常驻 AI 面板 |
 | `static/help.html` | 文档中心(`/help`):核心概念 / 工作流 / 全量 API 参考 / 错误码 |
 | `static/sw.js` + `manifest.webmanifest` + `assets/` | PWA:壳预缓存、API network-first、图标四件套 |
@@ -171,14 +172,14 @@ python -m harness.evolve  或  看板「运行完整自进化循环」/ POST /ap
 ```bash
 pip install -r requirements.txt
 python -m harness.evolve        # 看 7.7% → 84.6% → 100% 的进化全程
-python webapp/app.py            # 启动看板 http://127.0.0.1:8765(admin / harness123)
+python webapp/app.py            # 启动看板 http://127.0.0.1:8765(账号 admin;初始口令随机生成、只在控制台打印一次)
 ```
 
 **半天读懂(建立工程认知)**
 
 1. 读本文档 §2–§4,打开看板把每个页面点一遍(对照 §3 板块地图);
 2. 读 `ARCHITECTURE.md`(设计决策与扩展点)与 `docs/LLM.md`(七维设计);
-3. 跑 `pytest`(144 例)与 `python scripts/verify.py`,感受回归防护;
+3. 跑 `pytest`(190 例)与 `python scripts/verify.py`,感受回归防护;
 4. 挑一条 `cases/阈值错误/rc-0001.json` 读一遍,对照 `docs/API.md` 理解 checks 结构。
 
 **接入自己的系统(一天内)**

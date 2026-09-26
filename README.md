@@ -156,27 +156,37 @@ python scripts/verify.py                 # 端到端不变量校验,预期 VERIF
 python webapp/app.py                     # 启动看板 → http://127.0.0.1:8765
 ```
 
-**账号**:首次启动自动创建 `webapp/auth.json`(已被 .gitignore 排除,不入库),默认
-**admin / harness123**(可用环境变量 `ADMIN_USER` / `ADMIN_PASSWORD` 覆盖);登录后可在侧边栏修改密码。
+**账号**:首次启动自动创建 `webapp/auth.json`(已被 .gitignore 排除,不入库)。初始口令
+优先取环境变量 `ADMIN_PASSWORD`;没有提供就用 `secrets` 随机生成一枚强口令、**只在控制台打印一次**
+(仓库与文档里不再出现任何默认口令)。用户名默认 `admin`,可用 `ADMIN_USER` 覆盖;
+登录后在侧边栏左下角改密即可。
 内网演示想免登录,启动时设 `AUTH_MODE=open`;机器客户端(小程序/脚本)配
-`AUTH_TOKEN=<串>` 后以 `X-API-Token` 请求头访问。
+`AUTH_TOKEN=<强随机串>` 后以 `X-API-Token` 请求头访问;`AUTH_TOKEN` 与 `ADMIN_PASSWORD`
+都在服务启动时读取一次,改完要重启。
 
-### 当前部署状态(2026-09 公网版)
+受保护的 `/api/*` 认可三种凭据(任一即可):`X-API-Token: <AUTH_TOKEN>`、
+`Authorization: Bearer <会话令牌>`(小程序等带不了 Cookie 的客户端,令牌由
+`POST /api/auth/login` 响应的 `token` 字段给出)、`harness_session` Cookie(网页)。
 
-- **公网 ECS**:阿里云杭州 `47.114.37.174`(Ubuntu 26.04,2C4G,Docker 29 + Compose V2),
-  容器 `transportation-harness` 常驻 `/opt/harness`(compose 托管,自动重启);
-  安全组已放行 TCP 8765,`/api/health` 公网可达;
-- **小程序 AppID**:`wx5455bfec9b610cd7`(个人主体,已写入 `miniprogram/project.config.json`),
-  开发者工具登录后点"预览"即可真机调试;
-- **小程序 API 地址**:`http://47.114.37.174:8765`(公网,手机任意网络可用;
+### 部署形态与配置位置
+
+- **公网云服务器**:一台 Linux 云服务器(Ubuntu 26.04,2C4G 起,Docker 29 + Compose V2),
+  代码放 `/opt/harness`,容器名 `transportation-harness`(compose 托管,自动重启);
+  云厂商安全组放行 TCP 8765,`/api/health` 公网可达。地址在本文档统一写作
+  `<你的服务器地址>`,请替换为你自己的域名或公网 IP;
+- **小程序 API 地址**:`http://<你的服务器地址>:8765`,填在 `miniprogram/config.js` 的
+  `BASE_URL`(该文件已 gitignored,仓库里给的是 `miniprogram/config.example.js` 模板;
   备案域名 + HTTPS 就绪后替换,以满足正式发布要求);
-- **机器客户端令牌**:`harness-mp-2026`(小程序 `config.js` 的 TOKEN 与服务器 `.env` 的
-  `AUTH_TOKEN` 保持一致);
-- **服务器运维**:`ssh root@47.114.37.174`(公钥免密);日志 `docker logs transportation-harness`;
-  更新部署 = 本机打包 scp + 解压覆盖 + `docker compose up -d --build`;
+- **机器客户端令牌**:一串长随机值,生成用
+  `python -c "import secrets;print(secrets.token_urlsafe(32))`;服务器 `.env` 的 `AUTH_TOKEN`
+  与 `miniprogram/config.js` 的 `TOKEN` 必须一致(不一致会得到 401),两处都不入库;
+- **服务器运维**:用你自己的账号登录(例:`ssh <部署账号>@<你的服务器地址>`,建议密钥登录、
+  关闭密码登录与 root 直登);日志 `docker logs transportation-harness`;
+  更新部署 = 本机打包 → 用 `scp`/`rsync` 传到服务器 → 解压覆盖 → `docker compose up -d --build`
+  (覆盖式发布注意先跑 `python scripts/backup.py` 备份评测资产);
 - **手机首次进入**:小程序右上角"…" → 打开调试(放行 http 请求);
-- **局域网备选**:本机 `python webapp/app.py`(桌面 `启动后端.bat`)仍可离线开发,
-  小程序地址切回 `http://192.168.0.110:8765` 即可。
+- **局域网备选**:本机 `python webapp/app.py` 离线开发,把客户端地址填成
+  `http://<你本机的局域网 IP>:8765`(手机需与电脑同网段)。
 
 公网/小程序:
 
@@ -190,7 +200,7 @@ docker compose up -d --build                              # 或容器化部署
 ```bash
 python scripts/run_eval.py --version v1 --md              # 单版本评测并输出 Markdown
 python scripts/verify.py --evalset evalset_scenario_rain  # 校验指定评测集
-pytest                                                    # 单元/接口测试(144 个)
+pytest                                                    # 单元/接口测试(190 个)
 ruff check .                                              # 静态检查
 ```
 
@@ -211,11 +221,12 @@ ruff check .                                              # 静态检查
 
 ## 质量保障
 
-- **144 个 pytest 用例**:models 序列化往返、storage 路径安全与清单一致性、judge 全部规则语义、
+- **190 个 pytest 用例**:models 序列化往返、storage 路径安全与清单一致性、judge 全部规则语义、
   runner 崩溃捕获、report 差分与渲染、evolve 完整闭环、管线三版本算法行为、
-  auth 口令哈希/限流/令牌、Web API 鉴权与全端点、LLM 层(Runtime 缓存审计/judge/双工作流/
+  auth 口令哈希/限流/令牌、Web API 三种凭据鉴权与全端点、运行时配置接口的准入与掩码、
+  LLM 层(Runtime 缓存审计/judge/双工作流/
   幻觉过滤/Human-in-the-loop 全链路)、PWA(manifest/SW 预缓存与离线回退)、
-  Python SDK(强类型返回/命令行/全端点)—— 测试用临时目录隔离,不污染真实评测资产,CI 免密钥;
+  Python SDK(强类型返回/命令行/全端点)—— 测试用临时目录隔离,不污染真实评测资产与真实 .env,CI 免密钥;
 - **ruff** 静态检查全绿(B/UP/SIM/C4/I 规则集);
 - **GitHub Actions CI**:Python 3.11/3.12 矩阵,lint + pytest + 端到端校验;
 - **端到端不变量校验**(`scripts/verify.py`):种子 case 行为冻结 + 通过集单调不减(无回归)+
@@ -240,9 +251,12 @@ ruff check .                                              # 静态检查
 
 ## Web API
 
-鉴权:`AUTH_MODE=login`(默认)时,除 `/api/auth/*` 与 `/api/health` 外的接口需要
-登录会话(HttpOnly Cookie);设置 `AUTH_TOKEN` 后机器客户端可用 `X-API-Token` 头;
+鉴权:`AUTH_MODE=login`(默认)时,除 `/api/auth/*`、`/api/health` 外的接口需要凭据,
+三种任一即可 —— `X-API-Token: <AUTH_TOKEN>`(机器客户端)、
+`Authorization: Bearer <会话令牌>`(小程序等带不了 Cookie 的客户端,令牌取自
+`POST /api/auth/login` 响应体的 `token`)、`harness_session` HttpOnly Cookie(网页)。
 `AUTH_MODE=open` 全部放行(仅内网演示)。
+`/api/settings` 另有更严的准入:默认关闭,开启后只认本机直连或已登录会话(见下表)。
 
 **文档体系**:运行实例内置「文档中心」`/help`(核心概念 / 工作流 / 全量接口参考 / 错误码 /
 客户端集成示例,与网页同风格,无需登录),`/docs` 为交互式 OpenAPI 调试页;
@@ -254,7 +268,7 @@ Postman/Apifox)、[docs/INTEGRATION.md](docs/INTEGRATION.md)(《5 分钟接入�
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| POST | `/api/auth/login` / `/api/auth/logout` | 登录(种 Cookie)/ 登出;连续失败 5 次锁定 10 分钟 |
+| POST | `/api/auth/login` / `/api/auth/logout` | 登录(回 `token`+`expires_at` 并种 Cookie)/ 登出;连续失败 5 次锁定 10 分钟 |
 | GET | `/api/auth/me` | 当前登录用户 |
 | POST | `/api/auth/password` | 修改密码(旧密码校验 + 会话续签) |
 | GET | `/api/health` | 健康检查(鉴权模式、默认口令状态、case/评测集/报告数量) |
@@ -269,6 +283,8 @@ Postman/Apifox)、[docs/INTEGRATION.md](docs/INTEGRATION.md)(《5 分钟接入�
 | GET | `/api/activity` | 最近动态:case/评测/自进化/LLM 草稿统一时间流 |
 | POST | `/api/eval/run` | 运行评测 `{version, evalset}` 并归档报告 |
 | POST | `/api/evolve/run` | **一键自进化** `{evalset?, baseline?}`(基线 → 逐登记版本验证 → 归档,返回逐轮摘要) |
+| GET | `/api/settings` | 运行时配置快照(`.env`;密钥掩码,分 `hot_reloaded` / `requires_restart` 两组) |
+| PUT | `/api/settings` | 保存配置(原子写 `.env` + 写前备份;仅本机直连或已登录会话,默认关闭) |
 | GET | `/api/reports` / `/api/reports/{id}` | 报告列表 / 详情 |
 | GET | `/api/evolutions` / `/api/evolutions/{id}` | 自进化运行记录(时间线) |
 | GET | `/api/compare?a=&b=` | 两份报告逐 case 差分(含 checks 级明细 diff) |
@@ -314,6 +330,7 @@ Transportation_Harnesss/
 ├── webapp/
 │   ├── app.py             # FastAPI 后端(登录鉴权/校验/一键自进化)
 │   ├── auth.py            # 本地账号与会话(PBKDF2 口令哈希 + HMAC 令牌 + 登录限流)
+│   ├── settings.py        # 运行时配置(.env)读写:元数据/掩码/校验/原子写 + 备份
 │   └── static/
 │       ├── index.html     # 欢迎页 + 登录页 + 应用壳(单文件,无外部依赖)
 │       ├── help.html      # 文档中心(核心概念/工作流/全量 API 参考,/help 访问)
@@ -326,7 +343,7 @@ Transportation_Harnesss/
 │   └── openapi.json       # OpenAPI 3.1 机器可读规范(28 路径,可导入 Postman/Apifox)
 ├── sdk/                   # 官方 Python SDK(pip install ./sdk,导入名 harness_client)
 ├── miniprogram/           # 微信小程序客户端(评测看板/分析提交/Case 库/版本对比)
-├── tests/                 # 144 个 pytest 用例(单元 + 接口 + 闭环 + LLM + PWA + SDK;夹具用冻结种子快照)
+├── tests/                 # 190 个 pytest 用例(单元 + 接口 + 闭环 + LLM + PWA + SDK;夹具用冻结种子快照)
 ├── .github/workflows/ci.yml  # CI:ruff + pytest + verify(Python 3.11/3.12 矩阵)
 ├── Dockerfile             # 容器化(非 root 运行 + 健康检查;数据卷挂载,升级不丢评测资产)
 ├── docker-compose.yml

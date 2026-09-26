@@ -13,6 +13,7 @@ Transportation Harness 的全部能力通过一套 REST API 暴露,网页看板�
 
 - [鉴权方式](#鉴权方式)
 - [认证与会话](#认证与会话)
+- [运行时配置](#运行时配置)
 - [元数据](#元数据)
 - [交通分析](#交通分析)
 - [Case 管理](#case-管理)
@@ -27,26 +28,50 @@ Transportation Harness 的全部能力通过一套 REST API 暴露,网页看板�
 
 ## 鉴权方式
 
-三类身份由同一条中间件裁决:
+同一条中间件裁决三种凭据,**按下列顺序判定,任一通过即放行**:
+
+| 顺序 | 凭据 | 给谁用 | 来源 |
+| --- | --- | --- | --- |
+| 1 | `X-API-Token: <AUTH_TOKEN>` | SDK / 脚本 / CI / 小程序(机器通道) | 服务端启动时 `AUTH_TOKEN=<强随机串>`;未设置则此项不参与 |
+| 2 | `Authorization: Bearer <会话令牌>` | 小程序等**带不了 Cookie** 的客户端 | `POST /api/auth/login` 响应体的 `token` 字段 |
+| 3 | `harness_session` Cookie | 网页看板 | 登录时由服务端 `Set-Cookie`(HttpOnly,7 天) |
+
+第 2、3 项是**同一枚** HMAC 签名会话令牌(`用户名.过期时间` + 签名),只是投递方式不同,
+不存在第二套格式;校验都包含签名比对与过期检查,失败即 `401`。
+
+按模式划分:
 
 | 模式 | 启用方式 | 行为 |
 | --- | --- | --- |
-| **login**(默认) | `AUTH_MODE=login` 或不设置 | 除 `/api/auth/*`、`/api/health` 外,所有 `/api/*` 需登录会话(HttpOnly Cookie);配置 `AUTH_TOKEN` 后也接受 `X-API-Token` 头 |
-| **open** | `AUTH_MODE=open` | 全部放行,以 `demo` 身份进入工作台。**仅限内网演示** |
-| **令牌** | 启动时 `AUTH_TOKEN=<强随机串>` | 机器客户端(小程序/脚本)以 `X-API-Token: <串>` 请求头访问 |
+| **login**(默认) | `AUTH_MODE=login` 或不设置 | 除 `/api/auth/*`、`/api/health` 外,所有 `/api/*` 需上面三种凭据之一 |
+| **open** | `AUTH_MODE=open` | 全部放行,以 `demo` 身份进入工作台。**仅限内网演示**(不影响 `/api/settings` 的准入) |
+| **自判定** | `/api/settings` | 不经通用 401,由端点自己裁决:总开关开启 + (本机直连 或 已鉴权会话),否则 `403` |
 
+`/api/health` 与 `/api/auth/*` 始终免鉴权,可用于拨测。
 安全内建:口令 PBKDF2 哈希(12 万次迭代)、登录连续失败 5 次锁定 10 分钟、HMAC 签名会话(7 天)、
-令牌时序安全比较、文件名白名单防路径穿越。
+令牌时序安全比较、文件名白名单防路径穿越、`.env` 原子写 + 写前备份。
+
+> 注意:**登出只清 Cookie**。会话令牌是无状态签名串,`logout` 后那枚 `token` 在到期前仍可用作
+> Bearer 凭据 —— 小程序"退出登录"请同时丢弃本地保存的 `token`。
 
 ```bash
-# 浏览器会话方式:登录并保存 Cookie
-curl -c cookies.txt -X POST http://127.0.0.1:8765/api/auth/login \
-     -H "Content-Type: application/json" \
-     -d '{"username":"admin","password":"harness123"}'
-curl -b cookies.txt http://127.0.0.1:8765/api/cases
+BASE=http://127.0.0.1:8765      # 换成你的服务地址(本地默认如上;公网见 DEPLOY.md)
+USER=admin                      # 用户名:默认 admin,或部署时的 ADMIN_USER
+PASS='<你的初始口令>'            # 首次启动由服务端在控制台打印一次(或 ADMIN_PASSWORD 指定)
 
-# 机器客户端方式:令牌头
-curl -H "X-API-Token: <你的令牌>" http://127.0.0.1:8765/api/health
+# ① 网页方式:登录并保存 Cookie
+curl -c cookies.txt -X POST $BASE/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d "{\"username\":\"$USER\",\"password\":\"$PASS\"}"
+curl -b cookies.txt $BASE/api/cases
+
+# ② 小程序方式:取响应体里的 token,之后带 Bearer 头
+TOKEN=$(curl -s -X POST $BASE/api/auth/login -H "Content-Type: application/json" \
+        -d "{\"username\":\"$USER\",\"password\":\"$PASS\"}" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+curl -H "Authorization: Bearer $TOKEN" $BASE/api/cases
+
+# ③ 机器客户端方式:令牌头
+curl -H "X-API-Token: <AUTH_TOKEN>" $BASE/api/versions
 ```
 
 ---
@@ -59,20 +84,28 @@ curl -H "X-API-Token: <你的令牌>" http://127.0.0.1:8765/api/health
 
 ```jsonc
 // 请求
-{"username": "admin", "password": "harness123"}
-// 200:同时 Set-Cookie: harness_session=... (HttpOnly, 7 天)
-{"ok": true, "username": "admin"}
+{"username": "admin", "password": "<你的口令>"}
+// 200:同时 Set-Cookie: harness_session=<同一个 token> (HttpOnly, 7 天)
+{
+  "ok": true,
+  "username": "admin",
+  "token": "<会话令牌>",      // 与写进 Cookie 的值完全相同;带不了 Cookie 就每次带
+                              // `Authorization: Bearer <token>`
+  "expires_at": 1789000000    // unix 秒整数(该令牌的过期时刻),用于本地判断该不该重登
+}
 ```
 
 错误:`401` 用户名或密码错误;`429` 失败次数过多已锁定(附剩余秒数)。
+失败响应体恒为 `{"detail": "…"}`;口令错误与账号锁定共用 `401`/`429` 两种状态码。
 
 ### POST /api/auth/logout — 登出
 
-清除会话 Cookie,返回 `{"ok": true}`。
+清除会话 Cookie,返回 `{"ok": true}`。不吊销已签发出的 Bearer 令牌(见上方注意)。
 
 ### GET /api/auth/me — 当前用户
 
-公开接口,login 模式未登录返回 `401`;open 模式未登录返回 `{"username":"demo"}`。
+公开接口,login 模式无有效凭据返回 `401`;open 模式未登录返回 `{"username":"demo"}`。
+Bearer 与 Cookie 两种会话凭据都能在这里换出用户名。
 
 ```jsonc
 {"username": "admin"}
@@ -80,16 +113,78 @@ curl -H "X-API-Token: <你的令牌>" http://127.0.0.1:8765/api/health
 
 ### POST /api/auth/password — 修改密码
 
-需登录。修改成功后重签会话,当前登录不中断。
+需登录(Bearer 或 Cookie)。修改成功后重签会话并下发新 Cookie,当前登录不中断。
 
 ```jsonc
 // 请求
-{"old_password": "harness123", "new_password": "new-pass-2026"}   // 新密码 6~64 位
+{"old_password": "<旧口令>", "new_password": "<新口令>"}   // 新密码 6~64 位
 // 200
 {"ok": true}
 ```
 
 错误:`400` 原密码不正确 / 新密码长度不符。
+
+---
+
+## 运行时配置
+
+读写服务器本地 `.env`(已 gitignored),给 Web 看板的「系统设置」面板用。
+**默认关闭**:启动时设 `SETTINGS_ENABLED=1` 才有;`/api/settings` 不走通用 401,
+由端点自己裁决,`AUTH_TOKEN`/`ADMIN_PASSWORD`/`CORS_ORIGINS` 这类**启动期才生效**的键
+单列在 `requires_restart` 里,改完必须重启进程 —— 也正因为如此,
+**任何人都不可能在未登录时通过该接口给自己签发凭据**。
+
+准入(仅两条之一,否则 `403` 并附可操作的 `detail`):
+
+1. 请求携带**已鉴权会话**(`Authorization: Bearer <token>` 或 `harness_session` Cookie);
+2. 请求由**本机直连**(TCP 对端为 `127.0.0.1`/`::1`,且不带 `Forwarded`/`X-Forwarded-For`/`X-Real-IP`
+   —— 反代之后对端恒为 `127.0.0.1`,故经代理的请求一律要求会话)。
+
+`X-API-Token` 机器令牌**不**在本接口生效:它与小程序等客户端共用,拿它就能改服务器配置。
+
+### GET /api/settings — 配置快照
+
+```jsonc
+{
+  "env_file": ".env", "env_file_exists": true,
+  "secrets_masked": true,
+  "hot_reloaded": [            // 保存后立即生效
+    {"key": "LLM_MODEL", "set": true, "value": "gpt-4o-mini", "secret": false,
+     "restart_required": false, "source": "env", "default": "gpt-4o-mini",
+     "example": "", "description": "模型名"}
+  ],
+  "requires_restart": [        // 只在启动时读取:改完必须重启进程
+    {"key": "AUTH_TOKEN", "set": true, "value": "Ab***(43)",   // 密钥一律掩码:前 2 字符***(长度)
+     "secret": true, "restart_required": true, "source": "env", "default": "", "example": ""}
+  ],
+  "restart_pending_keys": ["AUTH_TOKEN"],   // .env 已改、进程尚未读到的键
+  "note": "…requires_restart 里的键只在服务启动时读取,已写入 .env,必须重启进程才生效…"
+}
+```
+
+`source`:`env`(进程环境变量)/ `file`(仅 `.env` 里写了)/ `default`(都没配)。
+密钥项的 `value`/`default` 恒为掩码,明文永不过网;界面上不要回填掩码值。
+
+### PUT /api/settings — 保存配置
+
+```jsonc
+// 请求:values 的键必须取自上面的清单;空串表示从 .env 删除该项
+{"values": {"LLM_MODEL": "deepseek-chat", "CORS_ORIGINS": "https://你的前端域名"}}
+// 200:touched 只列键名,永不回显值;并附最新快照
+{
+  "ok": true,
+  "updated": ["CORS_ORIGINS", "LLM_MODEL"], "removed": [],
+  "hot_reloaded": ["LLM_MODEL"], "requires_restart": ["CORS_ORIGINS"],
+  "snapshot": { …同 GET… }
+}
+```
+
+写入语义:值先去掉首尾空白;含换行或控制字符即 `400`(`.env` 是逐行格式,换行可用于注入配置);
+未知键、非法端口/来源/JSON、过短的 `AUTH_TOKEN` 等同样的 `400`,且**不写盘**;
+落盘 = 备份旧文件到 `backups/env.<时间戳>.bak` → 临时文件 → `os.replace` 原子替换,
+注释与未涉及的键原样保留。
+
+错误:`403` 未启用或非本机且无会话;`400` 值不合法;`401` 不会出现在此接口(见上)。
 
 ---
 
@@ -103,7 +198,7 @@ curl -H "X-API-Token: <你的令牌>" http://127.0.0.1:8765/api/health
 {
   "status": "ok",
   "auth_mode": "login",
-  "default_credentials": true,   // true = 仍在使用默认口令,应尽快修改
+  "default_credentials": true,   // true = 首次创建后还没在界面改过口令(随机初始口令时恒为 false)
   "versions": ["v0", "v1", "v2"],
   "case_count": 16, "evalset_count": 2, "report_count": 3
 }
@@ -449,8 +544,9 @@ LLM 故障时该检查降级为"未通过 + 原因可见",不影响整轮评测�
 
 | 状态码 | 含义 | 典型场景 |
 | --- | --- | --- |
-| `400` | 参数校验失败 | 标题超长、路段不在数据集、期望等级非法、名称含路径字符 |
-| `401` | 未登录或会话过期 | login 模式缺少 Cookie / 令牌;口令错误 |
+| `400` | 参数校验失败 | 标题超长、路段不在数据集、期望等级非法、名称含路径字符;`.env` 值非法(未知键、含换行、端口越界) |
+| `401` | 未登录或会话过期 | 三种凭据(X-API-Token / Bearer 会话令牌 / Cookie)都缺失或无效;口令错误 |
+| `403` | 已识别但无权 | 仅 `/api/settings`:总开关未开启,或既非本机直连也无已鉴权会话 |
 | `404` | 资源不存在 | 未知版本 / 数据集 / 评测集 / 报告 / case |
 | `409` | 冲突 | 自进化循环正在运行,重复触发 |
 | `429` | 请求被限流 | 登录连续失败 5 次,账号锁定 10 分钟 |
@@ -463,7 +559,7 @@ LLM 故障时该检查降级为"未通过 + 原因可见",不影响整轮评测�
 
 ```bash
 BASE=http://127.0.0.1:8765
-H="X-API-Token: <你的令牌>"
+H="X-API-Token: <AUTH_TOKEN 的值>"
 J="Content-Type: application/json"
 
 # 1) 沉淀一条 badcase(自动加入评测集)

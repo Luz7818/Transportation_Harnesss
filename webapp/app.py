@@ -2,9 +2,17 @@
 
 本地启动:python webapp/app.py(默认 http://127.0.0.1:8765)
 公网部署:支持环境变量配置(见 DEPLOY.md)
-  HOST=0.0.0.0 PORT=8765            监听地址/端口
-  AUTH_TOKEN=xxx                    设置后所有 /api/* 需要 X-API-Token 请求头(公网必开)
+  HOST=0.0.0.0 PORT=8765  监听地址/端口
+  AUTH_MODE=open          免登录(仅限内网演示);默认 login
+  AUTH_TOKEN=xxx          设置后所有 /api/* 需要 X-API-Token 请求头(公网必开)
   CORS_ORIGINS=https://a.com,https://b.com   允许的跨域来源,默认 *
+  SETTINGS_ENABLED=1      开启 /api/settings 运行时配置接口(默认关闭)
+
+受保护的 /api/* 认可三种凭据,按此顺序判定(任一通过即放行):
+  1. `X-API-Token: <AUTH_TOKEN>`     —— SDK / 脚本 / CI 等机器客户端;
+  2. `Authorization: Bearer <会话令牌>` —— 小程序等带不了 Cookie 的客户端;
+  3. `harness_session` Cookie         —— 网页看板(HttpOnly,登录时下发)。
+会话令牌由 webapp/auth.py 的 HMAC 签名机制签发与校验,三处共用同一套,不存在第二套格式。
 """
 
 from __future__ import annotations
@@ -15,6 +23,7 @@ import re
 import sys
 import threading
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -59,6 +68,7 @@ from llm.runtime import LLMError
 from pipeline.versions import CHANGELOG, PIPELINES
 
 from webapp import auth as auth_mod
+from webapp import settings as settings_mod
 
 HOST = os.getenv("HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", "8765"))
@@ -66,7 +76,15 @@ AUTH_TOKEN = os.getenv("AUTH_TOKEN", "").strip()      # 机器客户端(小程�
 AUTH_MODE = os.getenv("AUTH_MODE", "login")           # login(默认,需登录)| open(内网演示免登录)
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 COOKIE_NAME = "harness_session"
-COOKIE_SECURE = os.getenv("COOKIE_SECURE", "0") == "1"  # HTTPS 部署时设 1,浏览器仅经加密通道回传
+COOKIE_SECURE = settings_mod.flag_is_on(os.getenv("COOKIE_SECURE"))  # HTTPS 部署时设 1
+# 运行时配置接口(/api/settings)总开关:默认关闭。它只在启动时读一次,
+# 因此无法通过该接口本身给自己开权限;HOST 绑到非 loopback 时也不会默认开启。
+SETTINGS_ENABLED = settings_mod.flag_is_on(os.getenv("SETTINGS_ENABLED"))
+
+# 回环地址:uvicorn 直连本机时 client.host 落在这里
+_LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost"}
+# 反向代理痕迹头:出现任意一个,就说明"对端地址"属于代理而非真实客户端
+_PROXY_HINT_HEADERS = ("forwarded", "x-forwarded-for", "x-real-ip")
 
 VALID_LEVELS = ("畅通", "基本畅通", "缓行", "拥堵", "严重拥堵", "数据缺失")
 
@@ -83,15 +101,41 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
-    allow_headers=["*", "X-API-Token"],
+    allow_headers=["*", "X-API-Token", "Authorization"],
     allow_credentials=not _allow_all_origins,
 )
 app.mount("/static", StaticFiles(directory=ROOT / "webapp" / "static"), name="static")
 
 
+def _bearer_token(request: Request) -> str | None:
+    """从 `Authorization: Bearer <令牌>` 取会话令牌(小程序带不了 Cookie,只能靠请求头)。"""
+    scheme, _, value = request.headers.get("Authorization", "").partition(" ")
+    value = value.strip()
+    return value if scheme.lower() == "bearer" and value else None
+
+
 def _session_user(request: Request) -> str | None:
-    token = request.cookies.get(COOKIE_NAME)
-    return auth_mod.parse_token(_AUTH_STORE, token) if token else None
+    """已鉴权会话的用户名:Bearer 会话令牌与 harness_session Cookie 任一有效即可。"""
+    for token in (_bearer_token(request), request.cookies.get(COOKIE_NAME)):
+        if token and (username := auth_mod.parse_token(_AUTH_STORE, token)):
+            return username
+    return None
+
+
+def _is_direct_loopback(request: Request) -> bool:
+    """请求是否由本机直连发出。
+
+    经 Nginx 反代后对端地址恒为 127.0.0.1,若只看地址就把每个公网访客当本机,
+    等于没有这道门;因此带任一转发头的请求不算本机(它必然经过了代理),
+    只认 TCP 对端地址,且不接受被代理改写过来源的请求 —— 这类请求一律要求已登录会话。
+    """
+    client = request.client
+    host = ((client.host if client else "") or "").strip().strip("[]")
+    if host.startswith("::ffff:"):        # IPv4-mapped IPv6(::ffff:127.0.0.1)
+        host = host[len("::ffff:"):]
+    if host not in _LOOPBACK_HOSTS and not host.startswith("127."):
+        return False
+    return not any(name in request.headers for name in _PROXY_HINT_HEADERS)
 
 
 @app.middleware("http")
@@ -99,11 +143,15 @@ async def auth_middleware(request: Request, call_next):
     """访问控制:
     - AUTH_MODE=open:全部放行(仅限内网演示);
     - /api/auth/* 与 /api/health 始终放行(登录页与拨测需要);
-    - 其余 /api/*:AUTH_TOKEN 请求头(机器客户端)或有效会话 Cookie(浏览器)二者其一即可。
+    - /api/settings 交给端点自己做更严的准入判定(要区分本机直连与会话),
+      不能被这里的通用 401 提前挡掉,否则本机未登录用户只会看到一个"请先登录";
+    - 其余 /api/*:三种凭据按序裁决 —— X-API-Token(机器客户端)
+      → Authorization: Bearer(小程序)→ 会话 Cookie(网页),任一通过即放行。
     """
     path = request.url.path
-    open_path = (not path.startswith("/api/")) or path.startswith("/api/auth/") or path == "/api/health"
-    if AUTH_MODE == "open" or open_path:
+    exempt = (not path.startswith("/api/") or path.startswith("/api/auth/")
+              or path in ("/api/health", "/api/settings"))
+    if AUTH_MODE == "open" or exempt:
         return await call_next(request)
     # 时序安全比较:直接 == 逐字节短路,理论上可被响应时间侧信道逐位猜出令牌
     if AUTH_TOKEN and hmac.compare_digest(request.headers.get("X-API-Token", ""), AUTH_TOKEN):
@@ -174,7 +222,10 @@ def api_login(body: LoginBody, response: Response) -> dict:
     token = auth_mod.make_token(_AUTH_STORE, body.username)
     response.set_cookie(COOKIE_NAME, token, max_age=auth_mod.SESSION_TTL,
                         httponly=True, samesite="lax", path="/", secure=COOKIE_SECURE)
-    return {"ok": True, "username": body.username}
+    # token 与 Set-Cookie 里那枚完全相同:带不了 Cookie 的客户端(小程序)改用它,
+    # 之后每次请求发 `Authorization: Bearer <token>`;expires_at 为 unix 秒。
+    return {"ok": True, "username": body.username,
+            "token": token, "expires_at": auth_mod.token_expires_at(token)}
 
 
 @app.post("/api/auth/logout", tags=["auth"])
@@ -208,6 +259,66 @@ def api_change_password(request: Request, body: PasswordBody) -> dict:
     response.set_cookie(COOKIE_NAME, token, max_age=auth_mod.SESSION_TTL,
                         httponly=True, samesite="lax", path="/", secure=COOKIE_SECURE)
     return response
+
+
+# ================= 运行时配置(/api/settings) =================
+
+_SETTINGS_DISABLED_DETAIL = (
+    "运行时配置接口未启用:/api/settings 能读写服务器本地的 .env(含密钥),默认关闭。"
+    "确需使用请在服务启动环境里设 SETTINGS_ENABLED=1 并重启服务;"
+    "开启后非本机访问仍必须携带已登录会话。"
+)
+_SETTINGS_REMOTE_DETAIL = (
+    "/api/settings 仅允许本机直连或已登录会话访问。请二选一:"
+    "① 在服务器本机打开看板(127.0.0.1);② 先调 POST /api/auth/login 取 token,"
+    "再带 `Authorization: Bearer <token>` 重发。"
+    "X-API-Token 机器令牌不能用于该接口(小程序等客户端同样持有它),"
+    "经反向代理转发的请求也不算本机。"
+)
+
+
+def _settings_actor(request: Request) -> str:
+    """准入判定:返回操作者标识(供审计日志),不合格抛 403。
+
+    只认两种身份:已鉴权的**会话**(Bearer / Cookie)或本机直连。
+    刻意不认 X-API-Token —— 那是与小程序共用的机器令牌,拿它就能改服务器配置,
+    等于把"给自己签发任意凭据"的门槛降到了任何一个令牌持有者。
+    """
+    if not SETTINGS_ENABLED:
+        raise HTTPException(403, _SETTINGS_DISABLED_DETAIL)
+    username = _session_user(request)
+    if username:
+        return f"session:{username}"
+    if _is_direct_loopback(request):
+        return "loopback"
+    raise HTTPException(403, _SETTINGS_REMOTE_DETAIL)
+
+
+class SettingsBody(BaseModel):
+    values: dict[str, Any]      # 键名与 .env 一致;值必须是字符串,空串表示删除该项
+
+
+@app.get("/api/settings", tags=["settings"])
+def api_get_settings(request: Request) -> dict:
+    """配置快照:密钥一律掩码(前 2 字符***(长度)),按生效时机分成 hot_reloaded / requires_restart。"""
+    _settings_actor(request)
+    return settings_mod.snapshot()
+
+
+@app.put("/api/settings", tags=["settings"])
+def api_put_settings(request: Request, body: SettingsBody) -> dict:
+    """保存配置:校验 → 备份 → 原子写 .env;热生效键立刻生效,其余重启后生效。"""
+    actor = _settings_actor(request)
+    try:
+        changes = settings_mod.apply_updates(body.values)
+    except ValueError as exc:      # 值不合法 / 未知键:未写盘,原样回 400
+        raise HTTPException(400, str(exc)) from exc
+    if changes["hot_reloaded"]:
+        llm_runtime.reset_runtime()  # 热生效键目前全是 LLM_*:重建单例即读到新配置
+    touched = sorted(set(changes["updated"]) | set(changes["removed"]))
+    print(f"[settings] {actor} 保存了配置:{touched}"
+          f"(需重启:{sorted(changes['requires_restart']) or '无'})")  # 只记键名,绝不记值
+    return {"ok": True, **changes, "snapshot": settings_mod.snapshot()}
 
 
 def _require_dataset(name: str) -> list[dict]:
@@ -620,5 +731,7 @@ if __name__ == "__main__":
     banner = f"交通分析自进化 Harness -> http://{HOST}:{PORT}(鉴权模式:{AUTH_MODE})"
     if AUTH_TOKEN:
         banner += ";机器客户端可用 X-API-Token 访问"
+    banner += (";运行时配置接口 /api/settings 已启用(仅本机直连或已登录会话)"
+               if SETTINGS_ENABLED else ";/api/settings 未启用(设 SETTINGS_ENABLED=1 开启)")
     print(banner)
     uvicorn.run(app, host=HOST, port=PORT)

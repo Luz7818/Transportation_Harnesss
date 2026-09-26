@@ -7,7 +7,8 @@
     "pages/report/report",
     "pages/evolution/evolution",
     "pages/case-detail/case-detail",
-    "pages/drafts/drafts"
+    "pages/drafts/drafts",
+    "pages/login/login"
   ],
   "window": {
     "navigationBarBackgroundColor": "#1c2537",

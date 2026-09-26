@@ -266,8 +266,8 @@ python -m harness.evolve
 
 <span class="c"># 4. 端到端不变量校验,预期输出 VERIFY PASS</span>
 python scripts/verify.py</pre></div>
-  <p>浏览器打开 <code class="inline">http://127.0.0.1:8765</code>,默认账号
-    <code class="inline">admin / harness123</code>(登录后请在左下角修改密码);
+  <p>浏览器打开 <code class="inline">http://127.0.0.1:8765</code>,账号为 <code class="inline">admin</code>,
+    初始口令在服务器首次启动时打印到控制台一次(未设 <code class="inline">ADMIN_PASSWORD</code> 时随机生成),登录后请修改;
     内网演示可设 <code class="inline">AUTH_MODE=open</code> 免登录。公网部署、Docker 与小程序接入见项目根目录 <code class="inline">DEPLOY.md</code>。</p>
 </section>
 
@@ -346,7 +346,7 @@ python scripts/verify.py</pre></div>
 <pre><span class="c"># 登录,保存 Cookie</span>
 curl -c cookies.txt -X POST http://127.0.0.1:8765/api/auth/login \
      -H <span class="s">"Content-Type: application/json"</span> \
-     -d <span class="s">'{"username":"admin","password":"harness123"}'</span>
+     -d <span class="s">'{"username":"admin","password":"<初始口令>"}'</span>
 
 <span class="c"># 带 Cookie 访问受保护接口</span>
 curl -b cookies.txt http://127.0.0.1:8765/api/cases
@@ -366,10 +366,10 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
       <p><span class="auth-pill no">公开接口</span> 连续失败 5 次锁定 10 分钟(429)。</p>
       <h4>请求</h4>
       <div class="code-block"><div class="code-head"><span>Body</span><button class="copy-btn">复制</button></div>
-<pre>{ <span class="k">"username"</span>: <span class="s">"admin"</span>, <span class="k">"password"</span>: <span class="s">"harness123"</span> }</pre></div>
+<pre>{ <span class="k">"username"</span>: <span class="s">"admin"</span>, <span class="k">"password"</span>: <span class="s">"<初始口令>"</span> }</pre></div>
       <h4>响应 200</h4>
       <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
-<pre>{ <span class="k">"ok"</span>: true, <span class="k">"username"</span>: <span class="s">"admin"</span> }   <span class="c">// 并 Set-Cookie: harness_session=... (HttpOnly)</span></pre></div>
+<pre>{ <span class="k">"ok"</span>: true, <span class="k">"username"</span>: <span class="s">"admin"</span>, <span class="k">"token"</span>: <span class="s">"<会话令牌>"</span>, <span class="k">"expires_at"</span>: 1780000000 }   <span class="c">// 并 Set-Cookie: harness_session=<同一枚令牌> (HttpOnly)</span></pre></div>
       <h4>错误</h4><p><code class="inline">401</code> 用户名或密码错误 · <code class="inline">429</code> 失败次数过多已锁定,附剩余秒数</p>
     </div>
   </div>
@@ -398,7 +398,7 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
       <p><span class="auth-pill yes">需登录</span></p>
       <h4>请求</h4>
       <div class="code-block"><div class="code-head"><span>Body</span><button class="copy-btn">复制</button></div>
-<pre>{ <span class="k">"old_password"</span>: <span class="s">"harness123"</span>, <span class="k">"new_password"</span>: <span class="s">"new-pass-2026"</span> }</pre></div>
+<pre>{ <span class="k">"old_password"</span>: <span class="s">"<当前口令>"</span>, <span class="k">"new_password"</span>: <span class="s">"<新口令>"</span> }</pre></div>
       <h4>响应 200</h4><div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
 <pre>{ <span class="k">"ok"</span>: true }   <span class="c">// 同时重签会话 Cookie,当前登录不中断</span></pre></div>
       <h4>错误</h4><p><code class="inline">400</code> 原密码不正确 / 新密码长度需 6~64 位</p>
@@ -862,7 +862,7 @@ curl -s <span class="s">"$BASE/api/compare?a=report_v1_20260915T021603&b=report_
   <div class="faq-item"><div class="q">LLM 用在哪里?没配 API Key 会怎样?</div>
     <div class="a">LLM 只做规则判不了的三件事:坏例沉淀助手(草稿需人工确认)、结论文本质量评分(LLM-as-Judge)、失败诊断(分析者+评审者双智能体)。未配置 <code class="inline">LLM_API_KEY</code> 时自动降级为离线确定性 Mock —— 全功能可演示、零成本、可复现。配置三个环境变量即可接入任意 OpenAI 兼容端点,详见 <code class="inline">docs/LLM.md</code> 与右侧常驻的「智能助手」面板。</div></div>
   <div class="faq-item"><div class="q">默认账号是什么?如何重置?</div>
-    <div class="a">首次启动自动创建 <b>admin / harness123</b>(可用环境变量 <code class="inline">ADMIN_USER / ADMIN_PASSWORD</code> 覆盖)。忘记密码:停止服务,删除 <code class="inline">webapp/auth.json</code> 后重启即重新生成。</div></div>
+    <div class="a">账号名固定 <b>admin</b>(可用 <code class="inline">ADMIN_USER</code> 改);口令在首次启动时确定:设了 <code class="inline">ADMIN_PASSWORD</code> 就用它,否则随机生成并<b>只在控制台打印一次</b>,仓库与文档里不存在任何默认口令。忘记口令:停止服务,删除 <code class="inline">webapp/auth.json</code> 后重启,按控制台提示的新口令登录。</div></div>
   <div class="faq-item"><div class="q">如何新增管线版本 v3?</div>
     <div class="a">在 <code class="inline">pipeline/versions.py</code> 实现 <code class="inline">analyze_v3(segments)</code> 并登记到 <code class="inline">PIPELINES</code> 与 <code class="inline">CHANGELOG</code>,看板/评测自动识别;自进化从基线起逐轮验证登记版本 —— 增量验证可传 <code class="inline">baseline: "v2"</code>(API)或 <code class="inline">--baseline v2</code>(CLI),单轮上限可用 <code class="inline">EVOLVE_MAX_ROUNDS</code> 调整。版本只进不改,历史可回放。</div></div>
   <div class="faq-item"><div class="q">如何接入自己的数据?</div>

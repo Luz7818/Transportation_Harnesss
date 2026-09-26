@@ -1,5 +1,6 @@
-"""Web API:鉴权、评测集选择、case 生命周期、评测与自进化端点。"""
+"""Web API:鉴权(三种凭据)、评测集选择、case 生命周期、评测与自进化端点。"""
 
+import time
 
 
 class TestAuthFlow:
@@ -15,12 +16,30 @@ class TestAuthFlow:
         assert client.get("/api/cases").status_code == 401
         assert client.get("/api/versions").status_code == 401
 
-    def test_login_success_sets_cookie(self, client):
-        resp = client.post("/api/auth/login",
-                           json={"username": "admin", "password": "harness123"})
+    def test_login_success_sets_cookie(self, client, admin_credentials):
+        username, password = admin_credentials
+        resp = client.post("/api/auth/login", json={"username": username, "password": password})
         assert resp.status_code == 200
         assert "harness_session" in resp.cookies
-        assert client.get("/api/auth/me").json()["username"] == "admin"
+        assert client.get("/api/auth/me").json()["username"] == username
+
+    def test_login_returns_bearer_token_and_expiry(self, client, admin_credentials):
+        """契约:登录响应体除 ok/username 外还带 token(与 Cookie 同值)与 expires_at(unix 秒)。"""
+        username, password = admin_credentials
+        resp = client.post("/api/auth/login", json={"username": username, "password": password})
+        body = resp.json()
+        assert body["ok"] is True and body["username"] == username
+        assert isinstance(body["token"], str) and body["token"]
+        cookie = resp.headers["set-cookie"]
+        assert body["token"] in cookie                     # 同一枚令牌,Cookie 与 body 二选一即可
+        assert isinstance(body["expires_at"], int)
+        assert body["expires_at"] > int(time.time())       # 有效期在未来
+
+    def test_login_failure_body_is_detail_only(self, client, admin_credentials):
+        resp = client.post("/api/auth/login",
+                           json={"username": admin_credentials[0], "password": "nope"})
+        assert resp.status_code == 401
+        assert set(resp.json()) == {"detail"}              # 401 响应体保持 {detail: "..."}
 
     def test_login_wrong_password(self, client):
         assert client.post("/api/auth/login",
@@ -30,9 +49,42 @@ class TestAuthFlow:
         assert authed_client.post("/api/auth/logout", json={}).status_code == 200
         assert authed_client.get("/api/auth/me").status_code == 401
 
-    def test_api_token_grants_access(self, client):
-        resp = client.get("/api/cases", headers={"X-API-Token": "test-token-123"})
+    def test_api_token_grants_access(self, client, api_token):
+        resp = client.get("/api/cases", headers={"X-API-Token": api_token})
         assert resp.status_code == 200
+
+    def test_bearer_token_grants_access_without_cookie(self, bearer_client):
+        """小程序通道:无 Cookie,只靠 Authorization: Bearer <会话令牌>。"""
+        assert bearer_client.get("/api/cases").status_code == 200
+        assert bearer_client.get("/api/auth/me").json()["username"] == "admin"
+
+    def test_bearer_header_must_be_a_valid_session_token(self, client, admin_credentials):
+        username, password = admin_credentials
+        token = client.post("/api/auth/login",
+                            json={"username": username, "password": password}).json()["token"]
+        client.cookies.clear()
+        # 方案名不是 Bearer / 空令牌 / 签名被改 —— 三种都不认
+        assert client.get("/api/cases",
+                          headers={"Authorization": f"Basic {token}"}).status_code == 401
+        assert client.get("/api/cases", headers={"Authorization": "Bearer "}).status_code == 401
+        assert client.get("/api/cases",
+                          headers={"Authorization": f"Bearer {token[:-2]}xx"}).status_code == 401
+        assert client.get("/api/cases", headers={"Authorization": f"bearer {token}"}).status_code == 200
+
+    def test_logout_keeps_bearer_token_valid_until_expiry(self, bearer_client):
+        """登出只清 Cookie;HMAC 会话令牌是无状态的,到期前依旧有效(小程序契约需知)。"""
+        assert bearer_client.post("/api/auth/logout", json={}).status_code == 200
+        assert bearer_client.get("/api/cases").status_code == 200
+
+    def test_expired_bearer_token_rejected(self, bearer_client, monkeypatch):
+        from webapp import app as app_mod
+        from webapp import auth as auth_mod
+
+        with monkeypatch.context() as m:
+            m.setattr(auth_mod, "SESSION_TTL", -1)         # 签出一枚已过期令牌
+            expired = auth_mod.make_token(app_mod._AUTH_STORE, "admin")
+        resp = bearer_client.get("/api/cases", headers={"Authorization": f"Bearer {expired}"})
+        assert resp.status_code == 401
 
 
 class TestEvalsets:

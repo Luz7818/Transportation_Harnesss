@@ -1,12 +1,15 @@
 """本地账号与会话:replaycase/评测资产是项目核心资产,公网或多人使用时需要登录。
 
-- 账号存储在 webapp/auth.json(首次启动自动创建,默认 admin/harness123,可用
-  环境变量 ADMIN_USER / ADMIN_PASSWORD 覆盖初始值);
+- 账号存储在 webapp/auth.json(首次启动自动创建,已被 .gitignore 排除):
+  初始口令优先取环境变量 ADMIN_PASSWORD;未提供时用 secrets 生成随机强口令并只在控制台
+  打印一次(仓库与文档里不存在任何可复述的默认口令,也就无需在说明书里写它);
 - 密码只存 PBKDF2-HMAC-SHA256(salt + 12 万次迭代),不落明文;历史遗留的
   单轮 SHA-256 哈希在登录校验通过后透明升级为 PBKDF2;
 - 登录失败限流:同一用户名连续失败 5 次锁定 10 分钟,成功登录即清零,
   缓解公网口令暴力破解;
-- 会话为 HMAC 签名令牌(载荷 = 用户名 + 过期时间,7 天有效),放在 HttpOnly Cookie 里;
+- 会话为 HMAC 签名令牌(载荷 = 用户名 + 过期时间,7 天有效),网页放 HttpOnly Cookie,
+  小程序/脚本无法带 Cookie,故同一枚令牌也可以 `Authorization: Bearer <令牌>` 提交,
+  签发与校验都走本模块的 make_token / parse_token,不存在第二套会话格式;
 - 修改密码走 /api/auth/password,改完立即用新密码重签会话。
 """
 
@@ -25,7 +28,10 @@ from pathlib import Path
 AUTH_FILE = Path(__file__).resolve().parent / "auth.json"
 SESSION_TTL = 7 * 24 * 3600
 DEFAULT_USER = os.getenv("ADMIN_USER", "admin")
-DEFAULT_PASSWORD = os.getenv("ADMIN_PASSWORD", "harness123")
+
+# 初始口令字符集去掉易混字符(0/O、1/l/I),长度 20 → 约 116 bit 熵
+_INITIAL_PASSWORD_ALPHABET = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+INITIAL_PASSWORD_LENGTH = 20
 
 PBKDF2_ITERATIONS = 120_000          # OWASP 推荐量级;单次校验约几十毫秒,登录场景可接受
 ALGO_PBKDF2 = "pbkdf2_sha256"
@@ -65,20 +71,35 @@ def _upgrade_hash(store: dict, user: dict, password: str) -> None:
     _save(store)
 
 
+def generate_initial_password() -> str:
+    """随机强初始口令:仅在 auth.json 不存在且未提供 ADMIN_PASSWORD 时使用。"""
+    return "".join(secrets.choice(_INITIAL_PASSWORD_ALPHABET)
+                   for _ in range(INITIAL_PASSWORD_LENGTH))
+
+
 def load_store() -> dict:
     if AUTH_FILE.exists():
         return json.loads(AUTH_FILE.read_text(encoding="utf-8"))
+    password = os.getenv("ADMIN_PASSWORD") or ""
+    generated = not password            # 没给初始口令 → 随机生成,绝不落回任何公开默认值
+    if generated:
+        password = generate_initial_password()
     salt = secrets.token_hex(16)
     store = {
         "secret": secrets.token_hex(32),
-        "default_credentials": True,
+        # 随机口令只打印这一次,不是"默认口令",因此无需在登录页提醒改密;
+        # ADMIN_PASSWORD 注入的口令沿用原语义(首次创建 → 提示改密)
+        "default_credentials": not generated,
         "users": [{"username": DEFAULT_USER, "salt": salt,
-                   "password_hash": _hash(salt, DEFAULT_PASSWORD)}],
+                   "password_hash": _hash(salt, password)}],
     }
     AUTH_FILE.write_text(json.dumps(store, ensure_ascii=False, indent=2), encoding="utf-8")
-    from_env = "ADMIN_PASSWORD" in os.environ
-    print(f"[auth] 已初始化账号 {DEFAULT_USER} / "
-          f"{'环境变量 ADMIN_PASSWORD 注入的密码' if from_env else '默认密码 harness123'}(请登录后尽快修改)")
+    if generated:
+        print(f"[auth] 已初始化账号 {DEFAULT_USER},随机生成的初始口令为 {password}"
+              f"(仅此一次打印,请立即登录修改)")
+    else:
+        print(f"[auth] 已初始化账号 {DEFAULT_USER} / "
+              f"环境变量 ADMIN_PASSWORD 注入的密码(请登录后尽快修改)")
     return store
 
 
@@ -149,6 +170,19 @@ def make_token(store: dict, username: str) -> str:
     raw = payload.encode("utf-8")
     sig = hmac.new(store["secret"].encode("utf-8"), raw, hashlib.sha256).hexdigest()
     return base64.urlsafe_b64encode(raw).decode("ascii") + "." + sig
+
+
+def token_expires_at(token: str) -> int | None:
+    """会话令牌载荷里的过期时间(unix 秒);解析失败返回 None。
+
+    只用于登录响应里告知客户端"这枚令牌何时失效",不做任何鉴权判定 ——
+    鉴权一律走 parse_token 的签名 + 有效期校验。
+    """
+    try:
+        raw = base64.urlsafe_b64decode(token.rsplit(".", 1)[0].encode("ascii"))
+        return int(raw.decode("utf-8").rsplit(".", 1)[1])
+    except Exception:
+        return None
 
 
 def parse_token(store: dict, token: str) -> str | None:

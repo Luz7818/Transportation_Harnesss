@@ -438,6 +438,37 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .empty .e-s { font-size: 12.5px; margin-top: 3px; }
 .empty .btn { margin-top: 14px; }
 
+/* ================= 系统设置(运行时配置面板) ================= */
+#tab-settings code { background: var(--chip-bg); border-radius: 6px; padding: 1px 6px;
+                     font: 600 11.5px/1.6 Consolas, "Cascadia Mono", monospace; color: var(--t2); }
+.st-sum { margin-bottom: 4px; }
+.st-group { margin-top: 22px; }
+.st-group-head { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700;
+                 color: var(--t2); }
+.st-group-head .ico-svg { color: var(--t4); }
+.st-item { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 13px 15px 14px;
+           margin-top: 10px; background: var(--surface); transition: border-color .15s; }
+.st-item:hover { border-color: var(--line-2); }
+.st-item.flash { animation: stFlash 1.1s ease both; }
+@keyframes stFlash { from { border-color: var(--primary); background: var(--primary-soft); }
+                     to { border-color: var(--line); background: var(--surface); } }
+.st-top { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.st-key { font: 700 13px/1.5 Consolas, "Cascadia Mono", monospace; letter-spacing: .2px; }
+.st-desc { color: var(--t3); font-size: 12.5px; line-height: 1.6; margin: 5px 0 0; }
+.st-meta { display: flex; gap: 6px 16px; flex-wrap: wrap; margin-top: 9px; font-size: 12px; color: var(--t3); }
+.st-meta span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.st-meta .ico-svg { flex: none; color: var(--t4); }
+.st-mono { font-family: Consolas, "Cascadia Mono", monospace; word-break: break-all; }
+.st-edit { display: flex; align-items: center; gap: 9px; margin-top: 11px; flex-wrap: wrap; }
+.st-edit input { flex: 1 1 240px; min-width: 0; }
+.st-edit .btn { flex: none; }
+.st-err { margin-top: 9px; font-size: 12px; color: var(--bad); line-height: 1.55; word-break: break-all; }
+.st-warn { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 2px 9px; font-size: 11px; }
+/* 拒绝原因下的「怎么放开」指引:图标成列,正文整段换行 */
+.st-guide { display: grid; gap: 11px; margin-top: 15px; font-size: 12.5px; line-height: 1.65; color: var(--t2); }
+.st-guide p { margin: 0; display: flex; gap: 9px; align-items: flex-start; }
+.st-guide .g-ico { flex: none; margin-top: 2px; color: var(--t4); }
+
 /* ================= Toast ================= */
 .toast { position: fixed; right: 22px; bottom: 22px; background: #0c1322; color: #f2f5fb;
          padding: 12px 18px; border-radius: 12px; font-size: 13.5px; opacity: 0; transform: translateY(10px);
@@ -946,7 +977,7 @@ body.col-resizing .aipanel { transition: none; }
       <input id="login-pass" type="password" autocomplete="current-password" placeholder="密码">
       <div id="login-err"></div>
       <button class="btn" onclick="doLogin(this)">登 录</button>
-      <div id="login-hint">初始账号 <b>admin / harness123</b>,登录后请尽快在左下角修改密码</div>
+      <div id="login-hint">初始口令只在服务器首次启动时打印到控制台一次(未设 <code>ADMIN_PASSWORD</code> 时为随机生成),请据此登录并立即修改</div>
       <div class="login-foot"><span class="linklike" onclick="showWelcome()">← 返回欢迎页</span></div>
     </div>
   </div>
@@ -968,6 +999,7 @@ body.col-resizing .aipanel { transition: none; }
     <button class="nav-item" data-tab="compare"><span class="nv-ico" data-ico="scale"></span><span class="nv-txt">版本对比</span></button>
     <button class="nav-item" data-tab="analyze"><span class="nv-ico" data-ico="flask"></span><span class="nv-txt">分析提交</span></button>
     <div class="nav-label">其它</div>
+    <button class="nav-item" data-tab="settings"><span class="nv-ico" data-ico="settings"></span><span class="nv-txt">设置</span></button>
     <button class="nav-item" onclick="showWelcome()"><span class="nv-ico" data-ico="rocket"></span><span class="nv-txt">欢迎页</span></button>
     <a class="nav-item" href="/help" target="_blank" rel="noopener" style="text-decoration:none"><span class="nv-ico" data-ico="book"></span><span class="nv-txt">文档中心</span></a>
   </div>
@@ -1016,6 +1048,7 @@ body.col-resizing .aipanel { transition: none; }
     <section class="page" id="tab-cases"></section>
     <section class="page" id="tab-compare"></section>
     <section class="page" id="tab-analyze"></section>
+    <section class="page" id="tab-settings"></section>
   </main>
 </div>
 
@@ -1134,6 +1167,7 @@ const ICONS = {
   tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
   gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
   key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+  settings: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
   spark: '<path d="M12 3l1.9 5.7a1 1 0 0 0 .63.63L20.2 11.2a.57.57 0 0 1 0 1.08l-5.7 1.9a1 1 0 0 0-.63.63L12 20.4a.57.57 0 0 1-1.08 0l-1.9-5.7a1 1 0 0 0-.63-.63l-5.7-1.9a.57.57 0 0 1 0-1.08l5.7-1.9a1 1 0 0 0 .63-.63L11 3a.57.57 0 0 1 1 0z"/><circle cx="11.7" cy="11.9" r="1.1" fill="currentColor" stroke="none"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
@@ -1179,7 +1213,9 @@ async function api(url, body, method) {
   catch (e) { throw new Error("无法连接服务器,请确认服务已启动"); }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || `请求失败(${res.status})`);
+    const e = new Error(err.detail || `请求失败(${res.status})`);
+    e.status = res.status;   // 调用方按状态码分支(如 403 需给放开指引),detail 原文不丢
+    throw e;
   }
   return res.json();
 }
@@ -1267,8 +1303,8 @@ function showApp(username) {
   showView("app");
   let tab = null;
   try { tab = sessionStorage.getItem("harness_tab"); } catch {}
-  // 走 switchTab 以统一挂载任务区布局;刷新后恢复上次所在页签
-  switchTab(tab === "cases" || tab === "compare" || tab === "analyze" ? tab : "dashboard");
+  // 走 switchTab 以统一挂载任务区布局;刷新后恢复上次所在页签(仅认已注册的页签)
+  switchTab(TASK_RENDERERS[tab] || renderers[tab] ? tab : "dashboard");
   loadHealth(); initAiPanel();
 }
 async function enterApp() {
@@ -2059,6 +2095,217 @@ async function doAnalyze(btn) {
   });
 }
 
+/* ============ 设置(运行时配置托管 /api/settings) ============ */
+/* 界面完全由服务端 snapshot() 的字段驱动,不做任何本地推断:
+   快照: { env_file, env_file_exists, secrets_masked, hot_reloaded[], requires_restart[],
+            restart_pending_keys[], note }
+   每项: { key, set, value, secret, restart_required, source, default, example, description }
+   —— secret 项的 value 由服务端掩码(前 2 字符***(长度)),前端永远拿不到明文,故输入框不回填。
+   保存响应: { ok, updated[], removed[], hot_reloaded[], requires_restart[], snapshot }
+   —— 「已热生效 / 需重启」只按响应里的分区判定,不在前端硬编码哪些键热生效。 */
+let settingsSnap = null;
+
+const SOURCE_LABEL = { env: "进程环境变量", file: ".env 文件", default: "内置默认值" };
+const settingItems = snap => [...(snap.hot_reloaded || []), ...(snap.requires_restart || [])];
+
+function statusBadge(e) {
+  if (e.source === "env" || e.source === "file")
+    return `<span class="tag ok">${icon("check", 12)}已配置 · ${SOURCE_LABEL[e.source]}</span>`;
+  if (e.set)
+    return `<span class="tag">${icon("layers", 12)}未显式配置 · 取内置默认值</span>`;
+  return `<span class="tag warn">${icon("alert", 12)}未配置 · 该项能力自动降级</span>`;
+}
+function applyBadge(e) {
+  return e.restart_required
+    ? `<span class="st-warn">${icon("clock", 11)}保存后需重启</span>`
+    : `<span class="tag ok">${icon("cycle", 12)}保存即热生效</span>`;
+}
+function settingItemHtml(e) {
+  const ph = e.secret ? "填入新值后保存(当前值只回掩码,不回填)" : "留空并保存即清除该项";
+  const clearDisabled = e.source === "default" ? " disabled" : "";   // 文件与环境变量里都没有:无项可清
+  return `
+  <div class="st-item" id="st-${e.key}">
+    <div class="st-top">
+      <span class="st-key">${esc(e.key)}</span>${statusBadge(e)}${applyBadge(e)}
+    </div>
+    <p class="st-desc">${esc(e.description)}</p>
+    <div class="st-meta">
+      <span>${icon("gauge", 13)}当前值:<b class="st-mono">${e.set ? esc(e.value) : "—"}</b>
+        ${e.secret && e.set ? `<span class="st-warn">密钥掩码</span>` : ""}</span>
+      <span>${icon("shield", 13)}留空回落到:<b>${
+        e.default ? `<span class="st-mono">${esc(e.default)}</span>` : "不启用该项,相关链路自动降级"}</b></span>
+      ${e.example ? `<span>${icon("bulb", 13)}填写示例:<b class="st-mono">${esc(e.example)}</b></span>` : ""}
+    </div>
+    <div class="st-edit">
+      <input id="in-${e.key}" type="${e.secret ? "password" : "text"}"
+        autocomplete="${e.secret ? "new-password" : "off"}" spellcheck="false" placeholder="${ph}">
+      <button class="btn sm" onclick="saveSetting('${e.key}', this)">保存</button>
+      <button class="btn sm secondary" onclick="clearSetting('${e.key}', this)"${clearDisabled}
+        title="从 .env 中删除该行并回落默认行为">清空</button>
+    </div>
+    <div class="st-err" id="err-${e.key}"></div>
+  </div>`;
+}
+function settingsSummaryHtml(snap) {
+  const items = settingItems(snap);
+  const explicit = items.filter(e => e.source !== "default");
+  const pending = snap.restart_pending_keys || [];
+  const onDefault = items.filter(e => e.source === "default");
+  const chips = [
+    `<span class="chip2 ${explicit.length ? "good" : "plain"}">${icon("check", 12)} 已显式配置 ${explicit.length} / ${items.length} 项</span>`,
+    `<span class="chip2 plain">${icon("cycle", 12)} 热生效 ${(snap.hot_reloaded || []).length} 项</span>`,
+    `<span class="chip2 plain">${icon("clock", 12)} 需重启 ${(snap.requires_restart || []).length} 项</span>`,
+    `<span class="chip2 plain num" title="${esc(snap.env_file || "")}">${icon("database", 12)} ${
+      snap.env_file_exists ? esc(snap.env_file) : esc(snap.env_file) + "(尚不存在)"}</span>`,
+  ].join("");
+  const pendingHint = pending.length
+    ? `<div class="hint warn">${icon("alert", 15)}<span><b>${pending.join(" / ")}</b> 已写入 <code>.env</code>,但当前进程仍在用旧值 ——
+        重启服务(<code>python webapp/app.py</code> 或容器重启)后才会读到。本页只写文件,不能替正在跑的进程热替换这些键。</span></div>` : "";
+  const defaultHint = onDefault.length
+    ? `<div class="hint">${icon("bulb", 15)}<span><b>${onDefault.length} 项尚未显式配置</b>(
+        ${onDefault.map(e => esc(e.key)).join(" / ")}),现在取的是内置默认值或保持降级状态。
+        接入真实端点请按下面的「填写示例」逐项填入并保存 —— 不填也能正常演示。</span></div>` : "";
+  return `
+    <h3><span class="h-ico">${icon("shield", 16)}</span>配置就绪态</h3>
+    <p class="desc">这一页托管服务器运行时配置(<code>.env</code>):改完即写盘,热生效项免重启。</p>
+    <div class="chips">${chips}</div>
+    <div class="hint ok">${icon("check", 15)}<span><b>所有配置项全部留空,系统依然可以完整离线演示。</b>
+      评测闭环、多情景数据集、版本对比、报告归档都不依赖任何外部密钥;未配置 <code>LLM_API_KEY</code> 时,
+      整条 LLM 链路自动降级为离线确定性 Mock(结果可复现、零成本)。这里的凭据只决定「智能层走真实模型还是走 Mock」。</span></div>
+    ${pendingHint}${defaultHint}
+    <p class="muted" style="margin:12px 0 0">${esc(snap.note || "")}</p>`;
+}
+function settingsDeniedCard(e) {
+  const denied = e.status === 403;
+  return `
+  <div class="card">
+    <h3><span class="h-ico">${icon("lock", 16)}</span>设置暂不可用</h3>
+    <p class="desc">这一页直接读写服务器本地的 <code>.env</code>(含密钥),因此默认不开放。下面是接口返回的原文。</p>
+    <div class="hint warn">${icon("alert", 15)}<span><b>${denied ? "服务端" : "错误"}:</b>${esc(e.message)}</span></div>
+    ${denied ? `
+    <div class="st-guide">
+      <p><span class="g-ico">${icon("settings", 14)}</span><span><b>开关未开(最常见)</b>:在服务启动环境里设
+        <code>SETTINGS_ENABLED=1</code> 后重启服务。该开关只在启动时读一次,所以无法通过本接口给自己开权限;
+        把 <code>HOST</code> 绑到公网也不会顺带打开它。</span></p>
+      <p><span class="g-ico">${icon("shield", 14)}</span><span><b>不被认作本机</b>:二选一 —— 在服务器本机的浏览器里打开看板
+        (TCP 对端须是 127.0.0.1 / ::1 回环地址);或先登录,再携带会话凭据访问(网页靠 <code>harness_session</code> Cookie,
+        脚本用 <code>Authorization: Bearer &lt;会话令牌&gt;</code>)。<code>X-API-Token</code> 是与小程序共用的机器令牌,
+        不足以通过这道门;带 <code>X-Forwarded-For</code> 等转发头(经反向代理)的请求一律不算本机。</span></p>
+      <p><span class="g-ico">${icon("book", 14)}</span><span>部署与申请方式见
+        <a class="linklike" href="/help" target="_blank" rel="noopener">文档中心</a>(部署章节)。</span></p>
+    </div>` : ""}
+    <p style="margin:16px 0 0"><button class="btn sm secondary" onclick="renderSettings()">${icon("cycle", 14)} 重新读取</button></p>
+  </div>`;
+}
+async function renderSettings() {
+  const box = $("#tab-settings");
+  box.innerHTML = `<div class="skeleton" style="height:112px"></div>
+    <div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:150px"></div>
+    <div class="skeleton" style="height:150px"></div>`;
+  let snap;
+  try {
+    snap = await api("/api/settings");
+  } catch (e) {
+    settingsSnap = null;
+    box.innerHTML = settingsDeniedCard(e);
+    return;
+  }
+  settingsSnap = snap;
+  const groups = [
+    ["hot_reloaded", "热生效项", "cycle", "保存后立即生效,无需重启(当前为 LLM 智能层相关配置)"],
+    ["requires_restart", "启动期项", "clock", "只在服务启动时读取:已写入 .env,仍需重启进程才生效"],
+  ];
+  box.innerHTML = `
+    <div class="card st-sum" id="st-summary"></div>
+    <div class="card">
+      <h3><span class="h-ico">${icon("settings", 16)}</span>配置项清单</h3>
+      <p class="desc">按生效时机分两组;每一项的当前值、来源与回落行为都由服务端快照给出。</p>
+      ${groups.map(([field, title, ico, sub]) => {
+        const list = snap[field] || [];
+        return `<div class="st-group">
+          <div class="st-group-head">${icon(ico, 14)}${title}
+            <span class="chip2 plain num">${list.length}</span>
+            <span class="muted" style="font-weight:400">· ${sub}</span></div>
+          ${list.length ? list.map(settingItemHtml).join("")
+            : `<div class="muted" style="margin-top:8px">这一组没有配置项。</div>`}
+        </div>`;
+      }).join("")}
+      <div class="st-group">
+        <div class="st-group-head">${icon("bulb", 14)}去哪申请、怎么填</div>
+        <p class="st-desc" style="margin-top:6px">
+          <code>LLM_BASE_URL</code> / <code>LLM_API_KEY</code> / <code>LLM_MODEL</code> 取自你选定的模型服务商控制台
+          (任意 OpenAI 兼容端点均可,填这三项即接入真实模型;不填则保持离线 Mock);
+          <code>AUTH_TOKEN</code> 是给小程序 / 脚本共用的自建随机串,自行生成后两端填同一个值。
+          接口没有下发「申请入口」字段,所以这里不放任何外链 —— 每一项的「填写示例」就是权威格式。
+          部署与申请步骤见 <a class="linklike" href="/help" target="_blank" rel="noopener">文档中心</a>。
+        </p>
+      </div>
+    </div>`;
+  repaintSummary();
+}
+function repaintSummary() {
+  const box = $("#st-summary");
+  if (box && settingsSnap) box.innerHTML = settingsSummaryHtml(settingsSnap);
+}
+function repaintSetting(key) {
+  const row = $(`#st-${key}`);
+  const entry = settingsSnap && settingItems(settingsSnap).find(e => e.key === key);
+  if (!row || !entry) { renderSettings(); return; }   // 快照里找不到该项:整页兜底重绘
+  row.outerHTML = settingItemHtml(entry);
+  const next = $(`#st-${key}`);
+  if (!next) return;
+  next.classList.add("flash");
+  setTimeout(() => next.classList.remove("flash"), 1200);
+}
+function savedHint(key, out) {
+  // 生效时机只看服务端返回的分区,前端不猜哪些键热生效
+  const verb = (out.removed || []).includes(key) ? "已清除" : "已保存";
+  if ((out.hot_reloaded || []).includes(key)) return `${key} ${verb} · 已热生效,无需重启`;
+  if ((out.requires_restart || []).includes(key)) return `${key} ${verb} · 已写入 .env,需重启服务后生效`;
+  return `${key} ${verb} · 服务端未标注生效时机,以本页重新读取的状态为准`;
+}
+/* 拒绝原因必须原样保留服务端 detail,再补一句怎么放开 —— 400 的校验原文同理 */
+function writeErrorHtml(e) {
+  const detail = esc(e.message);
+  if (e.status !== 403) return detail;
+  return `${detail}<br>写入被拒只有两种原因:① 服务启动环境未设 <code>SETTINGS_ENABLED=1</code>
+    (设完须重启服务,该开关本身不能通过接口打开);② 请求既非服务器本机直连、也未携带已登录会话
+    —— 在服务器本机打开看板,或登录后由浏览器自动带上 <code>harness_session</code> Cookie 即可。`;
+}
+async function putSetting(key, value, btn) {
+  const errBox = $(`#err-${key}`);
+  if (errBox) errBox.innerHTML = "";
+  const old = btn.innerHTML;
+  btn.disabled = true;
+  let out;
+  try {
+    out = await api("/api/settings", { values: { [key]: value } }, "PUT");
+  } catch (e) {
+    if (errBox) errBox.innerHTML = writeErrorHtml(e);   // 输入框保留原文,便于改后重试
+    else toast(e.message, true);
+    return false;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = old;
+  }
+  if (!out || !out.snapshot) return false;
+  settingsSnap = out.snapshot;
+  repaintSetting(key);   // 就地刷新该行(输入框随该行重建,不会残留刚提交的值)
+  repaintSummary();
+  toast(savedHint(key, out));
+  return true;
+}
+function saveSetting(key, btn) {
+  const raw = $(`#in-${key}`).value.trim();
+  const errBox = $(`#err-${key}`);
+  if (!raw) {   // 空值走「清空」语义,避免误以为点了保存就删了配置
+    if (errBox) errBox.innerHTML = "请输入要写入的值;若要删除该项并回落默认行为,请点「清空」。";
+    return Promise.resolve(false);
+  }
+  return putSetting(key, raw, btn);
+}
+function clearSetting(key, btn) { return putSetting(key, "", btn); }
+
 /* ============ AI 常驻右栏(智能助手:LLM 层,原独立页并入) ============ */
 let asstDatasets = [];
 let asstDraft = null;
@@ -2329,6 +2576,7 @@ async function cmdkActions() {
     ["cases", "Case 管理", "database", "页面"],
     ["compare", "版本对比", "scale", "页面"],
     ["analyze", "分析提交", "flask", "页面"],
+    ["settings", "设置", "settings", "页面"],
   ].map(([tab, name, ico, cat]) => ({
     ico, label: name, cat,
     run: () => { if (views.app.classList.contains("hidden")) enterApp().then(() => switchTab(tab)); else switchTab(tab); },
@@ -2497,8 +2745,9 @@ const TITLES = {
   cases: ["Case 管理", "闭环第 1-2 步:把线上反馈沉淀为可重放的评测用例"],
   compare: ["版本对比", "闭环第 6 步:守护每一次迭代不引入回归"],
   analyze: ["分析提交", "用任意版本的管线分析任意数据集"],
+  settings: ["设置", "运行时配置托管:看板直接读写服务器 .env,热生效项免重启"],
 };
-const renderers = { compare: renderCompare, analyze: renderAnalyze };
+const renderers = { compare: renderCompare, analyze: renderAnalyze, settings: renderSettings };
 // 图标注入(HTML 里用 data-ico 占位,避免重复书写长 SVG)
 $$("[data-ico]").forEach(el => { el.innerHTML = icon(el.dataset.ico, el.dataset.icoSize || 18); });
 document.querySelector(".nav-scroll").addEventListener("click", e => {

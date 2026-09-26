@@ -6,25 +6,33 @@
 ## 前置:安全配置(公网必做)
 
 ```bash
-# 1. 生成强随机令牌(PowerShell)
--join ((48..57) + (97..122) | Get-Random -Count 32 | % {[char]$_})
+# 1. 生成强随机令牌(任选一种)
+python -c "import secrets;print(secrets.token_urlsafe(32))"     # PowerShell 亦可
+# -join ((48..57) + (97..122) | Get-Random -Count 32 | % {[char]$_})
 
-# 2. 启动时注入(登录模式 + 机器客户端令牌)
-AUTH_MODE=login AUTH_TOKEN=<上面生成的串> python webapp/app.py
+# 2. 启动时注入(登录模式 + 机器客户端令牌 + 绑到公网)
+AUTH_MODE=login AUTH_TOKEN=<上面生成的串> HOST=0.0.0.0 python webapp/app.py
 ```
 
-- 鉴权模式 `AUTH_MODE`:`login`(默认,浏览器需登录,首次账号 admin/harness123,
-  登录后请立即修改;可用 `ADMIN_USER`/`ADMIN_PASSWORD` 覆盖初始口令)/
-  `open`(免登录,仅限内网演示);
-- `AUTH_TOKEN` 供机器客户端(小程序/脚本)以 `X-API-Token` 请求头访问,浏览器登录会话
-  与令牌二者其一通过即可;
+- 鉴权模式 `AUTH_MODE`:`login`(默认,浏览器需登录)/ `open`(免登录,仅限内网演示)。
+  首次启动会自动创建 `webapp/auth.json`:用户名默认 `admin`,初始口令取环境变量
+  `ADMIN_PASSWORD`,**没给就用 `secrets` 随机生成一枚强口令、只在控制台打印一次**——
+  不存在任何公开默认口令,请按那行输出登录后立即改密;忘记口令就删掉 `auth.json` 重启;
+- 受保护的 `/api/*` 认可三种凭据(任一即可):`X-API-Token: <AUTH_TOKEN>`(SDK/脚本)、
+  `Authorization: Bearer <会话令牌>`(小程序;令牌取自 `POST /api/auth/login` 响应体的
+  `token`,7 天有效)、`harness_session` Cookie(网页);
+- `AUTH_TOKEN` 与 `ADMIN_PASSWORD`、`CORS_ORIGINS`、`HOST`/`PORT`、`SETTINGS_ENABLED` 都是
+  **启动期只读一次**,改完必须重启进程(用 systemd / docker compose 重启即可);
 - `CORS_ORIGINS` 指定允许的来源(默认 `*`),公网建议收窄
-  (配置具体来源时才会启用带 Cookie 的跨域凭证)。
+  (配置具体来源时才会启用带 Cookie 的跨域凭证);
+- `SETTINGS_ENABLED=1` 才开启 Web 看板的「系统设置」页(在线读写 `.env`),默认关闭;
+  开启后也只对**本机直连**或**已登录会话**开放,机器令牌不能用于该接口(详见 docs/API.md)。
 
 服务端已内置的防护(无需配置):口令 PBKDF2 哈希存储、登录连续失败 5 次锁定 10 分钟、
-会话 HMAC 签名 + HttpOnly Cookie、API 令牌时序安全比较、文件名白名单防路径穿越;
-容器以非 root 用户运行并自带健康检查。`webapp/auth.json` 含口令哈希与会话密钥,
-已列入 .gitignore,严禁提交或外传。
+会话 HMAC 签名 + HttpOnly Cookie、API 令牌时序安全比较、文件名白名单防路径穿越、
+`.env` 写入原子替换且写前备份;容器以非 root 用户运行并自带健康检查。
+`webapp/auth.json` 与会话密钥、`.env` 里的令牌/密钥都已列入 .gitignore,严禁提交或外传;
+**仓库与文档里不出现任何真实地址、令牌、口令**,部署时按占位符换成你自己的值。
 
 ## 路线 A:内网穿透演示(最快,10 分钟)
 
@@ -49,7 +57,7 @@ npx cloudflared tunnel --url http://127.0.0.1:8765      # Cloudflare 免费临�
 
 ```bash
 # 1. 上传代码到服务器(或 git clone),然后在项目根目录:
-echo "AUTH_TOKEN=你的强随机串" > .env
+echo "AUTH_TOKEN=你的强随机串" > .env            # 完整模板见 .env.example(全部为占位符)
 docker compose up -d --build          # 服务对外监听 8765(建议改为仅 127.0.0.1,见下)
 
 # 2. Nginx 反向代理 + 证书(certbot 自动签发续期)

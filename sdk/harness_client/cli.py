@@ -1,11 +1,12 @@
 """harness-client 命令行:装完 SDK 即可在终端直接查询评测服务。
 
-    harness-client health --base-url http://47.114.37.174:8765 --token <TOKEN>
+    harness-client health --base-url http://<你的服务器地址>:8765 --token <AUTH_TOKEN 的值>
     harness-client versions
     harness-client analyze --version v2 --dataset base
     harness-client eval --version v2
 
-地址与令牌支持环境变量 HARNESS_BASE_URL / HARNESS_TOKEN,免去重复输入。
+地址与令牌支持环境变量 HARNESS_BASE_URL / HARNESS_TOKEN,免去重复输入
+(默认地址为 http://127.0.0.1:8765,本地起服务后直接可用)。
 """
 
 from __future__ import annotations

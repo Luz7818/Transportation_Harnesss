@@ -11,9 +11,17 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_ROOT = Path(__file__).resolve().parent / "fixtures"
 
+# 仅测试:以下凭据只存在于 pytest 进程内(临时 auth.json),不对应任何真实部署。
+# 刻意用强赋值而非 setdefault —— 本机/CI 上残留的同名环境变量不该能改掉测试账号;
+# 需要换值时设 TEST_ADMIN_USER / TEST_ADMIN_PASSWORD / TEST_API_TOKEN。
+TEST_ADMIN_USER = os.getenv("TEST_ADMIN_USER", "admin")
+TEST_ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "test-only-harness-pw")
+TEST_API_TOKEN = os.getenv("TEST_API_TOKEN", "test-only-api-token")
 # webapp.app 在 import 时读取环境变量,必须在其被导入前固定测试取值
-os.environ.setdefault("AUTH_MODE", "login")
-os.environ.setdefault("AUTH_TOKEN", "test-token-123")
+os.environ["AUTH_MODE"] = "login"
+os.environ["AUTH_TOKEN"] = TEST_API_TOKEN
+os.environ["ADMIN_USER"] = TEST_ADMIN_USER
+os.environ["ADMIN_PASSWORD"] = TEST_ADMIN_PASSWORD
 
 
 def seed_asset_dirs(tmp_path: Path) -> dict[str, Path]:
@@ -37,7 +45,26 @@ def _reset_login_guard():
     from webapp import auth as auth_mod
 
     auth_mod._login_guard.clear()
+
+
+@pytest.fixture(autouse=True)
+def _hermetic_dotenv(tmp_path, monkeypatch):
+    """.env 的读写与备份一律重定向到临时目录,用例结束后还原被改过的环境变量。
+
+    autouse:/api/settings 会真写文件、真改 os.environ,不加这层保护
+    任何一次接口测试都可能改到仓库里现存的 .env(里面是本机真实 LLM 配置)。
+    """
+    from webapp import settings as settings_mod
+
+    monkeypatch.setattr(settings_mod, "ENV_FILE", tmp_path / ".env")
+    monkeypatch.setattr(settings_mod, "BACKUP_DIR", tmp_path / "backups")
+    saved = {key: os.environ.get(key) for key in settings_mod.SPECS_BY_KEY}
     yield
+    for key, value in saved.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
 
 
 @pytest.fixture
@@ -53,8 +80,8 @@ def hermetic_storage(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
-    """Web API 测试客户端:auth.json 指向临时文件,避免动到真实凭据。
+def make_client(tmp_path, monkeypatch):
+    """构造 API 测试客户端的工厂:`make_client(client_host=...)` 决定 TCP 对端地址。
 
     app 在 import 时会加载仓库根目录 .env(可能含本机真实 LLM 配置),
     这里统一清除并重置运行时,保证 API 级测试始终走离线确定性 Mock。
@@ -71,7 +98,23 @@ def client(tmp_path, monkeypatch):
 
     from fastapi.testclient import TestClient
 
-    with TestClient(app_mod.app) as tc:
+    def _make(client_host: str = "testclient") -> TestClient:
+        return TestClient(app_mod.app, client=(client_host, 50000))
+
+    return _make
+
+
+@pytest.fixture
+def client(make_client):
+    """Web API 测试客户端;默认对端地址不是回环,等价于"从另一台机器访问"。"""
+    with make_client() as tc:
+        yield tc
+
+
+@pytest.fixture
+def loopback_client(make_client):
+    """对端地址为 127.0.0.1 的客户端:用于 /api/settings 的本机直连分支。"""
+    with make_client("127.0.0.1") as tc:
         yield tc
 
 
@@ -79,6 +122,31 @@ def client(tmp_path, monkeypatch):
 def authed_client(client):
     """已登录(会话 Cookie)的客户端。"""
     resp = client.post("/api/auth/login",
-                       json={"username": "admin", "password": "harness123"})
+                       json={"username": TEST_ADMIN_USER, "password": TEST_ADMIN_PASSWORD})
     assert resp.status_code == 200, resp.text
     return client
+
+
+@pytest.fixture
+def bearer_client(make_client):
+    """只带 `Authorization: Bearer <会话令牌>`、不带任何 Cookie 的客户端(小程序形态)。"""
+    with make_client() as tc:
+        resp = tc.post("/api/auth/login",
+                       json={"username": TEST_ADMIN_USER, "password": TEST_ADMIN_PASSWORD})
+        assert resp.status_code == 200, resp.text
+        token = resp.json()["token"]
+        tc.cookies.clear()
+        tc.headers["Authorization"] = f"Bearer {token}"
+        yield tc
+
+
+@pytest.fixture
+def admin_credentials() -> tuple[str, str]:
+    """夹具账号的用户名/口令(仅测试)。"""
+    return TEST_ADMIN_USER, TEST_ADMIN_PASSWORD
+
+
+@pytest.fixture
+def api_token() -> str:
+    """机器客户端令牌(仅测试),与服务端 AUTH_TOKEN 的取值一致。"""
+    return TEST_API_TOKEN

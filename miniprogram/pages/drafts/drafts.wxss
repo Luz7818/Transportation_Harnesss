@@ -1,0 +1,11 @@
+.ipt { background: #fff; border: 1rpx solid #e7ebf3; border-radius: 14rpx; padding: 14rpx 20rpx; margin-top: 8rpx; }
+.ipt.ta { width: auto; height: 160rpx; margin-top: 14rpx; }
+.picker { background: #fff; border: 1rpx solid #e7ebf3; border-radius: 14rpx; padding: 16rpx 20rpx; margin-top: 8rpx; }
+.strong { font-weight: 600; }
+.draft { padding: 16rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 25rpx; }
+.draft:last-child { border-bottom: 0; }
+.pill.tag { background: #f1f4f9; color: #6b7686; }
+.pill.warn { background: #fef7e6; color: #b45309; }
+.ditem { padding: 14rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 26rpx; }
+.ditem:last-child { border-bottom: 0; }
+.danger-ghost { color: #dc2626 !important; border-color: #f3c3c3 !important; }

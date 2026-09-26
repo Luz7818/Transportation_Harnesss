@@ -21,8 +21,6 @@ from harness_client import (
 )
 from harness_client import cli as sdk_cli
 
-TOKEN = "test-token-123"
-
 
 def _free_port() -> int:
     with socket.socket() as sock:
@@ -57,17 +55,18 @@ def server_url():
 
 
 @pytest.fixture
-def api(server_url, hermetic_storage):
+def api(server_url, hermetic_storage, api_token):
     """令牌通道的 SDK 客户端(机器客户端形态)。"""
-    with TransportationHarnessClient(base_url=server_url, token=TOKEN) as client:
+    with TransportationHarnessClient(base_url=server_url, token=api_token) as client:
         yield client
 
 
 @pytest.fixture
-def login_api(server_url, hermetic_storage):
+def login_api(server_url, hermetic_storage, admin_credentials):
     """登录通道的 SDK 客户端(交互脚本形态):用户名/密码自动换取会话 Cookie。"""
+    username, password = admin_credentials
     with TransportationHarnessClient(
-        base_url=server_url, username="admin", password="harness123",
+        base_url=server_url, username=username, password=password,
     ) as client:
         yield client
 
@@ -82,9 +81,9 @@ class TestAuthChannels:
                 pytest.raises(HarnessAuthError):
             client.list_cases()
 
-    def test_login_channel_me_and_cases(self, login_api):
+    def test_login_channel_me_and_cases(self, login_api, admin_credentials):
         me = login_api.me()
-        assert me["username"] == "admin"
+        assert me["username"] == admin_credentials[0]
         assert len(login_api.list_cases()) >= 13
 
 
@@ -145,13 +144,13 @@ class TestCoreFlows:
 
 
 class TestCli:
-    def test_health_smoke(self, server_url, hermetic_storage, capsys):
-        assert sdk_cli.main(["health", "--base-url", server_url, "--token", TOKEN]) == 0
+    def test_health_smoke(self, server_url, hermetic_storage, api_token, capsys):
+        assert sdk_cli.main(["health", "--base-url", server_url, "--token", api_token]) == 0
         assert '"status": "ok"' in capsys.readouterr().out
 
-    def test_eval_smoke(self, server_url, hermetic_storage, capsys):
+    def test_eval_smoke(self, server_url, hermetic_storage, api_token, capsys):
         assert sdk_cli.main(["eval", "--version", "v2",
-                             "--base-url", server_url, "--token", TOKEN]) == 0
+                             "--base-url", server_url, "--token", api_token]) == 0
         assert "13/13 通过" in capsys.readouterr().out
 
     def test_error_exit_code(self, server_url, hermetic_storage, capsys):
