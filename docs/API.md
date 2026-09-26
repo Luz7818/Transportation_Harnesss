@@ -197,6 +197,7 @@ Bearer 与 Cookie 两种会话凭据都能在这里换出用户名。
 ```jsonc
 {
   "status": "ok",
+  "app_version": "1.5.0",
   "auth_mode": "login",
   "default_credentials": true,   // true = 首次创建后还没在界面改过口令(随机初始口令时恒为 false)
   "versions": ["v0", "v1", "v2"],
@@ -581,7 +582,8 @@ curl -s "$BASE/api/compare?a=report_v1_…&b=report_v2_…" -H "$H"
 ## 客户端集成
 
 **Python SDK(推荐)**:`pip install ./sdk` 后导入名 `harness_client`,
-方法与全部端点一一对应,评测结果/版本对比返回强类型模型,自带 `harness-client` 命令行;
+除 `/api/settings`(服务器本机运行时配置,不认机器令牌故不入 SDK)外方法与端点一一对应,
+评测结果/版本对比返回强类型模型,自带 `harness-client` 命令行;
 完整示例见 [INTEGRATION](INTEGRATION.md)。原生 HTTP 备选:
 
 ```python

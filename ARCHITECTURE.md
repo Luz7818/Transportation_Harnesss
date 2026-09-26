@@ -106,11 +106,12 @@ CompositeJudge                       按 spec.type 路由,无主 judge 支持时
   的约定隔离;
 - **PWA 是纯前端增强**:安装与离线能力(manifest + Service Worker)只在安全上下文注册,
   http IP 访问时优雅降级、页面功能不受影响 —— 渐进增强不改变后端契约,也不成为部署的前置条件;
-- **小程序共用同一套 API**:机器客户端走 `X-API-Token`,浏览器走 Cookie 会话,服务端一条
-  中间件同时支持两种身份;小程序不引入登录页,符合「外业快速记录」的定位;
+- **小程序共用同一套 API**:服务端一条中间件按序裁决三种凭据 —— `X-API-Token`(SDK / 脚本 / CI
+  等机器客户端)→ `Authorization: Bearer <会话令牌>`(小程序带不了 Cookie,登录页换取会话令牌)
+  → `harness_session` 会话 Cookie(网页看板),任一通过即放行;
 - **SDK 是 OpenAPI 的薄封装**:`sdk/`(harness_client)与 `docs/openapi.json` 由同一份
-  FastAPI 应用导出,方法与端点一一对应;规范先行保证 SDK、Postman 集合与 `/docs`
-  调试页不会互相漂移。
+  FastAPI 应用导出,除 `/api/settings`(服务器本机运行时配置,刻意不认机器令牌、也不进 SDK)
+  外方法与端点一一对应;规范先行保证 SDK、Postman 集合与 `/docs` 调试页不会互相漂移。
 
 ## 8. 测试策略:评测系统自己先要有测试
 
