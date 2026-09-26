@@ -131,8 +131,11 @@ CompositeJudge                       按 spec.type 路由,无主 judge 支持时
 
 | 文档 | 载体 | 读者 |
 | --- | --- | --- |
-| README | 仓库 | 首次接触项目的人:定位/架构图/工作流/目标人群 |
+| README | 仓库 | 首次接触项目的人:定位/工作流/目标人群/30 秒跑通 |
+| docs/getting-started.md | 仓库 | 要真的用起来或改它的人:环境、完整步骤、真实报错与故障表、术语小词典 |
+| AGENTS.md | 仓库 | AI 编码助手:状态表(带复核命令)、仓库地图、鉴权事实、会咬人的约定 |
 | ARCHITECTURE(本文) | 仓库 | 评审者与后续维护者:为什么这样设计 |
+| `<一级目录>/README.md` | 仓库 | 需要知道某块归谁管的人:该目录负责什么、每个文件干什么 |
 | docs/API.md | 仓库 | 集成方:全量接口参考 |
 | docs/INTEGRATION.md | 仓库 | 外部系统:5 分钟接入(cURL → Python SDK → 原生 HTTP) |
 | docs/openapi.json | 仓库 | 机器:导入 Postman/Apifox 或生成客户端 |

@@ -1,3 +1,38 @@
+# miniprogram/ —— 微信小程序客户端
+
+> 用途：说明本目录负责什么、每个文件干什么。使用步骤与鉴权方式在下面的原有章节里。
+
+本目录是一个**独立的小程序工程**（微信开发者工具直接导入本目录），
+与 FastAPI 后端共用同一套 HTTP API，不额外含任何业务逻辑：
+4 个 Tab（评测看板 / 版本对比 / 分析提交 / Case 库）+ 5 个非 Tab 页
+（报告详情 / 进化详情 / 用例详情 / AI 草稿 / 登录）。
+它服务的是「外业现场提交 badcase、手机上回看进化结果」这一段。
+
+## 文件清单
+
+| 文件 / 目录 | 干什么 | 备注 |
+| --- | --- | --- |
+| `app.json` | 注册 9 个页面、4 个 TabBar 项、窗口样式 | TabBar 为纯文字（合法，无需图标） |
+| `app.js` / `app.wxss` | 应用入口与全局样式 | `app.js` 只有一行,不承担逻辑 |
+| `config.example.js` | 配置模板：只有 `BASE_URL` 一项 | 复制为 `config.js` 后填写；**不要再写任何令牌** |
+| `config.js` | 本机后端地址 | 已 gitignore，克隆后不存在；缺失时 `utils/api.js` 兜底成空串并提示去登录页填 |
+| `utils/api.js` | `wx.request` 封装：地址解析（storage 覆盖 > `config.js`）、会话令牌读写、`Authorization: Bearer` 注入、401/过期→清令牌跳登录、临期提示、错误带 `statusCode` | 小程序与后端唯一的接口层；页面不直接调 `wx.request` |
+| `pages/login/` | 登录页：换会话令牌、覆盖服务器地址、显示剩余有效期 | 连续失败 5 次锁定 10 分钟，页面不自动重试 |
+| `pages/dashboard/` | 评测看板：得分卡片、运行评测、一键自进化、进化时间线、报告列表 | 并发拉 `health`/`llm/status`/`versions`/`reports`/`evolutions`/`evalsets`/`activity` |
+| `pages/report/` | 单份评测报告详情（逐用例判分明细） | 由 `dashboard` 或时间线跳入 |
+| `pages/evolution/` | 单次自进化完整记录（逐轮轨迹） | 读 `/api/evolutions/{id}` |
+| `pages/compare/` | 版本对比：任选两份报告逐用例差分 | 读 `/api/reports` + `/api/compare?a=&b=` |
+| `pages/analyze/` | 分析提交：版本 × 数据集，展示场景解读 | 读 `/api/versions`、`/api/datasets`、`POST /api/analyze` |
+| `pages/cases/` | Case 库：浏览、沉淀表单（数据集 → 路段下拉 → 期望）、批量删除 | 写 `POST /api/cases`、`POST /api/cases/batch-delete` |
+| `pages/case-detail/` | 单条用例详情（含 `checks`）与删除 | 读 `/api/cases/{id}` |
+| `pages/drafts/` | AI 草稿：起草、列表、人工确认、丢弃、失败诊断 | 写 `/api/llm/drafts`、`.../confirm`、`/api/llm/diagnose` |
+| `project.config.json` / `project.private.config.json` / `sitemap.json` | 开发者工具工程配置（含 AppID）、本机私有配置、索引规则 | 换主体时替换 `appid` |
+| `README.md` | 本文件 | — |
+
+`preview_qr.png`、`preview_info.json` 若出现在本机，是预览产物且已 gitignore，不要提交。
+
+---
+
 # 微信小程序端接入说明
 
 这是「交通分析自进化 Harness」的微信小程序客户端,与 FastAPI 后端共用同一套 HTTP API,
@@ -70,13 +105,17 @@
 
 ```
 miniprogram/
-├── app.json / app.js / app.wxss     # 全局配置与样式(4 个 Tab + 二级页)
+├── app.json / app.js / app.wxss     # 全局配置与样式(4 个 Tab + 5 个二级页)
 ├── config.example.js                # 配置模板:复制为 config.js 再填地址
 ├── config.js                        # 本机服务器地址(不入库,不含任何令牌)
 ├── utils/api.js                     # wx.request 封装:自动带 Bearer 会话令牌 + 401 回登录页
 ├── pages/login/                     # 登录页(换会话令牌、覆盖服务器地址)
 ├── pages/dashboard/                 # 评测看板(一键自进化 + 进化时间线)
+├── pages/report/                    # 单份评测报告详情
+├── pages/evolution/                 # 单次自进化的逐轮轨迹
 ├── pages/compare/                   # 版本对比(逐 case 差分)
 ├── pages/analyze/                   # 分析提交(场景化数据集)
-└── pages/cases/                     # Case 库(浏览 + 沉淀)
+├── pages/cases/                     # Case 库(浏览 + 沉淀 + 批量删除)
+├── pages/case-detail/               # 单条 replaycase 详情(含 checks)与删除
+└── pages/drafts/                    # AI 草稿(起草 / 确认 / 丢弃)与失败诊断
 ```

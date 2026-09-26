@@ -1,0 +1,12 @@
+# 文档检查豁免清单(每行一个相对路径;见《项目文档标准》)
+# 这些目录是「跑一次就变」的运行产物,不写板块说明:内容不由人工维护,
+# 说明写在 AGENTS.md 的仓库地图与 docs/getting-started.md 的对应小节里。
+
+# 评测/进化归档:python -m harness.evolve 与 scripts/run_eval.py 每次运行都会新增
+reports/
+# LLM 响应缓存(sha 命名的 JSON,命中即复用)
+llm_cache/
+# LLM 草稿工作流产物(pending → confirmed/discarded),人工确认后落入 cases/
+drafts/
+# 前端打包产物(本地构建输出,不参与文档)
+dist/
