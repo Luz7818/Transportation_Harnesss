@@ -5,6 +5,12 @@ const LEVELS = ["畅通", "基本畅通", "缓行", "拥堵", "严重拥堵", "�
 Page({
   data: {
     cases: [],
+    filtered: [],
+    labels: [],
+    labelFilter: "全部",
+    selectMode: false,
+    selected: {},
+    selectedKeys: [],
     datasets: [],
     datasetIdx: 0,
     segments: [],
@@ -23,9 +29,83 @@ Page({
     });
   },
 
-  refresh() {
-    request("/api/cases").then(cases => this.setData({ cases }));
+  onPullDownRefresh() { this.refresh(() => wx.stopPullDownRefresh()); },
+
+  refresh(done) {
+    request("/api/cases")
+      .then(cases => {
+        const labels = ["全部"].concat([...new Set(cases.map(c => c.label || "未分类"))]);
+        this.setData({
+          cases,
+          labels,
+          filtered: this.applyFilter(cases, this.data.labelFilter),
+        });
+      })
+      .finally(() => { if (done) done(); });
   },
+
+  applyFilter(cases, label) {
+    return label === "全部" ? cases : cases.filter(c => (c.label || "未分类") === label);
+  },
+
+  onFilter(e) {
+    const label = e.currentTarget.dataset.label;
+    this.setData({ labelFilter: label, filtered: this.applyFilter(this.data.cases, label) });
+  },
+
+  onCaseTap(e) {
+    const id = e.currentTarget.dataset.id;
+    if (this.data.selectMode) { this.toggleSelect(id); return; }
+    wx.navigateTo({ url: "/pages/case-detail/case-detail?id=" + id });
+  },
+
+  onCaseLongPress(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!this.data.selectMode) this.setData({ selectMode: true, selected: {} });
+    this.toggleSelect(id);
+  },
+
+  toggleSelect(id) {
+    const selected = { ...this.data.selected };
+    if (selected[id]) delete selected[id];
+    else selected[id] = true;
+    this.setData({ selected, selectedKeys: Object.keys(selected) });
+  },
+
+  selectAll() {
+    const selected = {};
+    this.data.filtered.forEach(c => { selected[c.case_id] = true; });
+    this.setData({ selected, selectedKeys: Object.keys(selected) });
+  },
+
+  clearSelect() { this.setData({ selected: {}, selectedKeys: [] }); },
+  exitSelect() { this.setData({ selectMode: false, selected: {}, selectedKeys: [] }); },
+
+  batchDelete() {
+    const ids = Object.keys(this.data.selected);
+    if (!ids.length) { wx.showToast({ title: "先长按选择要删除的 case", icon: "none" }); return; }
+    wx.showModal({
+      title: "批量删除",
+      content: `确定删除选中的 ${ids.length} 条 case?将同时从评测集清单移除,报告归档不受影响。`,
+      confirmText: "删除",
+      confirmColor: "#dc2626",
+      success: res => {
+        if (!res.confirm) return;
+        wx.showLoading({ title: "删除中…" });
+        request("/api/cases/batch-delete", "POST", { ids })
+          .then(out => {
+            wx.hideLoading();
+            const miss = out.missing.length ? `(另有 ${out.missing.length} 条不存在)` : "";
+            wx.showToast({ title: `已删除 ${out.deleted.length} 条${miss}`, icon: "none" });
+            this.exitSelect();
+            this.refresh();
+          })
+          .catch(() => wx.hideLoading());
+      },
+    });
+  },
+
+  goDrafts() { wx.navigateTo({ url: "/pages/drafts/drafts" }); },
 
   loadSegments() {
     const ds = this.data.datasets[this.data.datasetIdx];

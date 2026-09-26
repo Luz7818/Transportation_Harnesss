@@ -24,7 +24,8 @@
     <view class="seg row spread" wx:for="{{out.segments}}" wx:key="segment_id">
       <view>
         <view>{{item.segment_id}} {{item.name}}</view>
-        <view class="muted">饱和度 {{item.saturation === null ? "—" : item.saturation}} · 状态 {{item.status}}</view>
+        <view class="muted">饱和度 {{item.saturation === null ? "—" : item.saturation}} · 延误指数 {{item.delay_index === null ? "—" : item.delay_index}} · 速度比 {{item.speed_ratio === null ? "—" : item.speed_ratio}}</view>
+        <view class="muted">状态 {{item.status}}</view>
       </view>
       <text class="badge">{{item.classification}}</text>
     </view>

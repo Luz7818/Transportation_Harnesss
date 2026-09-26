@@ -1,0 +1,31 @@
+<view class="card" wx:if="{{loading}}"><text class="muted">加载中…</text></view>
+<view class="card" wx:if="{{!loading && !cs}}"><text class="muted">case 不存在或加载失败({{id}})</text></view>
+
+<block wx:if="{{cs}}">
+  <view class="card">
+    <view class="row spread">
+      <view class="card-title">{{cs.case_id}}</view>
+      <text class="badge">{{cs.label}}</text>
+    </view>
+    <view style="font-size:30rpx;font-weight:600">{{cs.title}}</view>
+    <view class="muted" style="margin-top:10rpx">数据集 {{cs.dataset_name}} · 来源 {{cs.source}} · {{cs.created_at}}</view>
+    <view class="hint" wx:if="{{cs.notes}}">📝 {{cs.notes}}</view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">📐 判分规则({{checks.length}})</view>
+    <view class="chk" wx:for="{{checks}}" wx:key="key">
+      <view class="row spread">
+        <text class="pill type">{{item.typeText}}</text>
+        <text class="muted">{{item.segment}}</text>
+      </view>
+      <view class="muted" style="margin-top:6rpx">期望:{{item.expectedText}}<text wx:if="{{item.field}}"> · 字段 {{item.field}}</text><text wx:if="{{item.tol}}"> · 容差 {{item.tol}}</text></view>
+      <view class="muted" wx:if="{{item.keywords.length}}">关键词:{{item.keywords}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <button class="btn danger" disabled="{{deleting}}" bindtap="del">🗑 删除此 case</button>
+    <view class="muted" style="margin-top:8rpx">删除后同时从评测集清单移除,报告归档不受影响</view>
+  </view>
+</block>

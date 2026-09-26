@@ -4,3 +4,13 @@
 .rep:last-child { border-bottom: 0; }
 .evo { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 24rpx; }
 .evo:last-child { border-bottom: 0; }
+.picker { background: #fff; border: 1rpx solid #e7ebf3; border-radius: 14rpx; padding: 14rpx 20rpx; margin-top: 12rpx; }
+.dot { width: 18rpx; height: 18rpx; border-radius: 50%; }
+.dot.ok { background: #10b981; }
+.dot.bad { background: #ef4444; }
+.chip { background: #eef1ff; color: #4f46e5; border-radius: 999rpx; padding: 6rpx 20rpx; font-size: 22rpx; flex-shrink: 0; }
+.chip.dim { background: #f1f4f9; color: #6b7686; }
+.linklike { color: #4f46e5; }
+.act { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 24rpx; }
+.act:last-child { border-bottom: 0; }
+.pill.tag { background: #f1f4f9; color: #6b7686; }

@@ -1,4 +1,39 @@
 <view class="card">
+  <view class="row spread">
+    <view class="card-title">🗃 Replaycase 库({{cases.length}})</view>
+    <view class="muted linklike" bindtap="goDrafts">🤖 AI 助手 ›</view>
+  </view>
+  <view class="chips" wx:if="{{labels.length > 1}}">
+    <view class="fchip {{labelFilter === item ? 'on' : ''}}" wx:for="{{labels}}" wx:key="*this"
+          data-label="{{item}}" bindtap="onFilter">{{item}}</view>
+  </view>
+  <view wx:if="{{!filtered.length}}" class="muted">{{cases.length ? "该标签下暂无 case" : "暂无 case"}}</view>
+  <view wx:else class="muted" style="margin-bottom:6rpx">点 case 看判分规则;长按进入多选删除</view>
+  <view class="cse {{selectMode ? 'sel' : ''}} {{selected[item.case_id] ? 'picked' : ''}}"
+        wx:for="{{filtered}}" wx:key="case_id"
+        data-id="{{item.case_id}}" bindtap="onCaseTap" bindlongpress="onCaseLongPress">
+    <view class="row spread">
+      <view class="row">
+        <view class="circle {{selected[item.case_id] ? 'on' : ''}}" wx:if="{{selectMode}}"></view>
+        <text>{{item.case_id}}</text>
+      </view>
+      <text class="muted">{{item.label}}</text>
+    </view>
+    <view class="muted">{{item.title}}</view>
+  </view>
+</view>
+
+<view class="batchbar" wx:if="{{selectMode}}">
+  <text class="muted">已选 {{selectedKeys.length}} 条</text>
+  <view class="row" style="gap:12rpx">
+    <button class="btn btn-ghost" size="mini" bindtap="selectAll">全选</button>
+    <button class="btn btn-ghost" size="mini" bindtap="clearSelect">清除</button>
+    <button class="btn danger" size="mini" bindtap="batchDelete">🗑 删除</button>
+    <button class="btn btn-ghost" size="mini" bindtap="exitSelect">退出</button>
+  </view>
+</view>
+
+<view class="card">
   <view class="card-title">➕ 沉淀新的 replaycase</view>
   <view class="muted">标题</view>
   <input class="ipt" value="{{form.title}}" data-field="title" bindinput="onInput" maxlength="80" placeholder="例:学府路应判为拥堵而非严重拥堵" />
@@ -20,16 +55,4 @@
   <view class="muted" style="margin-top:14rpx">备注</view>
   <input class="ipt" value="{{form.notes}}" data-field="notes" bindinput="onInput" maxlength="200" placeholder="反馈原文 / 复现步骤" />
   <button class="btn" style="margin-top:24rpx" disabled="{{submitting}}" bindtap="submit">💾 沉淀并加入评测集</button>
-</view>
-
-<view class="card">
-  <view class="card-title">🗃 Replaycase 库({{cases.length}})</view>
-  <view wx:if="{{!cases.length}}" class="muted">暂无 case</view>
-  <view class="cse" wx:for="{{cases}}" wx:key="case_id">
-    <view class="row spread">
-      <text>{{item.case_id}}</text>
-      <text class="muted">{{item.label}}</text>
-    </view>
-    <view class="muted">{{item.title}}</view>
-  </view>
 </view>

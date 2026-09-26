@@ -28,6 +28,7 @@
   </view>
   <view class="card">
     <view class="card-title">逐 Case 差分({{out.rows.length}} 条)</view>
+    <view class="muted" style="margin-bottom:6rpx">得分列:A → B;点「N 项变化」展开判分明细</view>
     <view class="crow" wx:for="{{out.rows}}" wx:key="case_id">
       <view class="row spread">
         <text>{{item.case_id}} · {{item.label}}</text>
@@ -35,7 +36,25 @@
           <text> → </text>
           <text class="pill {{item.b_passed ? 'pass' : (item.b_passed === null ? 'na' : 'fail')}}">{{item.bText}}</text></view>
       </view>
-      <view class="muted">{{item.title}}</view>
+      <view class="row spread" style="margin-top:4rpx">
+        <view class="muted">{{item.title}}</view>
+        <view class="row" style="gap:12rpx">
+          <text class="muted">{{item.aScoreText}} → {{item.bScoreText}}</text>
+          <view wx:if="{{item.diffCount}}" class="dtoggle {{item.expanded ? 'on' : ''}}"
+                data-idx="{{index}}" catchtap="toggleRow">{{item.diffCount}} 项变化 {{item.expanded ? "▲" : "▼"}}</view>
+        </view>
+      </view>
+      <view class="diffbox" wx:if="{{item.expanded}}">
+        <view class="drow" wx:for="{{item.diffs}}" wx:for-item="d" wx:key="key">
+          <view class="row spread">
+            <text class="pill dst-{{d.status}}">{{d.statusText}}</text>
+            <text class="muted">{{d.type}} · {{d.target}}</text>
+          </view>
+          <view class="muted" style="margin-top:4rpx">期望:{{d.expectedText}}</view>
+          <view class="muted" wx:if="{{d.a_detail}}">A:{{d.a_detail}}</view>
+          <view class="muted" wx:if="{{d.b_detail}}">B:{{d.b_detail}}</view>
+        </view>
+      </view>
     </view>
   </view>
 </block>

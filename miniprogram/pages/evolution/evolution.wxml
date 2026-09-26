@@ -1,0 +1,59 @@
+<view class="card" wx:if="{{loading}}"><text class="muted">加载中…</text></view>
+<view class="card" wx:if="{{!loading && !evo}}"><text class="muted">进化记录不存在或加载失败({{id}})</text></view>
+
+<block wx:if="{{evo}}">
+  <view class="card">
+    <view class="row spread">
+      <view class="card-title">{{evo.evolution_id}}</view>
+      <text class="pill {{pending ? 'warn' : 'pass'}}">{{evo.stop_reason}}</text>
+    </view>
+    <view class="muted">评测集 {{evo.evalset_id}}({{evo.total_cases}} 条)· 迭代 {{evo.iterations_used}} 轮 · {{evo.timestamp}}</view>
+    <view class="traj">
+      <view class="tnode">
+        <view class="tacc">{{evo.baseAcc}}</view>
+        <view class="muted">基线 {{evo.baseline.version}}</view>
+      </view>
+      <view class="tarrow">→</view>
+      <view class="tnode">
+        <view class="tacc best">{{evo.bestAcc}}</view>
+        <view class="muted">最佳 {{evo.best.version}}({{evo.best.passed_count}}/{{evo.best.total}})</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:for="{{rounds}}" wx:key="round">
+    <view class="row spread">
+      <view class="card-title">第 {{item.round}} 轮 · {{item.version}} {{item.version_name}}</view>
+      <text class="pill {{item.up ? 'pass' : 'fail'}}">{{item.deltaText}}</text>
+    </view>
+    <view style="font-size:44rpx;font-weight:800;color:#4f46e5">{{item.accText}}</view>
+    <view class="muted">{{item.passed_count}}/{{item.total}} 条通过</view>
+
+    <view class="sec" wx:if="{{item.changes.length}}">
+      <view class="muted">🔧 本轮优化</view>
+      <view class="muted" wx:for="{{item.changes}}" wx:for-item="c" wx:key="*this">· {{c}}</view>
+    </view>
+
+    <view class="sec" wx:if="{{item.newly.length}}">
+      <view class="muted">✅ 新通过({{item.newly.length}})</view>
+      <view class="muted" wx:for="{{item.newly}}" wx:for-item="c" wx:key="*this">· {{c}}</view>
+    </view>
+
+    <view class="sec" wx:if="{{item.regressed.length}}">
+      <view class="muted regressed">⚠️ 回归({{item.regressed.length}})</view>
+      <view class="muted" wx:for="{{item.regressed}}" wx:for-item="c" wx:key="*this">· {{c}}</view>
+    </view>
+
+    <view class="sec" wx:if="{{item.remaining.length}}">
+      <view class="muted">仍未通过</view>
+      <view class="muted" wx:for="{{item.remaining}}" wx:for-item="g" wx:key="label">
+        · {{g.label}}({{g.items.length}}):{{g.items[0]}}{{g.items.length > 1 ? " 等" : ""}}
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{pending}}">
+    <view class="muted">⏳ 有版本因单轮上限未验证:把基线切换到当前最佳版本再跑一轮即可继续验证。</view>
+    <button class="btn btn-ghost" style="margin-top:16rpx" bindtap="goCompare">去版本对比看差分</button>
+  </view>
+</block>

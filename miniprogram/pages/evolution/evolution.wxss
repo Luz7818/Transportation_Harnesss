@@ -1,0 +1,8 @@
+.traj { display: flex; align-items: center; gap: 20rpx; margin-top: 20rpx; }
+.tnode { flex: 1; }
+.tacc { font-size: 44rpx; font-weight: 800; color: #1f2733; }
+.tacc.best { color: #4f46e5; }
+.tarrow { font-size: 36rpx; color: #6b7686; }
+.sec { margin-top: 14rpx; padding-top: 10rpx; border-top: 1rpx solid #f0f3f9; }
+.regressed { color: #dc2626; }
+.pill.warn { background: #fef7e6; color: #b45309; }

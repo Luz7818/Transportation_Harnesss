@@ -6,3 +6,13 @@
 .crow { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 25rpx; }
 .crow:last-child { border-bottom: 0; }
 .pill.na { background: #f1f4f9; color: #6b7686; }
+.dtoggle { color: #4f46e5; font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 999rpx; background: #eef1ff; }
+.dtoggle.on { background: #4f46e5; color: #fff; }
+.diffbox { background: #f8f9fd; border-radius: 12rpx; padding: 10rpx 18rpx; margin-top: 10rpx; }
+.drow { padding: 10rpx 0; border-bottom: 1rpx solid #eef1f7; font-size: 23rpx; }
+.drow:last-child { border-bottom: 0; }
+.pill.dst-fixed { background: #e8f8f1; color: #059669; }
+.pill.dst-regressed { background: #feecec; color: #dc2626; }
+.pill.dst-changed { background: #eef1ff; color: #4f46e5; }
+.pill.dst-both_failed { background: #f1f4f9; color: #6b7686; }
+.pill.dst-added, .pill.dst-removed { background: #fef7e6; color: #b45309; }

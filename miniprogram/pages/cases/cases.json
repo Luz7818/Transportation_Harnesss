@@ -1,1 +1,1 @@
-{ "navigationBarTitleText": "Case 库" }
+{ "navigationBarTitleText": "Case 库", "enablePullDownRefresh": true, "backgroundTextStyle": "dark" }

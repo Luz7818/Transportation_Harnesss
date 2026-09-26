@@ -1,0 +1,6 @@
+.chk { padding: 14rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 26rpx; }
+.chk:last-child { border-bottom: 0; }
+.pill.type { background: #eef1ff; color: #4f46e5; }
+.hint { background: #eef1ff; border: 1rpx solid #dfe4ff; color: #4338ca; border-radius: 14rpx;
+        padding: 14rpx 20rpx; margin-top: 14rpx; font-size: 24rpx; line-height: 1.6; }
+.btn.danger { background: linear-gradient(90deg, #dc2626, #ef4444); }

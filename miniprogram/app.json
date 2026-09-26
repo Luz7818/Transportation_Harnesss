@@ -3,7 +3,11 @@
     "pages/dashboard/dashboard",
     "pages/compare/compare",
     "pages/analyze/analyze",
-    "pages/cases/cases"
+    "pages/cases/cases",
+    "pages/report/report",
+    "pages/evolution/evolution",
+    "pages/case-detail/case-detail",
+    "pages/drafts/drafts"
   ],
   "window": {
     "navigationBarBackgroundColor": "#1c2537",

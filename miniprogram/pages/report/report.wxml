@@ -1,0 +1,35 @@
+<view class="card" wx:if="{{loading}}"><text class="muted">加载中…</text></view>
+<view class="card" wx:if="{{!loading && !rep}}"><text class="muted">报告不存在或加载失败({{id}})</text></view>
+
+<block wx:if="{{rep}}">
+  <view class="card">
+    <view class="row spread">
+      <view class="card-title">{{rep.version}} · {{rep.evalset_id}}</view>
+      <text class="pill {{rep.passed_count === rep.total ? 'pass' : 'fail'}}">{{rep.passed_count === rep.total ? "✓ 全部通过" : "存在失败"}}</text>
+    </view>
+    <view style="font-size:64rpx;font-weight:800;color:#4f46e5">{{rep.accText}}</view>
+    <view class="muted">{{rep.passed_count}}/{{rep.total}} 条通过 · 耗时 {{rep.durationText}} · {{rep.timestamp}}</view>
+    <view class="muted" style="margin-top:10rpx" wx:if="{{rep.changes.length}}">版本优化:{{rep.changes[0]}}{{rep.changes.length > 1 ? " 等" : ""}}</view>
+  </view>
+
+  <view class="card" wx:if="{{labelStats.length}}">
+    <view class="card-title">🏷 分标签通过率</view>
+    <view class="row wrap">
+      <view class="lchip {{item.cls}}" wx:for="{{labelStats}}" wx:key="label">{{item.label}} {{item.passed}}/{{item.total}} · {{item.rateText}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">📋 逐 Case 结果({{results.length}})</view>
+    <view class="ritem" wx:for="{{results}}" wx:key="case_id">
+      <view class="row spread">
+        <text>{{item.case_id}} · {{item.label}}</text>
+        <view class="row">
+          <text class="muted">{{item.scoreText}}</text>
+          <text class="pill {{item.passed ? 'pass' : 'fail'}}">{{item.passed ? "PASS" : "FAIL"}}</text>
+        </view>
+      </view>
+      <view class="muted">{{item.title}}</view>
+    </view>
+  </view>
+</block>

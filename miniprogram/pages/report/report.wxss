@@ -1,0 +1,7 @@
+.lchip { border-radius: 999rpx; padding: 6rpx 20rpx; font-size: 22rpx; }
+.lchip.good { background: #e8f8f1; color: #059669; }
+.lchip.mid { background: #fef7e6; color: #b45309; }
+.lchip.bad { background: #feecec; color: #dc2626; }
+.wrap { flex-wrap: wrap; }
+.ritem { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 25rpx; }
+.ritem:last-child { border-bottom: 0; }

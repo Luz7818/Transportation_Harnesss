@@ -1,45 +1,81 @@
 <view class="card" wx:if="{{!loaded}}"><text class="muted">加载中…</text></view>
 
-<view class="card">
-  <view class="row spread">
+<block wx:if="{{loaded}}">
+  <view class="card">
+    <view class="row spread">
+      <view class="row">
+        <view class="dot {{offline || (health && health.status !== 'ok') ? 'bad' : 'ok'}}"></view>
+        <view>
+          <view>{{offline ? "无法连接服务器" : "服务在线 · v" + (health ? health.app_version : "…")}}</view>
+          <view class="muted" wx:if="{{health && !offline}}">case {{health.case_count}} · 评测集 {{health.evalset_count}} · 报告 {{health.report_count}}</view>
+        </view>
+      </view>
+      <view class="chip {{llm && llm.configured ? '' : 'dim'}}" bindtap="goDrafts">🤖 {{llm ? (llm.configured ? llm.model : "LLM 离线 Mock") : "…"}}</view>
+    </view>
+  </view>
+
+  <view class="card">
     <view class="card-title">⚡ 一键自进化</view>
-    <button class="btn" size="mini" disabled="{{evolving}}" bindtap="runEvolve">▶ 运行</button>
-  </view>
-  <view class="muted">基线 → 最多 2 轮迭代 → 验证「提升且无回归」→ 归档报告与进化记录。</view>
-</view>
-
-<view class="card" wx:for="{{versions}}" wx:key="version">
-  <view class="row spread">
-    <view class="card-title">{{item.version}} · {{item.name}}</view>
-    <button class="btn" size="mini" disabled="{{loading}}" data-version="{{item.version}}" bindtap="runEval">运行评测</button>
-  </view>
-  <view style="font-size:56rpx;font-weight:800;color:#4f46e5">{{item.accText}}</view>
-  <view class="muted" wx:if="{{item.latest}}">{{item.latest.passed_count}}/{{item.latest.total}} 条通过 · {{item.latest.evalset_id}}</view>
-  <view class="bar-track"><view class="bar-fill" style="width:{{item.barWidth}}%"></view></view>
-  <view class="muted" style="margin-top:12rpx" wx:if="{{item.changes.length}}">优化:{{item.changes[0]}}{{item.changes.length > 1 ? " 等" : ""}}</view>
-</view>
-
-<view class="card">
-  <view class="card-title">🧬 进化时间线</view>
-  <view wx:if="{{!evolutions.length}}" class="muted">暂无进化记录,点上方「运行」留下第一笔</view>
-  <view class="evo" wx:for="{{evolutions}}" wx:key="evolution_id">
-    <view class="row spread">
-      <text>{{item.timestamp}}</text>
-      <text class="pill pass" wx:if="{{item.allPass}}">✓ 全部通过</text>
-      <text class="pill fail" wx:else>⏹ {{item.stop_reason}}</text>
+    <view class="muted">评测集 → 基线 → 逐版本验证「提升且无回归」,收益低于 5% 即停,最多 2 轮。</view>
+    <picker mode="selector" range="{{evalsets}}" range-key="evalset_id" bindchange="onEvalset">
+      <view class="picker">评测集:{{evalsets[evalsetIdx] ? evalsets[evalsetIdx].evalset_id + "(" + evalsets[evalsetIdx].case_count + "条)" : "…"}}</view>
+    </picker>
+    <view class="row" style="margin-top:12rpx">
+      <picker style="flex:1" mode="selector" range="{{versions}}" range-key="version" bindchange="onBaseline">
+        <view class="picker">基线:{{versions[baselineIdx] ? versions[baselineIdx].version : "…"}}(增量验证从基线之后开始)</view>
+      </picker>
+      <button class="btn" size="mini" disabled="{{evolving}}" bindtap="runEvolve">▶ 运行</button>
     </view>
-    <view class="muted">{{item.traj}}(最佳 {{item.best.version}} {{item.best.passed_count}}/{{item.best.total}})</view>
   </view>
-</view>
 
-<view class="card">
-  <view class="card-title">🗂 评测报告归档</view>
-  <view wx:if="{{!reports.length}}" class="muted">暂无报告,点上方「运行评测」生成</view>
-  <view class="rep" wx:for="{{reports}}" wx:key="report_id">
+  <view class="card" wx:for="{{versions}}" wx:key="version">
     <view class="row spread">
-      <text>{{item.report_id}}</text>
-      <text class="muted">{{item.version}} · {{item.passed_count}}/{{item.total}}</text>
+      <view class="card-title">{{item.version}} · {{item.name}}</view>
+      <button class="btn" size="mini" disabled="{{loading}}" data-version="{{item.version}}" bindtap="runEval">运行评测</button>
     </view>
-    <view class="muted">{{item.evalset_id}} · {{item.timestamp}}</view>
+    <view style="font-size:56rpx;font-weight:800;color:#4f46e5">{{item.accText}}</view>
+    <view class="muted" wx:if="{{item.latest}}">{{item.latest.passed_count}}/{{item.latest.total}} 条通过 · {{item.latest.evalset_id}}</view>
+    <view class="bar-track"><view class="bar-fill" style="width:{{item.barWidth}}%"></view></view>
+    <view class="muted" style="margin-top:12rpx" wx:if="{{item.changes.length}}">优化:{{item.changes[0]}}{{item.changes.length > 1 ? " 等" : ""}}</view>
   </view>
-</view>
+
+  <view class="card">
+    <view class="card-title">🧬 进化时间线</view>
+    <view wx:if="{{!evolutions.length}}" class="muted">暂无进化记录,点上方「运行」留下第一笔</view>
+    <view class="evo" wx:for="{{evolutions}}" wx:key="evolution_id" data-id="{{item.evolution_id}}" bindtap="goEvolution">
+      <view class="row spread">
+        <text>{{item.timestamp}}</text>
+        <text class="pill {{item.allPass ? 'pass' : 'fail'}}">{{item.allPass ? "✓ 全部通过" : "⏹ " + item.stop_reason}}</text>
+      </view>
+      <view class="muted">{{item.traj}}(最佳 {{item.best.version}} {{item.best.passed_count}}/{{item.best.total}})</view>
+      <view class="muted linklike">点击查看逐轮明细 ›</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">🗂 评测报告归档</view>
+    <view wx:if="{{!reports.length}}" class="muted">暂无报告,点上方「运行评测」生成</view>
+    <view class="rep" wx:for="{{reports}}" wx:key="report_id" data-id="{{item.report_id}}" bindtap="goReport">
+      <view class="row spread">
+        <text>{{item.report_id}}</text>
+        <text class="muted">{{item.version}} · {{item.accText}}</text>
+      </view>
+      <view class="muted">{{item.evalset_id}} · {{item.timestamp}} · 点击查看详情 ›</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="row spread">
+      <view class="card-title">📣 最近动态</view>
+      <view class="muted linklike" bindtap="goDrafts">AI 助手 ›</view>
+    </view>
+    <view wx:if="{{!activity.length}}" class="muted">暂无动态</view>
+    <view class="act" wx:for="{{activity}}" wx:key="key" data-kind="{{item.kind}}" data-ref="{{item.ref}}" bindtap="onActivityTap">
+      <view class="row spread">
+        <text>{{item.icon}} {{item.title}}</text>
+        <text class="pill tag">{{item.tag}}</text>
+      </view>
+      <view class="muted">{{item.detail}} · {{item.ts}}</view>
+    </view>
+  </view>
+</block>

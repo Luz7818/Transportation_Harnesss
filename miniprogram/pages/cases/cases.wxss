@@ -2,3 +2,14 @@
 .picker { background: #fff; border: 1rpx solid #e7ebf3; border-radius: 14rpx; padding: 16rpx 20rpx; margin-top: 8rpx; }
 .cse { padding: 12rpx 0; border-bottom: 1rpx solid #f0f3f9; font-size: 26rpx; }
 .cse:last-child { border-bottom: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 12rpx; margin: 6rpx 0 14rpx; }
+.fchip { background: #f1f4f9; color: #6b7686; border-radius: 999rpx; padding: 6rpx 22rpx; font-size: 23rpx; }
+.fchip.on { background: #4f46e5; color: #fff; }
+.linklike { color: #4f46e5; }
+.circle { width: 30rpx; height: 30rpx; border-radius: 50%; border: 2rpx solid #cbd2e0; margin-right: 4rpx; }
+.circle.on { background: #4f46e5; border-color: #4f46e5; }
+.cse.sel { border-radius: 12rpx; }
+.cse.picked { background: #eef1ff; }
+.batchbar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; padding: 18rpx 28rpx;
+            box-shadow: 0 -4rpx 16rpx rgba(16,24,40,.08); display: flex; justify-content: space-between; align-items: center; z-index: 9; }
+.btn.danger { background: linear-gradient(90deg, #dc2626, #ef4444); }
