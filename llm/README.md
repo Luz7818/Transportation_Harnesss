@@ -17,7 +17,7 @@ LLM 只接在闭环的两个薄弱环节上：**把模糊反馈起草成结构�
 | `runtime.py` | 模型访问层：`load_config()` 读环境变量、`LLMRuntime.complete_json()`（stdlib `urllib` 直发 OpenAI 兼容 `/chat/completions`，强制 `response_format=json_object`，超时 30 s、瞬时错误重试 1 次、缓存与审计）、`MockLLMRuntime`、进程级单例 `get_runtime()` / `reset_runtime()` / `status()` | `LLM_BASE_URL` 或 `LLM_API_KEY` 缺任何一个就返回 `None` 配置 → 用 Mock；`LLM_EXTRA_BODY` 必须是 JSON 对象，非法立即抛 `LLMError`（失败可见） |
 | `judge.py` | `LLMJudge`：`conclusion_quality` 检查按细则（覆盖性 40% / 可执行性 40% / 简洁性 20%）打 0~1 分，`>= spec.min_score`（默认 0.7）才算通过 | 任何异常都返回「未通过 + 原因写进明细」，绝不抛出炸掉整轮评测；分数与理由随 `CheckResult` 进报告，可复核 |
 | `workflows.py` | 两条工作流的编排与治理：`draft_replaycase()`（反馈原文 + 数据集事实 + v2 实际判定 → 起草 → 校验 → 存 `drafts/`）、`diagnose_failures()`（分析者 → 评审者 → `case_id` 防幻觉过滤） | 三段系统提示词（`DRAFT_SYSTEM`/`ANALYZE_SYSTEM`/`REVIEW_SYSTEM`）在这里；草稿的期望等级不在六档枚举内直接 `ValueError`（非法输出不落盘）；`complaint` 长度须在 5~500 字符 |
-| `store.py` | 三样持久化：响应缓存 `llm_cache/<sha>.json`、审计日志 `llm_runs.jsonl`（追加写）、草稿 `drafts/draft-NNNN.json` | 缓存键 = `sha256(模型|用途|system|user)` 前 32 位 → 同输入同输出；草稿 ID 取当前最大序号 +1；三个位置都是运行期产物且已 gitignore |
+| `store.py` | 三样持久化：响应缓存 `llm_cache/<sha>.json`、审计日志 `llm_runs.jsonl`（追加写）、草稿 `drafts/draft-NNNN.json` | 缓存键 = `sha256(模型\|用途\|system\|user)` 前 32 位 → 同输入同输出；草稿 ID 取当前最大序号 +1；三个位置都是运行期产物且已 gitignore |
 | `mocks.py` | 离线确定性输出：按 `purpose`（`draft`/`judge`/`diagnose-analyze`/`diagnose-review`）从提示词文本里推导字段（关键词、`V/C=0.95` 这类数值、失败标签→根因/建议映射表） | 职责边界：保证**编排可演示可测试**，不追求与真实模型等价的语义质量 |
 | `__init__.py` | 包 docstring，指向 `docs/LLM.md` | — |
 

@@ -22,6 +22,22 @@
 | `static/manifest.webmanifest` | PWA 清单：`start_url`/`scope` 为 `/`、`display: standalone`、4 个图标、2 个快捷方式（`/` 与 `/help`） | 可安装性字段由 `tests/test_pwa.py` 断言 |
 | `static/assets/` | 图标四件套（`icon.svg` 母版 + `icon-192/512.png` + `icon-maskable-512.png` + `apple-touch-icon-180.png`）、`logo-lockup.svg`、`banner.svg`、深浅纹理与背景 SVG | PNG 全套与两个 lockup/banner 由 `python scripts/generate_pwa_icons.py` 生成，不要手改 |
 
+## 子目录
+
+| 子目录 | 负责 |
+| --- | --- |
+| `static/` | 零构建前端的根：4 个入口文件（`index.html` 2899 行、`help.html` 935 行、`sw.js` 106 行、`manifest.webmanifest` 35 行）加 `assets/` 的 11 个图标与背景（4 PNG + 7 SVG），共 15 个文件 |
+
+本目录唯一的二级目录（`__pycache__/` 已 gitignore）。规模核对（在仓库根执行：
+`python -X utf8 -c "import glob;print(len(glob.glob('webapp/static/*')),len(glob.glob('webapp/static/assets/*')))"` → `5 11`）。
+它由 `app.py:107` 挂到 `/static`，另外三个路径**不按这个前缀**提供：`GET /` → `index.html`、
+`GET /help` → `help.html`、`GET /sw.js` → `sw.js`（后一条是刻意的，见「别动」第 1 条）。
+逐文件职责见上面的文件清单，页签与端点的对应关系见「前端 ↔ 后端对应」。
+
+`assets/` 里 11 个文件有 10 个被页面或清单引用，只有 `logo-lockup.svg` 没有任何引用（核对，在仓库根执行：
+`grep -roh "/static/assets/[a-zA-Z0-9._-]*" webapp/static/index.html webapp/static/help.html webapp/static/manifest.webmanifest | sort -u`）——
+但它是 `generate_pwa_icons.py` 每次都会重写的入库产物，手删只会在下次运行时冒回来。
+
 ## 后端：路由分组
 
 | 组 | 端点 |

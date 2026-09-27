@@ -20,6 +20,21 @@
 | `data/empty.json` | `segments: []`（上游管道故障） | v0 在这里抛 `ZeroDivisionError` |
 | `__init__.py` | 一行 docstring | 包标记 |
 
+## 子目录
+
+| 子目录 | 负责 |
+| --- | --- |
+| `data/` | 6 个情景数据集，文件名就是数据集名（`base` `rain_peak` `incident` `evening_peak` `missing_volume` `empty`）；「加一个场景」= 加一个这样的 JSON，不改代码 |
+
+本目录只有这一个二级目录（`__pycache__/` 是本地字节码，`.gitignore` 已挡）。逐文件的路段数（复核，在仓库根执行：
+`python -X utf8 -c "import glob,os,json;print({os.path.basename(p)[:-5]:len(json.load(open(p,encoding='utf-8'))['segments']) for p in sorted(glob.glob('pipeline/data/*.json'))})"`）
+→ `{'base': 10, 'empty': 0, 'evening_peak': 10, 'incident': 10, 'missing_volume': 11, 'rain_peak': 10}`。
+
+读它的只有 `harness/storage.py` 的 `DATA_DIR`（`load_dataset()` 按名取文件、`list_datasets()` 遍历 glob），
+`webapp/app.py:330` 的「未知数据集」报错也用它列可选项；**仓库里没有任何代码写这个目录**——它是手工维护的资产
+（复核，在仓库根执行：`grep -rn "DATA_DIR" --include=*.py . | grep -v __pycache__` → 4 行，全是读）。
+`python scripts/backup.py` 会把它与 `cases/`、`evalsets/`、`reports/` 一起打包。字段与口径见下一节。
+
 ## 数据集格式
 
 顶层字段：`dataset_id`、`description`、`captured_at`、`segments`，可选 `scenario`

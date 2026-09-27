@@ -13,7 +13,7 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 
 | 项 | 值 | 复核命令 |
 | --- | --- | --- |
-| 测试 | `190 passed`（本机耗时 39.92 s，含真起 uvicorn 的 SDK 用例） | `python -m pytest` |
+| 测试 | `190 passed`（本机实测 40–55 s 之间浮动，含真起 uvicorn 的 SDK 用例；耗时受机器负载影响，别当判据） | `python -m pytest` |
 | 测试分布 | 14 个文件共 190 例，最大 `test_settings_api.py` 37 例、`test_webapp.py` 34 例、`test_llm.py` 27 例 | `python -m pytest --collect-only -q` |
 | 静态检查 | `All checks passed!`，退出码 0 | `ruff check .` |
 | 端到端校验 | `VERIFY PASS`，退出码 0；雨天评测集同样 PASS | `python scripts/verify.py` |
@@ -22,7 +22,7 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 | SDK 面 | 30 个公开方法（含 `close`），其中 29 个对应 API 操作 —— `/api/settings` 的 GET/PUT 刻意不接 | `python -c "import ast;print(len([n for n in ast.walk(ast.parse(open('sdk/harness_client/client.py',encoding='utf-8').read())) if isinstance(n,ast.FunctionDef) and not n.name.startswith('_')]))"` |
 | 评测资产 | 16 条 replaycase（8 个标签目录，2 个空目录）、2 个评测集（13 + 3 条）、6 个数据集、`reports/` 19 个归档文件 | `python -c "import glob;print(len(glob.glob('cases/*/*.json')),len(glob.glob('evalsets/*.json')),len(glob.glob('pipeline/data/*.json')),len(glob.glob('reports/*')))"` |
 | 得分轨迹 | evalset_v1：v0 1/13 → v1 11/13 → v2 13/13；evalset_scenario_rain：0/3 → 2/3 → 3/3 | `python scripts/verify.py` |
-| CI | 最近一次 `CI` 运行 `completed success`（HEAD `63f2690`，复核于 2026-09-27），两条矩阵 job：`test (3.11)`、`test (3.12)`；此前 5/5 全红已由「pytest 缺 `pythonpath`」与「`Pillow` 未声明」两个修复解决 | 本机没有 `gh`，但 Actions 接口对**公开仓免认证**：`python -c "import json,urllib.request as u;r=json.load(u.urlopen('https://api.github.com/repos/Luz7818/Transportation_Harnesss/actions/runs?per_page=1'))['workflow_runs'][0];print(r['head_commit']['id'][:7],r['status'],r['conclusion'])"`；步骤清单见 `.github/workflows/ci.yml` |
+| CI | 两条矩阵 job：`test (3.11)`、`test (3.12)`；此前 5/5 全红已由「pytest 缺 `pythonpath`」与「`Pillow` 未声明」两个修复解决。**这里不写"最近一次是哪个提交"**——分支每推一次它就变，写进文档同一次提交里就作废了。当前分支 HEAD 的徽章为 `passing`（复核见右）。本机没有 `gh`，但徽章与 Actions 接口对**公开仓都免认证**；要提交号与耗时再用 `/actions/runs`（匿名限 60 次/小时/IP，别拿它轮询） | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/Transportation_Harnesss/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`；步骤清单见 `.github/workflows/ci.yml` |
 | CI 步骤 | `ruff check .` → `pytest` → `python scripts/verify.py`，另装 `pip install -r requirements.txt -r requirements-dev.txt` 与 `pip install ./sdk` | `cat .github/workflows/ci.yml` |
 | 版本 | 应用与 SDK 均为 `1.5.0`（三处同步：`pyproject.toml`、`sdk/pyproject.toml`、`FastAPI(..., version=...)`） | `python -c "import webapp.app as m;print(m.app.version)"` |
 

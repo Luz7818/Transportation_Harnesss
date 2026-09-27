@@ -18,6 +18,20 @@
 | `export_openapi.py` | 离线导出 FastAPI 的 OpenAPI 3.1 规范 | `docs/openapi.json`（默认，可用 `--out` 改写别处） | 导出前把 `AUTH_MODE=login`、`AUTH_TOKEN=export-placeholder` 固定下来，保证 schema 稳定 |
 | `generate_pwa_icons.py` | 从 `webapp/static/assets/icon.svg` 栅格化 PWA 图标四件套，并内联组合 `logo-lockup.svg`、`banner.svg` | `webapp/static/assets/` 下 4 个 PNG + 2 个 SVG（都入库） | 需要 `resvg-py`（不在 `requirements*.txt` 里，属可选工具链）；缺它直接退出并给安装提示 |
 
+## 和谁打交道
+
+- **上游**：`harness/`（`storage`、`ReplayRunner`）与 `pipeline/versions.py` 的 `PIPELINES`——6 个脚本先把仓库根插进
+  `sys.path` 再 import 项目包；`export_openapi.py` 只 import `webapp.app` 取 schema，不起服务。
+  核对（在仓库根执行）：`grep -c "sys.path.insert" scripts/*.py` → 只有 `generate_pwa_icons.py` 是 `0`，其余 6 个都是 `1`。
+- **下游**（被这些脚本写到）：`cases/<标签>/` 与 `evalsets/*.json`（两个 seed 脚本）、`reports/report_<v>_<时间>.json`
+  与 `.md`（`run_eval.py`）、`docs/openapi.json`（`export_openapi.py`）、`webapp/static/assets/` 的 4 PNG + 2 SVG
+  （`generate_pwa_icons.py`）、仓库根 `backups/`（`backup.py`，已 gitignore）。`verify.py` 只读，一个文件都不写。
+- **改这里之后要跑**：CI 只跑 `python scripts/verify.py` 这一步（复核，在仓库根执行：
+  `grep -n "scripts/verify.py" .github/workflows/ci.yml`），先在仓库根跑它，看到 `VERIFY PASS` 且退出码 0 才算过。
+  按脚本再补一条：改 `export_openapi.py` → `python scripts/export_openapi.py` 后核对 `no_drift`（命令在
+  [AGENTS.md](../AGENTS.md) 的「当前真实状态」）；改 `generate_pwa_icons.py` → `python -m pytest tests/test_pwa.py -q`。
+  本目录不被任何测试引用（复核，在仓库根执行：`grep -rn "scripts/" tests/*.py` → 无输出）。
+
 ## 命令与真实输出
 
 ```bash
@@ -110,7 +124,7 @@ webapp\static\assets\apple-touch-icon-180.png  (21994 bytes)
 | 只在脚本里调一次评测/对比 | SDK：`harness-client eval --version v2` 或 `client.run_eval(...)`（[sdk/README.md](../sdk/README.md)） |
 | 起服务给浏览器/小程序用 | `python webapp/app.py`（[webapp/README.md](../webapp/README.md)） |
 
-## 注意
+## 别动
 
 - `verify.py` 的头注释说「新沉淀、尚未被 v2 覆盖的 case 不判失败，输出 WARN」——
   这只对第 [4] 组成立。第 [2] 组的单调性是对**全量通过集**做的：如果新用例恰好被 v0 判对、
@@ -124,3 +138,17 @@ webapp\static\assets\apple-touch-icon-180.png  (21994 bytes)
 - `export_openapi.py` 会覆盖 `docs/openapi.json`：先确认端点改动是有意的再跑，
   否则用 `--out` 导到别处做对比。
 - 不要给这些脚本加交互式提问：CI 与 cron 都直跑，任何等待输入都会挂住流水线。
+- `verify.py` 顶部那四个常量是 CI 第三步的判据本体：`SEED_CASE_IDS`（`rc-0001..0013`）、
+  `SEED_V0_PASSED = {"rc-0013"}`、`SEED_V1_FAILED = {"rc-0009", "rc-0010"}`、`EXPECT_V2_GLOBAL_INDEX = 0.7944`（`TOL = 0.005`）。
+  为了让某次改动变绿去动它们等于拆门禁；要动得同时复核 `cases/` 与 `pipeline/data/`（见 [AGENTS.md](../AGENTS.md) 关键约定 10）。
+  核对（在仓库根执行）：`grep -n "^SEED_\|^EXPECT_V2\|^TOL" scripts/verify.py` → 5 行。
+- 六个脚本开头那行 `sys.path.insert(0, 仓库根)` 不能删：`python scripts/x.py` 只把 `scripts/` 放进 `sys.path[0]`，
+  删掉它连在仓库根跑都直接 `ModuleNotFoundError: No module named 'harness'`；`pyproject.toml` 给 `scripts/*.py`
+  开的 `E402` 豁免正是为这行「先插路径再 import 项目包」准备的。
+- `generate_pwa_icons.py` 覆盖的是 6 个**已入库**文件（`webapp/static/assets/` 下 4 个 PNG 加 `logo-lockup.svg`、`banner.svg`）：
+  没换 `icon.svg` 就别重跑，那只会产出字节不同、内容等价的假 diff（核对：`grep -n "write_bytes\|write_text" scripts/generate_pwa_icons.py`）。
+- `export_openapi.py:19` 的注释说第 20–21 行两环境变量是「确保导出的 schema 包含 X-API-Token 安全方案」，实测不成立：
+  在本仓库根分别用 `AUTH_MODE=open` 与 `AUTH_MODE=login` 跑 `--out` 到临时目录，两份 JSON 逐键相同，且 `docs/openapi.json`
+  里只有 `components.schemas`、没有 `components.securitySchemes`。别照那句注释去找一个不存在的字段。
+- `backup.py` 写的 `backups/` 已被 `.gitignore` 的 `/backups/` 挡住（核对，在仓库根执行：`grep -n "/backups/" .gitignore`）：
+  每跑一次多一个 zip，它不是交付物，别为「产物少了」而提交它，也别把它当评测资产读。

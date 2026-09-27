@@ -43,6 +43,55 @@ python -m pytest --collect-only -q             # 只看分布
 | `fixtures/evalsets/*.json` | 与快照配套的清单（`evalset_v1` 13 条、`evalset_scenario_rain` 3 条） | 快照多出的 `rc-0014` **不在**清单里，用于断言「沉淀后编号递增且自动入集」 |
 | `test_*.py` | 上表 14 个测试文件 | 命名固定 `test_<模块>.py`，`testpaths = ["tests"]` |
 
+## 子目录
+
+| 子目录 | 负责 |
+| --- | --- |
+| `fixtures/` | 冻结的种子资产快照，共 19 个文件：`cases/` 下 8 个标签目录 / 17 个用例 JSON，`evalsets/` 下 2 个清单（`evalset_v1` 13 条、`evalset_scenario_rain` 3 条）。由 `conftest.py` 的 `seed_asset_dirs()` 拷进 `tmp_path` 后 monkeypatch 给 `storage`，是测试唯一的用例来源 |
+
+规模核对（在仓库根执行：
+`python -X utf8 -c "import glob;print(len(glob.glob('tests/fixtures/cases/*/*.json')),len(glob.glob('tests/fixtures/cases/*/')),len(glob.glob('tests/fixtures/evalsets/*.json')))"`
+→ `17 8 2`）。快照与 `cases/` **故意不等**：多的那一条见「别动」第 1 条。
+`__pycache__/` 是本地产物、已被 `.gitignore` 挡住，不属快照。
+
+## 和谁打交道
+
+- **上游**：被测的五块——`harness/`、`pipeline/versions.py` + `pipeline/data/`、`llm/`、`webapp/`、
+  `sdk/harness_client`。评测资产只从 `fixtures/` 来，不从生产目录来（见「加测试时的三条惯例」第 1 条）。
+- **下游**：CI 矩阵里 Python 3.11 / 3.12 各跑一次 `pytest`（在 `ruff check .` 之后、`python scripts/verify.py` 之前，
+  复核：`cat .github/workflows/ci.yml`）、[AGENTS.md](../AGENTS.md) 的「当前真实状态」表（测试数与分布以那里为单一口径），
+  以及改动者本人的回归判据。
+- **改这里之后要跑**（都在仓库根执行）：`python -m pytest` 末行 `190 passed`。总数复核用
+  `python -m pytest -o addopts="" --collect-only -q` → 末行 `190 tests collected`；`-o addopts=""` 不能省，
+  否则 `pyproject.toml` 里那条 `-q` 会叠成 `-qq`，只剩每文件计数与一行圆点、看不到统计行。
+
+  ```bash
+  python -m pytest tests/test_webapp.py -q                          # 只动一个文件
+  python -m pytest tests/test_settings_api.py tests/test_sdk.py -q  # 验 SDK(本机退出码 0)
+  python -m ruff check .                                            # 静态检查同样覆盖本目录
+  ```
+
+  单独 `python -m pytest tests/test_sdk.py -q` 会得到 1 error（`HarnessAuthError: [401] 用户名或密码错误`），见「已知限制」。
+
+## 别动
+
+- **`fixtures/cases/结论缺失/rc-0014.json` 是快照唯一比生产库多出来的一条**（核对，在仓库根执行：
+  `python -X utf8 -c "import glob,os;f={os.path.basename(p) for p in glob.glob('tests/fixtures/cases/*/*.json')};c={os.path.basename(p) for p in glob.glob('cases/*/*.json')};print(sorted(f-c),len(f),len(c))"` → `['rc-0014.json'] 17 16`）。
+  两个 fixture 清单都不引用它（`grep -c rc-0014 tests/fixtures/evalsets/*.json` → 都是 `0`），而沉淀取「当前最大 `rc-` 序号 +1」
+  （`webapp/app.py:485-488`）：有它，测试里沉淀出的是 `rc-0015`；删掉就退化成 `rc-0014`。别为「对齐」拷进 `cases/`，也别当冗余删。
+- **不要把 `fixtures/` 当 `cases/` 的镜像去同步**。加一条 fixture 用例会同时改变 `verify.py` 的 `SEED_CASE_IDS`
+  口径与两个清单的条数，那是跨目录契约（见 [scripts/README.md](../scripts/README.md) 的「别动」）。
+- **`pyproject.toml:54` 的 `pythonpath = ["."]` 不在本目录，但删了它本目录全灭**：裸 `pytest` 不进当前目录，
+  收集期一律 `ModuleNotFoundError: No module named 'harness'`、退出码 2（核对：`grep -n pythonpath pyproject.toml`）。
+  别改用 `conftest.py` 里 `sys.path.insert` 单点兜底——`conftest.py` 自己也要先被导入。
+- **两个 autouse 夹具不能删**（`tests/conftest.py:42` 的 `_reset_login_guard`、`:50` 的 `_hermetic_dotenv`，
+  核对：`grep -n "autouse=True" tests/conftest.py` → 2 行）。前者删了会让用例之间互相锁定登录
+  （5 次失败锁 10 分钟），表现是随机出现的 429；后者删了 `/api/settings` 的测试会写到你本机真实 `.env`。
+- **`conftest.py` 里 `AUTH_MODE` / `AUTH_TOKEN` / `ADMIN_USER` / `ADMIN_PASSWORD` 用的是硬赋值**（原因见上面「夹具」一节末）：
+  改成 `setdefault` 不报错，但本机 shell 残留的同名变量就能顶掉测试账号，真起 uvicorn 的那组用例会读到错凭据。
+- **`Pillow` 与已安装的 `harness_client` 是两条隐形前置**：`test_pwa.py` 靠 `requirements-dev.txt` 的 `Pillow>=10`，
+  `test_sdk.py` 靠 CI 里那一步 `pip install ./sdk`。胖环境（本机两个都装了）看不出来缺，别把它们当可选依赖。
+
 ## 夹具怎么保证不污染真实环境
 
 | 夹具 | 隔离了什么 |
@@ -71,4 +120,5 @@ python -m pytest --collect-only -q             # 只看分布
   `webapp/auth.json`）；原因与绕开办法写在 [AGENTS.md](../AGENTS.md) 的「已知坑」。
 - `tests/test_pwa.py` 需要 `Pillow`（在 `requirements-dev.txt`），`tests/test_sdk.py` 需要
   已 `pip install ./sdk`：两者都是「干净环境必须显式装、胖环境看不出缺」的依赖，CI 里已各占一步。
-- 全量在本机约 40 秒（`python -m pytest` 末尾的 `in 39.92s`），大头是 SDK 那个真起 uvicorn 的模块级夹具。
+- 全量在本机 40–50 秒（两次实测 `in 39.92s` 与 `in 49.64s`，复核：`python -m pytest` 末行；耗时随机器负载变，
+  别把它当断言），大头是 SDK 那个真起 uvicorn 的模块级夹具。

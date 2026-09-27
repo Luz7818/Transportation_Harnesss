@@ -31,6 +31,56 @@
 
 `preview_qr.png`、`preview_info.json` 若出现在本机，是预览产物且已 gitignore，不要提交。
 
+## 子目录
+
+| 子目录 | 负责 |
+| --- | --- |
+| `pages/` | 9 个页面目录（4 个 Tab + 5 个非 Tab），每个固定 4 个同名文件：`.js` 逻辑、`.wxml` 结构、`.wxss` 样式、`.json` 页面配置（管 `navigationBarTitleText`）。逐页职责见上面的文件清单 |
+| `utils/` | 只有 `api.js` 一个文件：`wx.request` 的唯一封装，页面不直接发请求 |
+
+规模与一致性（复核，在仓库根执行：`python -X utf8 -c "import glob;print(len(glob.glob('miniprogram/pages/*/')),len(glob.glob('miniprogram/pages/*/*')),len(open('miniprogram/utils/api.js',encoding='utf-8').readlines()))"`
+→ `9 36 200`）。`pages/` 下的 9 个目录名必须与 `app.json` 的 `pages` 数组一一对应，核对见「别动」第 2 条。
+
+## 和谁打交道
+
+- **上游**：`webapp/app.py` 的 `/api/*`。登录用 `POST /api/auth/login` 换会话令牌，其余页面各引用 1–9 个 `/api/` 路径
+  （逐页对应关系在上面的文件清单里，`login/` 是 `0` 因为路径写在 `utils/api.js`）；端点与字段口径以 `docs/openapi.json`、`docs/API.md` 为准。
+- **下游**：微信开发者工具与真机上的用户。本目录的代码不被仓库内任何 Python 模块 import，
+  也不在 `tests/` 与 CI 的覆盖范围内（复核，在仓库根执行：`grep -rn miniprogram tests/*.py .github/workflows/ci.yml` → 无输出）。
+- **改这里之后要跑**：Python 侧的门禁（`python -m ruff check .`、`python -m pytest`）碰不到本目录，
+  能自动核对的只有配置一致性与每页引用了几个端点（Git Bash，在仓库根执行；三条的预期分别是 `9 4`、`[] []`、每页 0–9）：
+
+  ```bash
+  python -X utf8 -c "import json;d=json.load(open('miniprogram/app.json',encoding='utf-8'));print(len(d['pages']),len(d['tabBar']['list']))"
+  python -X utf8 -c "import json,os;a={x.split('/')[1] for x in json.load(open('miniprogram/app.json',encoding='utf-8'))['pages']};d=set(os.listdir('miniprogram/pages'));print(sorted(a-d),sorted(d-a))"
+  for f in miniprogram/pages/*/; do echo "$f $(grep -oh '/api/[a-z/]*' "$f"*.js | sort -u | wc -l)"; done
+  ```
+
+  界面行为只能在微信开发者工具里导入 `miniprogram/` 人工回归：登录 → 逐个点开 4 个 Tab → 沉淀一条 case。
+- **改了后端契约**：这里要同步的通常是 `utils/api.js` 的错误分支与页面里的字段名；
+  同一次改动还要落到 `docs/API.md`、`webapp/static/help.html`、`sdk/`（约定见 [AGENTS.md](../AGENTS.md) 关键约定 4）。
+
+## 别动
+
+- **`config.js` 不入库但编译期硬依赖**：`utils/api.js:24` 直接 `require("../config.js")`，缺文件就编译报错。
+  克隆后第一步是复制 `config.example.js` 改名为 `config.js`。核对：`grep -n 'require("../config.js")' miniprogram/utils/api.js`。
+- **`pages/login/login.wxml` 三个 `<input>` 上的 `bindinput="onInput"`**（核对，在仓库根执行：
+  `grep -c 'bindinput="onInput"' miniprogram/pages/login/login.wxml` → `3`）：2026-09-27 三处全缺过，
+  打字永远进不了 `data`、点登录必提示「请填写用户名与口令」，登录整条链路不可用；它属 WXML 层，
+  ruff / pytest / CI 全都测不到。修复在提交 `63f2690`，别当成重复属性删掉。
+- **`app.json` 的 `pages` 与 `pages/` 目录必须互相齐平**：注册了没目录 → 编译失败；有目录没注册 → 页面打不开。
+  `.gitignore` 里 `/drafts/` 的前导斜杠就是为此——去掉斜杠会连带吞掉 `miniprogram/pages/drafts/` 那 4 个文件，
+  而 `app.json` 照样注册它（当前 4 个文件都在库里，核对：`git ls-files miniprogram/pages/drafts` → 4 行；
+  两边齐平的核对命令见上面「改这里之后要跑」，应输出 `[] []`）。
+- **四个本机存储键** `harness_base_url` / `harness_session_token` / `harness_session_expires_at` / `harness_return_to`
+  是登录态与「登录后回跳原页」的唯一载体（核对：`grep -n "harness_" miniprogram/utils/api.js` → 4 行常量）。
+  改名不报错，只会让已登录用户当场掉回登录页、登录后回不到原来那一页。
+- **`project.config.json` 的 `urlCheck: false`**：它让本机与局域网的 `http` 地址能在开发者工具里直接请求，
+  去掉就只能连备案过的 https 域名（核对：`grep -n urlCheck miniprogram/project.config.json`）。
+  同文件的 `appid` 是个人主体 `wx5455bfec9b610cd7`，换主体才动它。
+- **TabBar 的 4 项是纯文字**（`app.json` 的 `tabBar.list` 里没有 `iconPath`，这是合法配置）：
+  别只给其中几项加图标，要加就四套齐全，见上面「正式发布的要求」第 5 条。
+
 ---
 
 # 微信小程序端接入说明

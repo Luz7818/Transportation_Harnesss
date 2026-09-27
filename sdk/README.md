@@ -21,6 +21,37 @@
 | `dist/transportation_harness_sdk-1.5.0-py3-none-any.whl` / `.tar.gz` | 构建产物，按约定入库 | 改了包内容要重新构建再提交，别手改 |
 | `README.md` | 本文件 | — |
 
+## 子目录
+
+| 子目录 | 负责 |
+| --- | --- |
+| `harness_client/` | 包的主体，5 个 `.py`、共 515 行：`client.py`（唯一的 HTTP 出口）、`models.py`（5 个 dataclass）、`cli.py`（5 个子命令）、`errors.py`（2 个异常类）、`__init__.py`（re-export 与 `__version__`） |
+| `dist/` | 构建产物 2 个文件：`transportation_harness_sdk-1.5.0-py3-none-any.whl` 与 `.tar.gz`，**已入库**（核对，在仓库根执行：`git ls-files sdk/dist` → 2 行）。`.docsignore` 里那行 `dist/` 登记的是仓库根那个前端 zip，不是这里「可以不构建」的凭据 |
+
+规模核对（在仓库根执行：
+`python -X utf8 -c "import glob;print(len(glob.glob('sdk/harness_client/*.py')),sum(len(open(p,encoding='utf-8').readlines()) for p in glob.glob('sdk/harness_client/*.py')),len(glob.glob('sdk/dist/*')))"`
+→ `5 515 2`）。逐文件说明见上面的文件清单，`__pycache__/` 是本地字节码、不入库。
+
+## 和谁打交道
+
+- **上游**：`webapp/app.py` 的 `/api/*`，机器可读契约是 `docs/openapi.json`（由 `python scripts/export_openapi.py` 生成）。
+  本目录不 import 任何服务端模块，只按路径拼 HTTP（复核，在仓库根执行：
+  `grep -rn "^from harness\|^from webapp\|^from pipeline" sdk/harness_client/*.py` → 无输出）。
+- **下游**：`tests/test_sdk.py`（13 例，线程内真起 uvicorn 走「SDK → TCP → 鉴权中间件 → 端点 → 判分」全链路）；
+  装包后的 `harness-client` 命令；外部脚本与 CI——`.github/workflows/ci.yml` 有一步 `pip install ./sdk` 就是为它。
+- **改这里之后要跑**（都在仓库根执行，先重装才生效）：
+
+  ```bash
+  python -m pip install ./sdk
+  python -m pytest tests/test_settings_api.py tests/test_sdk.py -q
+  python -m pytest
+  ```
+
+  单独 `python -m pytest tests/test_sdk.py -q` 会得到 1 个 error（`[401] 用户名或密码错误`），
+  那是夹具读本机 `webapp/auth.json` 的已知坑，不是你改坏的；原因与绕法见 [AGENTS.md](../AGENTS.md) 的「已知坑」。
+- **改了端点或请求体字段**：同一次提交里 `python scripts/export_openapi.py` → `docs/API.md` →
+  `webapp/static/help.html` → 这里的 `client.py`（见 [AGENTS.md](../AGENTS.md) 关键约定 4），四处不许只改两处。
+
 ## 别动
 
 - 不要给 SDK 加 `/api/settings`：那枚机器令牌与小程序共用，服务器配置接口刻意不认它。
