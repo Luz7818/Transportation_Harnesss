@@ -6,7 +6,7 @@
 
 <view class="card">
   <view class="card-title">服务器地址</view>
-  <input class="ipt" data-field="baseUrl" value="{{baseUrl}}" placeholder="http://192.168.x.x:8765" />
+  <input class="ipt" data-field="baseUrl" value="{{baseUrl}}" bindinput="onInput" placeholder="http://192.168.x.x:8765" />
   <view class="muted" style="margin-top:10rpx">
     默认取 config.js 的 BASE_URL;在此填写会覆盖并保存到本机,便于在
     本机(127.0.0.1)/ 局域网(电脑 IP)/ 公网(域名)之间切换。
@@ -16,10 +16,10 @@
 <view class="card">
   <view class="card-title">账号口令</view>
   <view class="muted">用户名</view>
-  <input class="ipt" data-field="username" value="{{username}}" placeholder="管理员分配的用户名"
+  <input class="ipt" data-field="username" value="{{username}}" bindinput="onInput" placeholder="管理员分配的用户名"
          maxlength="32" confirm-type="next" />
   <view class="muted" style="margin-top:12rpx">口令</view>
-  <input class="ipt" data-field="password" value="{{password}}" password="{{true}}" placeholder="登录口令"
+  <input class="ipt" data-field="password" value="{{password}}" bindinput="onInput" password="{{true}}" placeholder="登录口令"
          maxlength="64" confirm-type="go" bindconfirm="submit" />
   <view class="err" wx:if="{{error}}">⚠️ {{error}}</view>
   <button class="btn" style="margin-top:24rpx" disabled="{{submitting}}" bindtap="submit">登录</button>
