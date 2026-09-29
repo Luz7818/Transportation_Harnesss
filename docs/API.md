@@ -200,7 +200,7 @@ Bearer 与 Cookie 两种会话凭据都能在这里换出用户名。
 ```jsonc
 {
   "status": "ok",
-  "app_version": "1.6.0",
+  "app_version": "2.0.0",
   "auth_mode": "login",
   "default_credentials": true,   // true = 初始口令未改:业务接口处于 403 门禁状态(见「鉴权方式」第 0 步)
   "versions": ["v0", "v1", "v2"],
@@ -247,7 +247,7 @@ case 沉淀、评测运行、自进化与 LLM 草稿聚合为倒序 feed,可选 
 ### GET /api/evalsets — 评测集清单列表
 
 ```jsonc
-[{"evalset_id": "evalset_v1", "description": "由 8 月底线上反馈沉淀的 13 条 replaycase 组成",
+[{"evalset_id": "evalset_v1", "description": "由 8 月底线上反馈沉淀的 13 条 replaycase 组成(后追加 rc-0014/rc-0015,现 15 条)",
   "created_at": "2026-08-31", "case_count": 13}]
 ```
 

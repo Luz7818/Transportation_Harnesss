@@ -69,9 +69,23 @@ def test_unknown_baseline_rejected(hermetic_storage):
 
 
 def test_tail_baseline_rejected(hermetic_storage):
-    """基线传最末登记版本(其后无待验证版本)→ 明确 ValueError,不再 IndexError。"""
+    """基线传最末登记版本(其后无待验证版本)→ 明确 ValueError,不再 IndexError。
+    v3 登记后最末版本随之前移(v2 → v3),用 PIPELINES 的实际末位,别写死。"""
     import pytest
+    from pipeline.versions import PIPELINES
 
+    tail = list(PIPELINES)[-1]
     with pytest.raises(ValueError) as excinfo:
-        run_evolution("evalset_v1", "v2")
+        run_evolution("evalset_v1", tail)
     assert "没有待验证" in str(excinfo.value)
+
+
+def test_forward_iteration_to_registered_v3(hermetic_storage):
+    """前向迭代留痕:v3 已真实登记,以 v2 为基线增量验证 —— 无需任何 monkeypatch。"""
+    summary = run_evolution("evalset_v1", "v2")
+    assert [r["version"] for r in summary["rounds"]] == ["v3"]
+    assert summary["baseline"]["version"] == "v2"
+    assert summary["best"]["version"] == "v3"
+    assert summary["best"]["accuracy"] == 1.0          # v3 通过夹具全部 13 条种子 case
+    assert all(not r["regressed"] for r in summary["rounds"])
+    assert summary["pending_versions"] == []

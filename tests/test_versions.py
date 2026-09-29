@@ -1,7 +1,7 @@
-"""pipeline.versions:三种版本管线的算法行为(分级公式/边界/健壮性)。"""
+"""pipeline.versions:各版本管线的算法行为(分级公式/边界/健壮性)。"""
 
 import pytest
-from pipeline.versions import analyze_v0, analyze_v1, analyze_v2
+from pipeline.versions import analyze_v0, analyze_v1, analyze_v2, analyze_v3
 
 
 def _seg(**kw):
@@ -86,3 +86,35 @@ class TestV2:
     def test_all_missing_volume_index_is_none(self):
         out = analyze_v2([_seg(volume=None)])
         assert out["global_congestion_index"] is None
+
+
+class TestV3:
+    """v3 排队回溢升级带:[0.70,0.8) × 速度比<0.50;其余行为与 v2 一致。"""
+
+    def test_escalation_band_widened(self):
+        # V/C=0.7647、速度比 0.48:v2 判「缓行」(不在其升级带),v3 升级为「拥堵」
+        seg = _seg(volume=2600, lane_count=2, capacity_per_lane=1700, speed=24, free_flow_speed=50)
+        assert analyze_v2([seg])["segments"][0]["classification"] == "缓行"
+        assert analyze_v3([seg])["segments"][0]["classification"] == "拥堵"
+
+    def test_no_escalation_when_speed_ratio_boundary(self):
+        # 同在升级带内,但速度比恰为 0.50(未低于)→ 维持「缓行」(对应 base S-06 的口径)
+        out = analyze_v3([_seg(volume=2808, speed=30)])  # V/C=0.78,速度比 0.5
+        assert out["segments"][0]["classification"] == "缓行"
+
+    def test_v2_band_is_subset_of_v3(self):
+        # v2 会升级的场景(0.78,速度比 0.25),v3 必然同样升级
+        seg = _seg(volume=2808, speed=15)
+        assert analyze_v3([seg])["segments"][0]["classification"] == "拥堵"
+
+    def test_parity_with_v2_outside_band(self):
+        # 升级带之外的典型场景与 v2 完全一致:严重拥堵/数据缺失/空数据集
+        assert (analyze_v3([_seg(volume=3960)])["segments"][0]["classification"]
+                == analyze_v2([_seg(volume=3960)])["segments"][0]["classification"] == "严重拥堵")
+        out = analyze_v3([_seg(volume=None)])
+        assert out["segments"][0]["classification"] == "数据缺失"
+        assert out["global_congestion_index"] is None
+        assert analyze_v3([])["congested_segments"] == []
+
+    def test_version_field(self):
+        assert analyze_v3([_seg()])["version"] == "v3"

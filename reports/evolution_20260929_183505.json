@@ -1,0 +1,51 @@
+{
+  "evolution_id": "evolution_20260929_183505",
+  "evalset_id": "evalset_v1",
+  "total_cases": 15,
+  "baseline": {
+    "version": "v2",
+    "accuracy": 0.8667,
+    "passed_count": 13,
+    "total": 15,
+    "failures_by_label": {
+      "边界处理": [
+        "rc-0014 晚高峰学府路(V/C 0.76)现场排队已回溢,应按「拥堵」预警"
+      ],
+      "结论缺失": [
+        "rc-0015 晚高峰长江路(V/C 0.72)排队已形成,应按「拥堵」预警且结论需可执行"
+      ]
+    }
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "version": "v3",
+      "version_name": "排队回溢升级带",
+      "changes": [
+        "升级判据扩展:V/C ∈ [0.70, 0.8) 且速度比 < 0.50 时升级为「拥堵」(v2 仅覆盖 [0.75,0.8) × <0.35,是 v3 升级带的子集)",
+        "依据:外业复核晚高峰学府路/长江路排队已回溢 —— 饱和度快照未及阈值,而地点车速已降至自由流一半;由新沉淀的 rc-0014/rc-0015 驱动的前向迭代"
+      ],
+      "accuracy": 1.0,
+      "passed_count": 15,
+      "total": 15,
+      "improvement": 0.13329999999999997,
+      "newly_passed": [
+        "rc-0014",
+        "rc-0015"
+      ],
+      "regressed": [],
+      "remaining_failures": {}
+    }
+  ],
+  "pending_versions": [],
+  "stop_reason": "评测集已全部通过",
+  "iterations_used": 1,
+  "best": {
+    "version": "v3",
+    "accuracy": 1.0,
+    "passed_count": 15,
+    "total": 15
+  },
+  "md_report": "reports\\report_evolution_20260929_183505.md",
+  "timestamp": "20260929_183505"
+}

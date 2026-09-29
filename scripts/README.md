@@ -68,7 +68,7 @@ python scripts/verify.py --evalset evalset_scenario_rain
 ```
 
 ```
-[1] 得分轨迹(evalset=evalset_v1,共 13 条 case)
+[1] 得分轨迹(evalset=evalset_v1,共 15 条 case)
   PASS  v0 得分 1/13
   PASS  v1 得分 11/13
   PASS  v2 得分 13/13

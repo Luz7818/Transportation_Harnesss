@@ -50,7 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     for name, help_text in (("health", "健康检查:版本、鉴权模式、资产数量"),
-                            ("versions", "列出管线版本(v0/v1/v2)与各轮优化内容"),
+                            ("versions", "列出管线版本与各轮优化内容"),
                             ("datasets", "列出情景数据集(常规/雨天/事故/晚高峰)")):
         sub.add_parser(name, help=help_text, parents=[_common_args(defaults=False)])
 

@@ -11,11 +11,11 @@
 
 | 文件 | `evalset_id` | 条数 | 覆盖 |
 | --- | --- | --- | --- |
-| `evalset_v1.json` | `evalset_v1` | 13 | 8 月底线上反馈沉淀的种子用例（`rc-0001..rc-0013`），8 个失败标签 |
+| `evalset_v1.json` | `evalset_v1` | 15 | 8 月底线上反馈沉淀的 13 条种子用例（`rc-0001..rc-0013`）+ rc-0014/rc-0015（晚高峰排队回溢外业复核），9 个失败标签 |
 | `evalset_scenario_rain.json` | `evalset_scenario_rain` | 3 | 雨天早高峰场景（`rsc-001..003`），数据集 `rain_peak` |
 
 （复核：`python -c "import glob,json;print({p: len(json.load(open(p, encoding='utf-8'))['case_ids']) for p in glob.glob('evalsets/*.json')})"`，
-Windows 下输出 `{'evalsets\\evalset_scenario_rain.json': 3, 'evalsets\\evalset_v1.json': 13}`）
+Windows 下输出 `{'evalsets\\evalset_scenario_rain.json': 3, 'evalsets\\evalset_v1.json': 15}`）
 
 ## 清单格式
 

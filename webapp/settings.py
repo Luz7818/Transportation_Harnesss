@@ -79,7 +79,7 @@ SETTING_SPECS: tuple[SettingSpec, ...] = (
     SettingSpec("LLM_API_KEY", "模型密钥;留空则整条 LLM 链路自动降级为离线确定性 Mock",
                 secret=True, example="sk-…"),
     SettingSpec("LLM_MODEL", "模型名", default="gpt-4o-mini", example="deepseek-chat"),
-    SettingSpec("LLM_EXTRA_BODY", "可选 JSON 对象,原样并入请求体(如关闭思考模式)",
+    SettingSpec("LLM_EXTRA_BODY", "可选 JSON 对象,原样并入请求体(如关闭思考模式;response_format 置 null 可关闭 JSON 引导解码)",
                 example='{"enable_thinking": false}'),
 )
 

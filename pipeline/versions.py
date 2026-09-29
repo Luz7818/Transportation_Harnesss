@@ -9,6 +9,10 @@ v1、v2 为依据评测报告做的两轮迭代,遵循 code-optimization 技能�
 分级标准(基于饱和度 V/C,城市道路常用口径):
   畅通 [0,0.4) | 基本畅通 [0.4,0.6) | 缓行 [0.6,0.8) | 拥堵 [0.8,1.0) | 严重拥堵 [1.0,+∞)
 
+v2 与 v3 的边界升级(排队回溢:V/C 快照未及阈值而地点车速已显著下降):
+  v2: V/C ∈ [0.75,0.8) 且速度比 < 0.35 → 拥堵
+  v3: V/C ∈ [0.70,0.8) 且速度比 < 0.50 → 拥堵(由 rc-0014/rc-0015 外业复核驱动的前向迭代)
+
 统一输出结构:
 {
   "version": "v1",
@@ -31,6 +35,12 @@ SATURATION_CAP = 1.2
 # v2 边界升级规则:V/C 处于 [0.75, 0.8) 且速度比 < 0.35 时升级为「拥堵」
 ESCALATION_BAND = (0.75, 0.8)
 ESCALATION_SPEED_RATIO = 0.35
+
+# v3 排队回溢升级带:V/C ∈ [0.70, 0.8) 且速度比 < 0.50 时升级为「拥堵」。
+# v2 的规则是其子集([0.75,0.8) ∩ 速度比<0.35 ⊆ 本带),故 v3 对 v2 只扩不缩;
+# 速度比 0.50 = 地点车速降至自由流一半,是排队形成、延误可感 的运行状态特征
+V3_ESCALATION_BAND = (0.70, 0.8)
+V3_ESCALATION_SPEED_RATIO = 0.50
 
 
 def _classify_by_saturation(sat: float) -> str:
@@ -201,10 +211,71 @@ def analyze_v2(segments: list[dict]) -> dict:
     }
 
 
+def analyze_v3(segments: list[dict]) -> dict:
+    """v3(第 3 轮:排队回溢升级带)——在 v2 基础上的前向迭代,只改升级判据:
+
+    - 升级带从 v2 的 [0.75,0.8)×(速度比<0.35) 扩展为 [0.70,0.8)×(速度比<0.50):
+      队列形成先于饱和度快照越过 0.8,地点车速降至自由流一半即应按「拥堵」预警
+      (外业复核:晚高峰学府路/长江路排队回溢,V/C 0.72~0.76、速度比 0.47~0.48,v2 判「缓行」);
+    - v2 的升级带是 v3 的子集,故对既有场景只扩不缩(verify.py 断言 v3 与 v2 在 base 上判定一致);
+    - 其余公式、加权、排序、降级与 v2 完全一致。
+    """
+    rows, missing = [], []
+    sat_raw_by_id: dict[str, float] = {}  # 保留未取整的 V/C,供边界升级/加权/排序使用
+    for seg in segments:
+        if seg.get("volume") is None:
+            missing.append(seg["segment_id"])
+            rows.append({
+                "segment_id": seg["segment_id"], "name": seg["name"],
+                "classification": MISSING_LEVEL, "saturation": None, "delay_index": None,
+                "speed_ratio": None, "status": "数据缺失(volume 缺失)", "volume": None,
+            })
+            continue
+        capacity = seg["capacity_per_lane"] * seg["lane_count"]
+        sat_raw = seg["volume"] / capacity
+        speed, ffs = seg["speed"], seg["free_flow_speed"]
+        ratio_raw = speed / ffs
+        level = _classify_by_saturation(sat_raw)
+        if (V3_ESCALATION_BAND[0] <= sat_raw < V3_ESCALATION_BAND[1]
+                and ratio_raw < V3_ESCALATION_SPEED_RATIO):
+            level = "拥堵"  # 排队回溢升级:饱和度逼近上限且地点车速已降至自由流一半以下
+        sat_raw_by_id[seg["segment_id"]] = sat_raw
+        rows.append({
+            "segment_id": seg["segment_id"], "name": seg["name"], "classification": level,
+            "saturation": round(sat_raw, 2),
+            "delay_index": round(max(0.0, (ffs - speed) / ffs), 2),
+            "speed_ratio": round(ratio_raw, 2), "status": "ok", "volume": seg["volume"],
+        })
+
+    valid = [r for r in rows if r["status"] == "ok"]
+    congested = [r["segment_id"] for r in sorted(
+        (r for r in rows if r["classification"] in CONGESTED_LEVELS),
+        key=lambda r: sat_raw_by_id[r["segment_id"]], reverse=True)]
+    total_volume = sum(r["volume"] for r in valid)
+    global_index = (round(sum(r["volume"] * min(sat_raw_by_id[r["segment_id"]], SATURATION_CAP)
+                              for r in valid) / total_volume, 4)
+                    if valid else None)
+    recommendations = [
+        {"segment_id": r["segment_id"], "text": _advice(r["classification"], r["name"])}
+        for r in rows if r["classification"] in CONGESTED_LEVELS
+    ]
+    cnt = _summary_counts(valid)
+    summary = (f"共分析 {len(segments)} 个路段(有效 {len(valid)} 个,数据缺失 {len(missing)} 个):"
+               f"按饱和度 V/C 五级划分,畅通 {cnt.get('畅通', 0)}、基本畅通 {cnt.get('基本畅通', 0)}、"
+               f"缓行 {cnt.get('缓行', 0)}、拥堵 {cnt.get('拥堵', 0)}、严重拥堵 {cnt.get('严重拥堵', 0)};"
+               f"全局拥堵指数(流量加权){'无' if global_index is None else global_index}。")
+    return {
+        "version": "v3", "segments": rows, "congested_segments": congested,
+        "global_congestion_index": global_index, "recommendations": recommendations,
+        "summary": summary,
+    }
+
+
 PIPELINES = {
     "v0": analyze_v0,
     "v1": analyze_v1,
     "v2": analyze_v2,
+    "v3": analyze_v3,
 }
 
 CHANGELOG = {
@@ -221,5 +292,11 @@ CHANGELOG = {
         "全局拥堵指数改为按流量加权(单点 V/C 以 1.2 封顶)",
         "空数据集/零有效路段输出空结果集,全局指数为 null,不报错",
         "拥堵路段按饱和度降序排列;单次遍历完成统计",
+    ]},
+    "v3": {"name": "排队回溢升级带", "changes": [
+        "升级判据扩展:V/C ∈ [0.70, 0.8) 且速度比 < 0.50 时升级为「拥堵」"
+        "(v2 仅覆盖 [0.75,0.8) × <0.35,是 v3 升级带的子集)",
+        "依据:外业复核晚高峰学府路/长江路排队已回溢 —— 饱和度快照未及阈值,"
+        "而地点车速已降至自由流一半;由新沉淀的 rc-0014/rc-0015 驱动的前向迭代",
     ]},
 }

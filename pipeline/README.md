@@ -11,7 +11,7 @@
 
 | 文件 | 干什么 | 备注 |
 | --- | --- | --- |
-| `versions.py` | 三版管线 `analyze_v0`/`analyze_v1`/`analyze_v2` + 两张登记表 `PIPELINES`（版本名 → 函数）与 `CHANGELOG`（版本名 → 名称与本轮优化内容） | 全项目的版本事实来源：看板、CLI、`/api/versions`、报告、自进化都读这两张表 |
+| `versions.py` | 四版管线 `analyze_v0`/`analyze_v1`/`analyze_v2`/`analyze_v3` + 两张登记表 `PIPELINES`（版本名 → 函数）与 `CHANGELOG`（版本名 → 名称与本轮优化内容） | 全项目的版本事实来源：看板、CLI、`/api/versions`、报告、自进化都读这两张表 |
 | `data/base.json` | 常规早高峰，10 个路段，标定其它情景的基线 | 6 个数据集之一，字段见下 |
 | `data/rain_peak.json` | 雨天早高峰：通行能力按 0.85 折算、车速普降 | `evalset_scenario_rain` 用它 |
 | `data/incident.json` | 突发事故占道：S-03 车道 6→5、上游车流转移 | |
@@ -56,7 +56,7 @@
 文件名就是数据集名：`storage.load_dataset("base")` 读 `pipeline/data/base.json`，
 名字先过 `_safe_name()` 白名单（防 `../`）。
 
-## 三个版本的差异（一句话版）
+## 四个版本的差异（一句话版）
 
 | 版本 | 分级依据 | 饱和度 | 延误指数 | 缺数据 / 空数据 | 处置建议 | 全局指数 |
 | --- | --- | --- | --- | --- | --- | --- |

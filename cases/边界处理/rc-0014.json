@@ -1,0 +1,29 @@
+{
+  "case_id": "rc-0014",
+  "title": "晚高峰学府路(V/C 0.76)现场排队已回溢,应按「拥堵」预警",
+  "label": "边界处理",
+  "dataset_name": "evening_peak",
+  "checks": [
+    {
+      "type": "classify",
+      "segment": "S-02",
+      "field": null,
+      "expected": "拥堵",
+      "tol": 0.01,
+      "keywords": [],
+      "min_score": 0.7
+    },
+    {
+      "type": "metric",
+      "segment": "S-02",
+      "field": "saturation",
+      "expected": 0.76,
+      "tol": 0.01,
+      "keywords": [],
+      "min_score": 0.7
+    }
+  ],
+  "source": "外业复核",
+  "created_at": "2026-09-29T18:23:48",
+  "notes": "外业复核(晚高峰):学府路排队回溢至上游进口道,地点车速 24 km/h,已不足自由流一半;v2 依据 V/C 0.76 判「缓行」,与现场体验不符。"
+}

@@ -35,7 +35,7 @@ ruff --version
 
 ```
 0.141.1 0.52.4 0.28.1 12.0.0 8.3.5
-1.6.0
+2.0.0
 ruff 0.16.7
 ```
 
@@ -51,7 +51,7 @@ ruff 0.16.7
 | `SETTINGS_ENABLED` | 开启 `/api/settings` 在线读写 `.env`（默认关） | 看板「设置」页恒得 `403` |
 | `COOKIE_SECURE` | HTTPS 部署时设 `1`，会话 Cookie 只经加密通道回传 | Cookie 允许经 http 回传 |
 | `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` | 接任意 OpenAI 兼容端点（`base_url` + `api_key` 两枚齐了才启用） | 整条 LLM 链路走离线确定性 Mock |
-| `LLM_EXTRA_BODY` | JSON 对象，原样并入请求体（如关闭 Qwen3 思考模式） | 不附加供应商专属参数 |
+| `LLM_EXTRA_BODY` | JSON 对象，原样并入请求体（如关闭 Qwen3 思考模式）；含 `"response_format": null` 时关闭默认的 JSON 引导解码（个别 vLLM 端点会与模型输出叠加产生畸形 JSON） | 不附加供应商专属参数 |
 
 > `.env` 已在 `.gitignore` 里；不要把真实地址、令牌、口令写进任何文档或提交物。
 
@@ -85,7 +85,7 @@ curl http://127.0.0.1:8765/api/health
 ```
 
 ```json
-{"status":"ok","app_version":"1.6.0","auth_mode":"open","default_credentials":true,
+{"status":"ok","app_version":"2.0.0","auth_mode":"open","default_credentials":true,
  "versions":["v0","v1","v2"],"case_count":16,"evalset_count":2}
 ```
 
@@ -166,30 +166,46 @@ python scripts/run_eval.py --version v0 --evalset evalset_scenario_rain
 python -m harness.evolve
 ```
 
-真实输出的关键几行：
+真实输出的关键几行(2026-09-29,15 条评测集;单轮上限 2,本轮验证 v1/v2,v3 留待下轮):
 
 ```
-=== 自进化循环启动:评测集 evalset_v1(13 条 replaycase)===
+=== 自进化循环启动:评测集 evalset_v1(15 条 replaycase)===
 --- 基线测量(v0)---
-得分 1/13(7.7%);失败案例如下:
+得分 1/15(6.7%);失败案例如下:
 --- 第 1 轮迭代(v1:算法修正)---
-得分 11/13(84.6%),较上一轮 76.9%;新通过 10 条,回归 0 条
+得分 11/15(73.3%),较上一轮 66.7%;新通过 10 条,回归 0 条
 --- 第 2 轮迭代(v2:边界与聚合优化)---
-得分 13/13(100.0%),较上一轮 15.4%;新通过 2 条,回归 0 条
+得分 13/15(86.7%),较上一轮 13.3%;新通过 2 条,回归 0 条
 === 总结 ===
-停止原因:评测集已全部通过(本轮迭代 2 轮,上限 2)
-最佳版本:v2,得分 13/13(100.0%)(基线 7.7%) → 提升 92.3%
+停止原因:已达本轮迭代上限(v3 待验证)(本轮迭代 2 轮,上限 2)
+待验证版本:v3 —— 用 --baseline <上一版本> 继续验证
+最佳版本:v2,得分 13/15(86.7%)(基线 6.7%) → 提升 80.0%
 Markdown 报告 -> reports\report_evolution_<时间>.md
 ```
 
-它同时写三份归档：逐版本 JSON（`reports/report_v*_*.json`）、进化摘要
-（`reports/evolution_*.json`，看板时间线读它）、Markdown 总报告。
+**前向迭代留痕**:沉淀新 badcase 后写新版本,再用 `--baseline` 增量验证 ——
+v3 就是这样产生的(rc-0014/rc-0015 沉淀 → 登记 `analyze_v3` → 增量验证):
+
+```bash
+python -m harness.evolve --baseline v2
+```
+
+```
+--- 第 1 轮迭代(v3:排队回溢升级带)---
+得分 15/15(100.0%),较上一轮 13.3%;新通过 2 条,回归 0 条
+=== 总结 ===
+停止原因:评测集已全部通过(本轮迭代 1 轮,上限 2)
+最佳版本:v3,得分 15/15(100.0%)(基线 86.7%) → 提升 13.3%
+```
+
+它同时写三份归档:逐版本 JSON(`reports/report_v*_*.json`)、进化摘要
+(`reports/evolution_*.json`,看板时间线读它)、Markdown 总报告。
 
 | 参数 | 作用 | 注意 |
 | --- | --- | --- |
 | `--evalset` | 用哪个评测集 | 默认 `evalset_v1` |
-| `--baseline` | 基线版本；只验证登记在它之后的版本 | 默认 `v0`;传最末登记版本(现为 `v2`)会得到明确报错退出码 1(第 9 节) |
-| `EVOLVE_MAX_ROUNDS`（环境变量） | 单轮运行的迭代上限 | 默认 2；设 1 时未验证版本会列在「待验证版本」里而不是被丢弃 |
+| `--baseline` | 基线版本;只验证登记在它之后的版本 | 默认 `v0`;传最末登记版本(现为 `v3`)会得到明确报错退出码 1(第 9 节) |
+| `EVOLVE_MAX_ROUNDS`(环境变量) | 单轮运行的迭代上限 | 默认 2;设 1 时未验证版本会列在「待验证版本」里而不是被丢弃 |
 
 ### 4.3 端到端校验（改完必须绿）
 
@@ -359,9 +375,9 @@ docker logs -f transportation-harness
 | `ModuleNotFoundError: No module named 'harness_client'` | 没装仓库内 SDK（`tests/test_sdk.py` 与所有 SDK 示例都要它） | `pip install ./sdk`；CI 里这一步是显式的一步，别指望仓库根目录能 import 到 |
 | 裸 `pytest` 收集期 `ModuleNotFoundError: No module named 'harness'`、退出码 2 | `pytest` 不把当前目录放进 `sys.path`（`python -m pytest` 才会），`pyproject.toml` 里的 `pythonpath = ["."]` 就是修这个的 | 别删那一行；被误删后重新加回 `[tool.pytest.ini_options] pythonpath` |
 | `POST /api/cases` 得 `400 {"detail":"路段 'S-99' 不在该数据集中(可用:S-01, S-02, …)"}` | `segment` 必须是所选数据集中存在的路段 ID | 先 `GET /api/segments/{dataset}` 或看板下拉取合法 ID；数据集名写错会得到 `404 未知数据集 …` |
-| `python scripts/run_eval.py --version v9` → `argument --version: invalid choice: 'v9' (choose from 'v0', 'v1', 'v2')`，退出码 2 | 版本必须已在 `pipeline/versions.py` 的 `PIPELINES` 里登记 | 想验新版本就照第 5 节末登记 `analyze_v3`；只是打错则改用 `v0/v1/v2` |
+| `python scripts/run_eval.py --version v9` → `argument --version: invalid choice: 'v9' (choose from 'v0', 'v1', 'v2', 'v3')`，退出码 2 | 版本必须已在 `pipeline/versions.py` 的 `PIPELINES` 里登记 | 想验新版本就照第 5 节末登记 `analyze_v4`；只是打错则改用已登记版本 |
 | `python scripts/run_eval.py --evalset no_such_set` → `FileNotFoundError: [Errno 2] No such file or directory: '…\\evalsets\\no_such_set.json'` | CLI 直读文件，不做 404 包装 | 评测集名取 `evalsets/*.json` 的文件名；HTTP 侧同样的错误会返回 `404 评测集不存在 …(可选:…)` |
-| `python -m harness.evolve --baseline v2` → `错误:'v2' 已是最新登记版本,其后没有待验证的版本…`（退出码 1）；HTTP 侧 `POST /api/evolve/run {"baseline":"v2"}` → `400` 同文案 | 基线传了最末登记版本,其后没有可验证的迭代版本(1.6.0 起明确报错,不再 IndexError) | 基线传「上一个版本」（登记 v3 之后用 `--baseline v2`）；只想看单版本表现用 `python scripts/run_eval.py --version v2` |
+| `python -m harness.evolve --baseline v3` → `错误:'v3' 已是最新登记版本,其后没有待验证的版本…`（退出码 1）；HTTP 侧 `POST /api/evolve/run {"baseline":"v2"}` → `400` 同文案 | 基线传了最末登记版本,其后没有可验证的迭代版本(1.6.0 起明确报错,不再 IndexError) | 基线传「上一个版本」（登记 v4 之后用 `--baseline v3`）；只想看单版本表现用 `python scripts/run_eval.py --version v3` |
 | 受保护业务接口得 `403 {"detail":"初始口令尚未修改,业务接口暂不开放:…"}`（登录模式，机器令牌/已登录会话同样被挡） | 初始口令未改（`/api/health` 的 `default_credentials` 为 true），门禁只放行 `/api/health` 与 `/api/auth/*` | 用控制台打印的初始口令登录 → 看板「改密」;或在启动环境设 `ADMIN_PASSWORD` 后重启(部署者自备凭据,见 [DEPLOY.md](../DEPLOY.md)) |
 | `GET /api/settings` → `403 {"detail":"运行时配置接口未启用:/api/settings 能读写服务器本地的 .env(含密钥),默认关闭。确需使用请在服务启动环境里设 SETTINGS_ENABLED=1 并重启服务;开启后非本机访问仍必须携带已登录会话。"}` | 该接口默认关闭，且只在启动时读一次 | 在服务器环境里设 `SETTINGS_ENABLED=1` 并重启；机器令牌 `X-API-Token` 永远不能用于该接口（设计如此，见 [AGENTS.md](../AGENTS.md) 鉴权事实） |
 | 从本机以外访问 `/api/settings` → `403 {"detail":"/api/settings 仅允许本机直连或已登录会话访问。…"}`；经 Nginx 反代后从本机访问也被拒 | 反代之后 TCP 对端恒为 `127.0.0.1`，但请求带 `X-Forwarded-For` 等转发头 → 不算「本机直连」 | 带已登录会话（Bearer 或 Cookie），或在服务器本机浏览器里打开 `127.0.0.1:8765` |
@@ -386,7 +402,7 @@ docker logs -f transportation-harness
 | 回归 | 新版本把原本通过的用例改坏了；一票否决，`/api/compare` 的 `regressed` 非空就是这个 |
 | LLM-as-Judge | 让大模型按评分细则（覆盖性/可执行性/简洁性）给结论文本打 0~1 分，`conclusion_quality` 检查类型；分数与理由随报告落盘可复核，模型故障则降级为「未通过 + 原因可见」 |
 | 杀伤（变异分数） | 一套测试能杀掉多少「故意注入的故障」：把代码改坏一点，测试若还全绿就说明没杀伤力。**本仓库没有引入变异测试工具**，所以不报这个指标；它的等价防护是「通过集单调不减 + 用例断言可失败」，即新沉淀的用例必须能真的把不合格版本判 FAIL |
-| 管线版本 v0/v1/v2 | 被测的交通分析实现：v0 是带已知缺陷的基线，v1 修公式与分级，v2 精修边界与聚合；登记在 `pipeline/versions.py` 的 `PIPELINES` 里，新版本加一行即可被评测与自进化认得 |
+| 管线版本 v0~v3 | 被测的交通分析实现:v0 是带已知缺陷的基线,v1 修公式与分级,v2 精修边界与聚合,v3 扩展排队回溢升级带;登记在 `pipeline/versions.py` 的 `PIPELINES` 里,新版本加一行即可被评测与自进化认得 |
 | 全局拥堵指数 | 一个数据集层面的拥堵数字：v1 按有效路段简单平均，v2 改为按流量加权并对单点 V/C 以 1.2 封顶 |
 | 边界升级 | v2 的规则：V/C ∈ [0.75, 0.8) 且速度比 < 0.35 时把等级抬到「拥堵」，让"实际体验"和"数字"对齐 |
 | 看板（PWA） | `webapp/static/index.html` 那个单文件前端；装了 manifest + Service Worker，所以能被浏览器当应用安装、断网时回退到缓存数据 |

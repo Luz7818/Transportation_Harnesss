@@ -222,7 +222,7 @@ class TestOpsApi:
     def test_health_exposes_app_version(self, client):
         body = client.get("/api/health").json()
         assert body["app_version"]
-        assert body["versions"] == ["v0", "v1", "v2"]
+        assert body["versions"] == ["v0", "v1", "v2", "v3"]
 
     def test_evolve_with_baseline_param(self, authed_client, hermetic_storage):
         """API 支持指定基线:以 v1 为基线增量验证 v2。"""
@@ -238,8 +238,11 @@ class TestOpsApi:
         assert resp.status_code == 404
 
     def test_evolve_baseline_at_tail_400(self, authed_client, hermetic_storage):
-        """基线传最末登记版本:明确 400,而不是 IndexError → 500。"""
-        resp = authed_client.post("/api/evolve/run", json={"baseline": "v2"})
+        """基线传最末登记版本:明确 400,而不是 IndexError → 500。
+        最末版本随登记前进(v2 → v3),从注册表取实际末位,别写死。"""
+        from pipeline.versions import PIPELINES
+
+        resp = authed_client.post("/api/evolve/run", json={"baseline": list(PIPELINES)[-1]})
         assert resp.status_code == 400
         assert "没有待验证" in resp.json()["detail"]
 

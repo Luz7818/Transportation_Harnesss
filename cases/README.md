@@ -20,7 +20,7 @@
 
 ## 子目录
 
-**一级子目录 = 失败标签**（`label` 经 `storage.safe_label()` 净化的结果）。10 个目录、16 条用例。
+**一级子目录 = 失败标签**（`label` 经 `storage.safe_label()` 净化的结果）。10 个目录、18 条用例。
 逐目录计数（复核，在仓库根执行；`-X utf8` 是为了在 GBK 控制台里也不乱码）：
 `python -X utf8 -c "import os,glob;print({d:len(glob.glob(os.path.join('cases',d,'*.json'))) for d in os.listdir('cases') if os.path.isdir(os.path.join('cases',d))})"`
 
@@ -77,7 +77,7 @@
 
 `checks[].type` 可用值：`classify`、`metric`、`no_crash`、`recommendations`、
 `congested_empty`、`conclusion_keyword`、`conclusion_quality`（最后一种由 `llm/judge.py` 的
-LLM 判分，未配密钥时走离线 Mock；现有 16 条都没用到它）。字段语义见
+LLM 判分，未配密钥时走离线 Mock；rc-0015 首次用到它）。字段语义见
 [docs/API.md](../docs/API.md) 的「checks 的 type 取值」。
 
 ## 和谁打交道

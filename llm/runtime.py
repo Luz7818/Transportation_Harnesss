@@ -40,11 +40,14 @@ class LLMConfig:
     extra_body: dict = field(default_factory=dict)
 
 
-def load_config() -> LLMConfig | None:
-    """从环境变量读取配置;未配置完整(base_url + api_key)返回 None → 使用 Mock。
+def load_config() -> LLMConfig:
+    """从环境变量读取配置;base_url + api_key 任一缺失返回 None → 使用 Mock。
 
     LLM_EXTRA_BODY(JSON 对象字符串)原样并入请求体,用于供应商/模型专属参数,
     如 {"enable_thinking": false} 关闭 Qwen3 思考模式;非法 JSON 直接报错,失败可见。
+    特殊语义:若其中含 "response_format" 键且值为 null,表示**关闭**默认的
+    JSON 引导解码(个别 vLLM 端点的引导解码会与模型输出叠加产生畸形 JSON,
+    实测 SEU openapi + qwen3.8-27b:{"{"score": ...} 双大括号)。
     """
     base = os.getenv("LLM_BASE_URL", "").strip().rstrip("/")
     key = os.getenv("LLM_API_KEY", "").strip()
@@ -64,19 +67,67 @@ def load_config() -> LLMConfig | None:
 
 
 def _parse_json_content(content: str) -> dict:
-    """解析模型输出为 JSON;容忍 ```json 代码围栏。"""
+    """解析模型输出为 JSON;容忍 ```json 代码围栏与 <think> 思考块。
+
+    混合推理模型(如 Qwen3 系列)可能把 <think>…</think> 混进 content
+    (端点的 reasoning 解析器未启用时),先剥掉再解析;仍失败时尝试
+    提取首个平衡的 JSON 对象子串,把前后缀噪声(引导语/收尾说明)隔离掉。
+    """
     text = content.strip()
+    if "<think>" in text:
+        if "</think>" in text:
+            text = text.split("</think>", 1)[1]
+        else:  # 只有开标签:思考未闭合,取 <think> 之后的全部内容
+            text = text.split("<think>", 1)[1]
     if text.startswith("```"):
         text = text.split("`" * 3, 2)[1]
         if text.startswith("json"):
             text = text[4:]
     try:
         data = json.loads(text.strip())
-    except json.JSONDecodeError as exc:
-        raise LLMError(f"模型输出不是合法 JSON:{exc}") from exc
+    except json.JSONDecodeError:
+        extracted = _extract_json_object(text)
+        try:
+            data = json.loads(extracted) if extracted is not None else None
+        except json.JSONDecodeError as exc:
+            raise LLMError(f"模型输出不是合法 JSON:{exc}") from exc
+        if data is None:
+            raise LLMError("模型输出不是合法 JSON:未找到 JSON 对象") from None
     if not isinstance(data, dict):
         raise LLMError("模型输出 JSON 不是对象")
     return data
+
+
+def _extract_json_object(text: str) -> str | None:
+    """从混入前后缀噪声的文本里提取首个平衡的 `{...}` 子串;找不到返回 None。
+
+    平衡扫描感知字符串字面量(引号内的花括号不计数),覆盖模型在 JSON
+    前后补说明文字的常见形态;对结构性损坏(如双大括号)无能为力 ——
+    那属于请求侧问题,用 LLM_EXTRA_BODY 关闭 response_format 解决。
+    """
+    start = text.find("{")
+    if start < 0:
+        return None
+    depth, in_str, escape = 0, False, False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if in_str:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    return None
 
 
 class LLMRuntime:
@@ -109,7 +160,10 @@ class LLMRuntime:
             "temperature": self.config.temperature,
             "response_format": {"type": "json_object"},
         }
-        body.update(self.config.extra_body)  # 模型专属参数(如 enable_thinking)原样透传
+        extra = dict(self.config.extra_body)  # 模型专属参数(如 enable_thinking)原样透传
+        if "response_format" in extra and extra.pop("response_format") is None:
+            body.pop("response_format")  # extra_body 显式 null = 关闭 JSON 引导解码
+        body.update(extra)
         payload = json.dumps(body).encode("utf-8")
 
         last_err: Exception | None = None

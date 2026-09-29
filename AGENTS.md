@@ -13,8 +13,8 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 
 | 项 | 值 | 复核命令 |
 | --- | --- | --- |
-| 测试 | `199 passed`(本机实测 30–55 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
-| 测试分布 | 14 个文件共 199 例,最大 `test_webapp.py` 39 例、`test_settings_api.py` 37 例、`test_llm.py` 27 例 | `python -m pytest --collect-only -q` |
+| 测试 | `208 passed`(本机实测 30–55 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
+| 测试分布 | 14 个文件共 208 例,最大 `test_webapp.py` 39 例、`test_settings_api.py` 37 例、`test_llm.py` 30 例 | `python -m pytest --collect-only -q` |
 | 静态检查 | `All checks passed!`,退出码 0 | `ruff check .` |
 | 端到端校验 | `VERIFY PASS`,退出码 0;雨天评测集同样 PASS | `python scripts/verify.py` |
 | 发布一致性 | `RELEASE CHECK PASS`:版本四处一致 + `docs/openapi.json` 与 app 当前 schema 逐键一致(29 路径) | `python scripts/check_release.py` |
@@ -65,7 +65,7 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 │  models / storage / runner    │  runtime / judge / workflows      │
 │  judge / report / evolve      │  store / mocks                    │
 ├──────────────────────────────┴──────────────────────────────┤
-│  被测对象：pipeline/versions.py（v0 → v1 → v2）+ pipeline/data/（6 情景）  │
+│  被测对象：pipeline/versions.py（v0 → v1 → v2 → v3）+ pipeline/data/（6 情景）│
 ├─────────────────────────────────────────────────────────────┤
 │  评测资产（全量落盘 JSON，git 友好）：cases/ · evalsets/ · reports/         │
 └─────────────────────────────────────────────────────────────┘
@@ -138,7 +138,7 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
    **只有全程离线 Mock 下结果确定，才叫确定性**：任何要求联网才能过的测试或校验都不许进 CI。
 3. **评测资产用 `tests/fixtures/` 的冻结快照，不用真实 `cases/`**：`conftest.seed_asset_dirs()`
    把 `tests/fixtures/cases|evalsets` 拷进 `tmp_path` 再 monkeypatch `storage` 的三个目录。
-   夹具比真实库多一条 `rc-0014`（用于断言「沉淀后编号递增」），所以 17 个 fixture 文件 ≠ 16 条生产 case，
+   夹具比真实库多一条 `rc-0014`（用于断言「沉淀后编号递增」），所以 17 个 fixture 文件 ≠ 18 条生产 case，
    别把它们当成同一份数据、也别让测试去读 `cases/`。
 4. **OpenAPI / SDK / 文档不许互相漂移**：端点改动后同一次提交里
    `python scripts/export_openapi.py`（重写 `docs/openapi.json`）→ 改 `docs/API.md` →

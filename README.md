@@ -67,9 +67,10 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 | v0 | 基线:按车速分四档、饱和度漏乘车道数、延误公式方向反、缺数据即崩 | 1/13(7.7%) | — |
 | v1 | 分级改看 V/C 五级、公式修正、缺失数据降级、生成处置建议 | 11/13(84.6%) | 0 条 |
 | v2 | 边界升级、全局指数按流量加权、空数据防御 | 13/13(100%) | 0 条 |
+| v3 | 排队回溢升级带:V/C∈[0.70,0.8) 且速度比<0.50 升级「拥堵」 | 15/15(100%)¹ | 0 条 |
 
-雨天情景评测集上同样成立:v0 0/3 → v1 2/3 → v2 3/3
-(复核:`python scripts/verify.py --evalset evalset_scenario_rain`)。
+¹ v3 由新沉淀的 rc-0014/rc-0015(晚高峰排队回溢外业复核)驱动:同一评测集 v2 13/15 → v3 15/15
+(复核:`python -m harness.evolve --baseline v2`);雨天集 v3 保持 3/3(复核:verify.py --evalset evalset_scenario_rain)。
 
 ## 能力总览
 
@@ -99,7 +100,7 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 ├──────────────────────────────┬──────────────────────────────┤
 │  harness/(评测框架,领域无关) │  llm/(LLM 智能层,可选可降级) │
 ├──────────────────────────────┴──────────────────────────────┤
-│  被测对象:pipeline/versions.py(v0 → v1 → v2)+ 6 情景数据集   │
+│  被测对象:pipeline/versions.py(v0 → … → v3)+ 6 情景数据集    │
 ├─────────────────────────────────────────────────────────────┤
 │  评测资产(全量落盘 JSON,git 友好):cases · evalsets · reports │
 └─────────────────────────────────────────────────────────────┘
@@ -122,34 +123,33 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 
 ## Roadmap
 
-- [ ] **2.0 真实数据接入**:换掉合成快照(公开轨迹集或外业采集),数据集记录 `source`/`captured_at`
-- [ ] **2.1 前向迭代留痕**:不再事后重写版本 —— 真实沉淀 badcase → evolve → 产出 v3 归档
+- [ ] **2.0 真实数据接入**:换掉合成快照(公开轨迹集或外业采集),数据集记录 `source`/`captured_at`;当前快照仍为合成口径
+- [x] **2.1 前向迭代留痕**:rc-0014/rc-0015 沉淀 → evolve → v3 归档(2.0.0)
 - [x] **2.2 交付形态收口**:单实例约束写明(DEPLOY.md),`--baseline` 末端版本明确 400(1.6.0)
-- [ ] **2.3 真实模型判分**:接真 LLM 跑 `conclusion_quality`,归档 Mock 与真实判分差异
+- [x] **2.3 真实模型判分**:qwen3.8-27b 判分归档,Mock 1.0 vs 真实 0.70(见 [docs/LLM.md](docs/LLM.md))
 - [ ] **2.4 线上化**:HTTPS + 备案域名,小程序正式发布(或明确定位为内网演示端)
 - [ ] **发布**:tag + GitHub Release 附 SDK wheel;版本一致性断言已进 CI(1.6.0)
 
 ## 已知局限
 
 1. **版本只有三个,且都是"事后重写"的样例**。harness 只负责验证与守回归,不会自动生成新版本。
-2. **结论文本质量没有真实模型判分**:现有用例只用到 `conclusion_keyword`,
-   「100%」衡量的是结构化断言,不等于结论可读性已达人工水准。
+2. **建议文案的可执行性是真实短板**:rc-0015 引入 `conclusion_quality` 后,真实模型
+   (qwen3.8-27b)判 0.70 恰在阈值(「建议模板化、缺少具体分流路径」),Mock 判 1.0 掩盖了它
+   (对比见 [docs/LLM.md](docs/LLM.md))。
 3. **交通数据是合成快照**(`captured_at` 2026-08-31),未接卡口/GPS 实时源。
 4. **单进程文件存储**:并发靠进程内锁,多实例部署锁不跨进程(部署约束见 DEPLOY.md)。
 5. **小程序正式发布有硬门槛**:必须 HTTPS + 已备案域名,当前默认部署只适合开发与内网。
 
 ## 贡献
 
-欢迎 issue 与 PR。动手前请先读 [AGENTS.md](AGENTS.md)(事实与约束的单一来源):
-改动需通过 `ruff check . && python -m pytest && python scripts/verify.py`
-三条门禁;端点改动需重导 OpenAPI 并同步 `docs/API.md` 与 `webapp/static/help.html`;
-文档遵循工作区《文档标准》(五件套 + `check_docs.py`)。
+欢迎 issue 与 PR,动手前请先读 [AGENTS.md](AGENTS.md)(事实与约束的单一来源)。改动需过
+`ruff check .` + `python -m pytest` + `verify.py` + `check_release.py` 四条门禁;端点改动需重导
+OpenAPI 并同步 `docs/API.md` 与 `webapp/static/help.html`;文档遵循工作区《文档标准》。
 
 ## 环境要求
 
-Python 3.11+。运行时依赖只有 `fastapi` 与 `uvicorn`(复核:`cat requirements.txt`);
-开发/测试另需 `pytest`、`httpx`、`ruff`、`Pillow`(复核:`cat requirements-dev.txt`)。
-默认全程离线:不需要网络、不需要模型密钥。
+Python 3.11+。运行时依赖只有 `fastapi` 与 `uvicorn`,开发/测试另需 `pytest`、`httpx`、`ruff`、`Pillow`
+(复核:`cat requirements.txt requirements-dev.txt`)。默认全程离线:不需要网络、不需要模型密钥。
 
 ## 许可
 

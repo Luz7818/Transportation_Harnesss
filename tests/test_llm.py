@@ -1,5 +1,7 @@
 """LLM 集成层:Runtime(Mock/缓存/审计)、LLMJudge、双工作流、API 全链路(全程离线 Mock)。"""
 
+import json
+
 import pytest
 from llm import runtime as llm_runtime
 from llm import store as llm_store
@@ -248,3 +250,52 @@ def test_backup_script_packages_assets(tmp_path):
     assert any(n.startswith("cases/") for n in names)
     assert any(n.startswith("evalsets/") for n in names)
     assert any(n.startswith("reports/") for n in names)
+
+
+def test_parse_json_content_strips_think_block():
+    """混合推理模型把 <think> 混进 content:闭合与未闭合两种都要能解析。"""
+    closed = '<think>用户要 JSON,直接给。</think>\n{"score": 0.9, "rationale": "ok"}'
+    assert llm_runtime._parse_json_content(closed) == {"score": 0.9, "rationale": "ok"}
+    unclosed = '<think>思考被打断…\n{"score": 0.8}'
+    assert llm_runtime._parse_json_content(unclosed) == {"score": 0.8}
+
+
+def test_parse_json_content_extracts_object_with_noise():
+    """JSON 前后有说明文字:提取首个平衡对象(花括号在字符串内不计数)。"""
+    noisy = '评分结果如下:{"score": 0.6, "rationale": "含 \\"}\\" 转义"} 以上。'
+    assert llm_runtime._parse_json_content(noisy) == {"score": 0.6, "rationale": '含 "}" 转义'}
+    with pytest.raises(llm_runtime.LLMError):
+        llm_runtime._parse_json_content('{"{"score": 0.7}')  # 结构性损坏:不静默修复
+
+
+def test_extra_body_can_disable_response_format():
+    """LLM_EXTRA_BODY 里 response_format 显式 null = 关闭 JSON 引导解码(SEU vLLM 实测)。"""
+    cfg = llm_runtime.LLMConfig(base_url="https://x/v1", api_key="k", model="m",
+                                extra_body={"response_format": None, "enable_thinking": False})
+    runtime = llm_runtime.LLMRuntime(cfg)
+    captured = {}
+
+    class FakeResp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return json.dumps({"choices": [{"message": {"content": '{"a": 1}'}}],
+                               "usage": {}}).encode()
+
+    real_urlopen = llm_runtime.urllib.request.urlopen
+
+    def fake_urlopen(req, timeout):
+        captured["body"] = json.loads(req.data)
+        return FakeResp()
+
+    llm_runtime.urllib.request.urlopen = fake_urlopen
+    try:
+        assert runtime.complete_json(purpose="judge", system="s", user="u") == {"a": 1}
+    finally:
+        llm_runtime.urllib.request.urlopen = real_urlopen
+    assert "response_format" not in captured["body"]          # null → 键整体移除
+    assert captured["body"]["enable_thinking"] is False       # 其余参数照常透传

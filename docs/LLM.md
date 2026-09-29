@@ -18,7 +18,7 @@
 | **Human-in-the-loop** | 草稿必须人工确认才成为 replaycase(且走与手工沉淀**完全相同**的校验/落盘路径);诊断结论仅供参考,不自动改任何资产;LLM 判分失败降级可见、可重跑 | `POST /api/llm/drafts/{id}/confirm`、`harness/judge.py` |
 | **Multi-Agent 协作** | 失败诊断 = 分析者(按标签归因)+ 评审者(复核、去重、风险提示)的 generator-critic 流水线;**刻意不做自主 Agent 群** —— 评测系统要求可复现,编排必须确定 | `llm/workflows.py:diagnose_failures` |
 | **Evaluation & Governance** | 模型输出全部过校验(等级枚举、case_id 防幻觉过滤、长度截断);一切调用进 `llm_runs.jsonl` 审计;响应缓存保证同输入同输出;LLM judge 的分数与理由随报告持久化可复核;成本可见(缓存命中/token 统计) | `llm/store.py`、`llm/judge.py`、`llm/workflows.py` |
-| **工程化落地** | 零新增依赖(stdlib urllib);未配 Key 自动降级 Mock,CI 与课堂演示离线可跑;27 个专项测试;环境变量两枚即可接入(另有 LLM_EXTRA_BODY 可选透传模型专属参数);.env 零依赖自动加载;Docker 卷持久化草稿与缓存 | `tests/test_llm.py`、`Dockerfile`、`docker-compose.yml` |
+| **工程化落地** | 零新增依赖(stdlib urllib);未配 Key 自动降级 Mock,CI 与课堂演示离线可跑;30 个专项测试;环境变量两枚即可接入(另有 LLM_EXTRA_BODY 可选透传模型专属参数);.env 零依赖自动加载;Docker 卷持久化草稿与缓存 | `tests/test_llm.py`、`Dockerfile`、`docker-compose.yml` |
 
 ## 1. Runtime:统一模型访问层
 
@@ -131,6 +131,7 @@ LLM_BASE_URL=https://api.deepseek.com/v1   # 或 OpenAI/vLLM/Ollama 等任意兼
 LLM_API_KEY=sk-xxx                          # 无鉴权端点可填 EMPTY
 LLM_MODEL=deepseek-chat
 LLM_EXTRA_BODY={"enable_thinking": false}   # 可选:JSON 对象,原样并入请求体(如关闭 Qwen3 思考模式)
+#                                            # {"response_format": null} = 关闭 JSON 引导解码(个别 vLLM 端点必要,见下文实测)
 python webapp/app.py
 ```
 
@@ -159,6 +160,39 @@ LLMJudge 打分与故障降级、草稿工作流(编号递增/校验拒绝)、�
 | POST | `/api/llm/drafts/{id}/confirm` | 人工确认 → 正式 replaycase(可带编辑覆盖) |
 | DELETE | `/api/llm/drafts/{id}` | 丢弃草稿 |
 | POST | `/api/llm/diagnose` | 失败诊断(双角色) |
+
+## 真实模型判分 vs 离线 Mock 判分(2.3,2026-09-29 实测)
+
+`conclusion_quality` 检查在 2.0.0 起有了真实判分数据。同一评测集(evalset_v1,15 条)、
+同一版本(v3)、同一用例(rc-0015,`conclusion_quality` 阈值 0.7)分别用离线 Mock 与
+真实端点跑了一遍,报告都归档在 `reports/`:
+
+| 判分方 | 报告 | rc-0015 文本质量得分 | 整轮结果 |
+| --- | --- | --- | --- |
+| 离线 Mock(确定性启发式) | `report_v3_20260929T183505.json` | **1.0**(满分) | 15/15 |
+| 真实 qwen3.8-27b(SEU openapi) | `report_v3_20260929T184933.json` | **0.70**(恰在阈值) | 15/15,耗时 14.0 s |
+
+真实判分的理由原文:「覆盖性较好,指数与分级齐全;但建议模板化,『视情况绕行』缺乏具体
+路口与分流路径,可执行性偏弱;表述简洁无矛盾。」
+
+**怎么读这组数字**:
+
+- **差异是真实且方向合理的**:Mock 按结构完整性给满分(关键词覆盖/篇幅/有建议各占权重),
+  真实模型按语义扣「建议模板化、可执行性偏弱」的分 —— 这正是 `_advice()` 模板文案的
+  真实短板,Mock 掩盖、真实判分暴露。0.70 恰好压线通过,说明该用例对判分方差敏感,
+  是后续改进建议文案质量的最佳靶子(预期修法:v3 的建议按升级带/严重程度差异化)。
+- **结论可复核**:分数与理由随 CheckResult 持久化在报告 JSON 里,审计日志在
+  `llm_runs.jsonl`(purpose=judge,含耗时与 token)。
+- **端点兼容性实测**(过程中修掉的两个真实问题,均已进 runtime):
+  1. 该 vLLM 端点的 JSON 引导解码(`response_format: json_object`)与 qwen3.8-27b 输出
+     叠加会产生 `{"{"score": ...}` 双大括号畸形 JSON —— `LLM_EXTRA_BODY` 现支持
+     `{"response_format": null}` 显式关闭引导解码(本仓 `.env` 即此配置);
+  2. 混合推理模型可能把 `<think>` 思考块混进 `content` —— `_parse_json_content`
+     现在会剥思考块、容忍围栏,并从带前后缀噪声的文本里提取首个平衡 JSON 对象。
+  过程中两次判分失败的报告已删除(它们是 runtime 修复前的产物,不是评测结论);
+  另遇端点网关 420 限流(短窗口高频调用触发),重试需拉开间隔。
+- **CI 纪律不变**:以上真实判分是一次性归档证据;CI 与 `verify.py` 仍全程离线 Mock,
+  结果确定、零成本、不联网。
 
 ## 已知边界与演进方向
 

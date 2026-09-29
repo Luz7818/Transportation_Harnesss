@@ -1,0 +1,106 @@
+{
+  "version": "v3",
+  "evalset_id": "evalset_scenario_rain",
+  "timestamp": "2026-09-29T18:35:07",
+  "total": 3,
+  "passed_count": 3,
+  "accuracy": 1.0,
+  "label_stats": {
+    "雨天场景": {
+      "passed": 3,
+      "total": 3
+    }
+  },
+  "results": [
+    {
+      "case_id": "rsc-001",
+      "title": "雨天学府路(V/C 1.02)应升级为「严重拥堵」",
+      "label": "雨天场景",
+      "version": "v3",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-02",
+          "expected": "严重拥堵",
+          "actual": "严重拥堵",
+          "passed": true,
+          "detail": "期望「严重拥堵」,实际「严重拥堵」"
+        },
+        {
+          "type": "metric",
+          "target": "S-02.saturation",
+          "expected": 1.02,
+          "actual": 1.02,
+          "passed": true,
+          "detail": "期望 1.02±0.01,实际 1.02"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.33
+    },
+    {
+      "case_id": "rsc-002",
+      "title": "雨天解放西路保持「缓行」,全局拥堵指数 0.8927",
+      "label": "雨天场景",
+      "version": "v3",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-06",
+          "expected": "缓行",
+          "actual": "缓行",
+          "passed": true,
+          "detail": "期望「缓行」,实际「缓行」"
+        },
+        {
+          "type": "metric",
+          "target": "全局.global_congestion_index",
+          "expected": 0.8927,
+          "actual": 0.8925,
+          "passed": true,
+          "detail": "期望 0.8927±0.005,实际 0.8925"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.24
+    },
+    {
+      "case_id": "rsc-003",
+      "title": "雨天泉山南路(V/C 1.16)应为「严重拥堵」且指标保留两位小数",
+      "label": "雨天场景",
+      "version": "v3",
+      "passed": true,
+      "score": 1.0,
+      "checks": [
+        {
+          "type": "classify",
+          "target": "S-10",
+          "expected": "严重拥堵",
+          "actual": "严重拥堵",
+          "passed": true,
+          "detail": "期望「严重拥堵」,实际「严重拥堵」"
+        },
+        {
+          "type": "metric",
+          "target": "S-10.saturation",
+          "expected": 1.16,
+          "actual": 1.16,
+          "passed": true,
+          "detail": "期望 1.16±0.01,实际 1.16"
+        }
+      ],
+      "error": null,
+      "duration_ms": 0.21
+    }
+  ],
+  "duration_ms": 0.82,
+  "version_name": "排队回溢升级带",
+  "changes": [
+    "升级判据扩展:V/C ∈ [0.70, 0.8) 且速度比 < 0.50 时升级为「拥堵」(v2 仅覆盖 [0.75,0.8) × <0.35,是 v3 升级带的子集)",
+    "依据:外业复核晚高峰学府路/长江路排队已回溢 —— 饱和度快照未及阈值,而地点车速已降至自由流一半;由新沉淀的 rc-0014/rc-0015 驱动的前向迭代"
+  ]
+}

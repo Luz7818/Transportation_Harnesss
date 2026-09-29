@@ -1,12 +1,15 @@
-"""端到端校验:重放三个版本的评测,用"不变量"而非硬编码得分断言,评测集增长后依然可用。
+"""端到端校验:重放全部已登记版本的评测,用"不变量"而非硬编码得分断言,评测集增长后依然可用。
 
 校验的不变量(与 reports/report_evolution_*.md 的结果一致):
-  [种子不变量] 仅对 evalset_v1 的 13 条种子 case(rc-0001~0013)生效:
-    - v0 仅 rc-0013 通过(回归保护用例);v1 恰好剩 rc-0009/rc-0010 未通过;v2 全部通过;
-  [单调性]      任意评测集上:通过集 v0 ⊆ v1 ⊆ v2(改动只许修好、不许改坏);
-  [数值抽查]    v2 在 base/missing_volume/empty 数据集上的关键行为与数值;
-  [资产归档]    reports/ 已有各版本 JSON 报告与自进化 Markdown 报告。
-  新沉淀、尚未被 v2 覆盖的 case 不判失败,输出 WARN 并提示作为下一轮迭代 backlog。
+  [得分轨迹]    全部已登记版本(v0..v3)逐一重放,得分与通过集单调不减;
+  [种子不变量]  仅对 evalset_v1 的 13 条种子 case(rc-0001~0013)生效:
+    - v0 仅 rc-0013 通过(回归保护用例);v1 恰好剩 rc-0009/rc-0010 未通过;
+    - 最新登记版本通过全部种子 case(新版本只许修好、不许改坏种子行为);
+  [单调性]      任意评测集上:相邻版本通过集只许扩大(v0 ⊆ v1 ⊆ v2 ⊆ …);
+  [数值抽查]    v2 在 base/missing_volume/empty 数据集上的关键行为与数值(已发表口径,冻结);
+                v3 与 v2 在 base 上判定一致(升级带只扩不缩)+ v3 在 evening_peak 的升级行为;
+  [资产归档]    reports/ 已有全部已登记版本的 JSON 报告与自进化 Markdown 报告。
+  最新版本仍未覆盖的新沉淀 case 不判失败,输出 WARN 并提示作为下一轮迭代 backlog。
 
 运行:
   python scripts/verify.py                       # 校验 evalset_v1(默认)
@@ -51,22 +54,23 @@ def main() -> None:
         if not cond:
             (warnings if warn_only else failures).append(name)
 
-    er = {v: runner.run_evalset(v, PIPELINES[v], evalset, cases)
-          for v in ("v0", "v1", "v2")}
+    versions = tuple(PIPELINES)          # 全部已登记版本,按注册顺序(v0..v3,…)重新评估
+    latest = versions[-1]
+    er = {v: runner.run_evalset(v, PIPELINES[v], evalset, cases) for v in versions}
     passed_ids = {v: {r.case_id for r in res.results if r.passed} for v, res in er.items()}
 
     print(f"[1] 得分轨迹(evalset={args.evalset},共 {len(cases)} 条 case)")
-    for v in ("v0", "v1", "v2"):
+    for v in versions:
         check(f"{v} 得分 {er[v].passed_count}/{er[v].total}", True)  # 展示行,恒真
-    check("得分单调不减 v0 ≤ v1 ≤ v2",
-          er["v0"].accuracy <= er["v1"].accuracy <= er["v2"].accuracy,
-          f"{er['v0'].accuracy} → {er['v1'].accuracy} → {er['v2'].accuracy}")
+    check("得分单调不减 " + " ≤ ".join(versions),
+          all(er[a].accuracy <= er[b].accuracy for a, b in zip(versions, versions[1:], strict=False)),
+          " → ".join(f"{er[v].accuracy}" for v in versions))
 
     print("[2] 单调性(通过集只许扩大,不许缩小 = 无回归)")
-    check("v1 通过集 ⊇ v0 通过集", passed_ids["v0"] <= passed_ids["v1"],
-          f"丢失 {sorted(passed_ids['v0'] - passed_ids['v1'])}" if passed_ids["v0"] - passed_ids["v1"] else "")
-    check("v2 通过集 ⊇ v1 通过集", passed_ids["v1"] <= passed_ids["v2"],
-          f"丢失 {sorted(passed_ids['v1'] - passed_ids['v2'])}" if passed_ids["v1"] - passed_ids["v2"] else "")
+    for a, b in zip(versions, versions[1:], strict=False):
+        check(f"{b} 通过集 ⊇ {a} 通过集", passed_ids[a] <= passed_ids[b],
+              f"丢失 {sorted(passed_ids[a] - passed_ids[b])}"
+              if passed_ids[a] - passed_ids[b] else "")
 
     if args.evalset == "evalset_v1":
         print("[3] 种子不变量(13 条种子 case 的行为冻结)")
@@ -78,19 +82,19 @@ def main() -> None:
             check("v1 剩余失败 = {rc-0009, rc-0010}",
                   SEED_CASE_IDS - passed_ids["v1"] == SEED_V1_FAILED,
                   f"实际 {sorted(SEED_CASE_IDS - passed_ids['v1'])}")
-            check("v2 通过全部种子 case", passed_ids["v2"] >= SEED_CASE_IDS)
+            check(f"{latest} 通过全部种子 case", passed_ids[latest] >= SEED_CASE_IDS)
     else:
         print("[3] 种子不变量(非 evalset_v1,跳过)")
 
-    open_failures = sorted({r.case_id for r in er["v2"].results if not r.passed} - SEED_CASE_IDS)
-    print("[4] 新沉淀 case(v2 尚未覆盖的不判失败,属于下一轮迭代 backlog)")
+    open_failures = sorted({r.case_id for r in er[latest].results if not r.passed} - SEED_CASE_IDS)
+    print(f"[4] 新沉淀 case({latest} 尚未覆盖的不判失败,属于下一轮迭代 backlog)")
     if open_failures:
-        print(f"  WARN  v2 未通过新沉淀 case:{open_failures}(沉淀新 case 后应迭代 v3 修复)")
+        print(f"  WARN  {latest} 未通过新沉淀 case:{open_failures}(应迭代新版本修复)")
         warnings.extend(open_failures)
     else:
         print("  PASS  无待修复的新沉淀 case")
 
-    print("[5] v2 数值与健壮性抽查(与评测集无关)")
+    print("[5] v2/v3 数值与健壮性抽查(与评测集无关)")
     out = PIPELINES["v2"](storage.load_dataset("base"))
     check("全局拥堵指数(流量加权)≈ 0.7944",
           abs(out["global_congestion_index"] - EXPECT_V2_GLOBAL_INDEX) <= TOL,
@@ -103,11 +107,22 @@ def main() -> None:
     out_empty = PIPELINES["v2"](storage.load_dataset("empty"))
     check("空数据集优雅降级(无拥堵路段,指数为空)",
           out_empty["congested_segments"] == [] and out_empty["global_congestion_index"] is None)
+    # v3(2.0.0 新增):升级带只扩不缩 + evening_peak 升级行为
+    out3_base = PIPELINES["v3"](storage.load_dataset("base"))
+    out2_base = out  # v2 在 base 上的输出(上方已算)
+    check("v3 与 v2 在 base 上判定一致(升级带未误伤既有场景)",
+          [r["classification"] for r in out3_base["segments"]]
+          == [r["classification"] for r in out2_base["segments"]])
+    out3_evening = PIPELINES["v3"](storage.load_dataset("evening_peak"))
+    evening = {r["segment_id"]: r["classification"] for r in out3_evening["segments"]}
+    check("v3 排队回溢升级:晚高峰 S-02/S-03(V/C 0.72~0.76,速度比<0.5)判「拥堵」",
+          evening.get("S-02") == "拥堵" and evening.get("S-03") == "拥堵",
+          f"实际 S-02 {evening.get('S-02')} / S-03 {evening.get('S-03')}")
 
     print("[6] 报告归档")
     reports = storage.list_reports()
     versions_present = {r["version"] for r in reports}
-    check("reports/ 已有 v0/v1/v2 的 JSON 报告", {"v0", "v1", "v2"} <= versions_present,
+    check("reports/ 已有全部已登记版本的 JSON 报告", set(versions) <= versions_present,
           f"现有版本 {sorted(versions_present)}")
     md_files = list(storage.REPORTS_DIR.glob("report_evolution_*.md"))
     check("存在自进化 Markdown 报告", bool(md_files))
