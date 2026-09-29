@@ -28,7 +28,10 @@ Transportation Harness 的全部能力通过一套 REST API 暴露,网页看板�
 
 ## 鉴权方式
 
-同一条中间件裁决三种凭据,**按下列顺序判定,任一通过即放行**:
+同一条中间件裁决三种凭据,**按下列顺序判定,任一通过即放行**。
+第 0 步是**初始口令门禁**(先于一切凭据):`/api/health` 的 `default_credentials` 为 true 时
+(部署者还没提供/改掉初始口令),除 `/api/health` 与 `/api/auth/*` 外的全部 `/api/*`
+对三种凭据一律 `403`,直到口令被改掉或启动环境提供 `ADMIN_PASSWORD`。各凭据语义见 [DEPLOY.md](../DEPLOY.md):
 
 | 顺序 | 凭据 | 给谁用 | 来源 |
 | --- | --- | --- | --- |
@@ -197,9 +200,9 @@ Bearer 与 Cookie 两种会话凭据都能在这里换出用户名。
 ```jsonc
 {
   "status": "ok",
-  "app_version": "1.5.0",
+  "app_version": "1.6.0",
   "auth_mode": "login",
-  "default_credentials": true,   // true = 首次创建后还没在界面改过口令(随机初始口令时恒为 false)
+  "default_credentials": true,   // true = 初始口令未改:业务接口处于 403 门禁状态(见「鉴权方式」第 0 步)
   "versions": ["v0", "v1", "v2"],
   "case_count": 16, "evalset_count": 2, "report_count": 3
 }
@@ -547,7 +550,7 @@ LLM 故障时该检查降级为"未通过 + 原因可见",不影响整轮评测�
 | --- | --- | --- |
 | `400` | 参数校验失败 | 标题超长、路段不在数据集、期望等级非法、名称含路径字符;`.env` 值非法(未知键、含换行、端口越界) |
 | `401` | 未登录或会话过期 | 三种凭据(X-API-Token / Bearer 会话令牌 / Cookie)都缺失或无效;口令错误 |
-| `403` | 已识别但无权 | 仅 `/api/settings`:总开关未开启,或既非本机直连也无已鉴权会话 |
+| `403` | 已识别但无权 | 初始口令未改时,全部业务接口都 403(门禁);或仅 `/api/settings`:总开关未开启,或既非本机直连也无已鉴权会话 |
 | `404` | 资源不存在 | 未知版本 / 数据集 / 评测集 / 报告 / case |
 | `409` | 冲突 | 自进化循环正在运行,重复触发 |
 | `429` | 请求被限流 | 登录连续失败 5 次,账号锁定 10 分钟 |
@@ -603,8 +606,9 @@ summary = requests.post(f"{BASE}/api/evolve/run", headers=H, timeout=120,
 print(summary["best"], summary["stop_reason"])
 ```
 
-**微信小程序**:修改 `miniprogram/config.js` 的 `BASE_URL` 与 `TOKEN`(与服务端 `AUTH_TOKEN` 一致),
-`utils/api.js` 自动携带 `X-API-Token` 头。正式发布需 HTTPS + 备案域名,清单见 [DEPLOY.md](../DEPLOY.md)。
+**微信小程序**:修改 `miniprogram/config.js` 的 `BASE_URL`(不要写任何令牌),
+登录页换会话令牌后 `utils/api.js` 自动携带 `Authorization: Bearer <token>` 头。
+正式发布需 HTTPS + 备案域名,清单见 [DEPLOY.md](../DEPLOY.md)。
 
 ## 相关文档
 

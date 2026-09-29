@@ -3,21 +3,41 @@
 后端是标准的 FastAPI 应用,数据(cases / evalsets / reports / 数据集)全部落盘本地目录,
 迁移 = 拷贝目录。以下三条路线按成本从低到高排列,按需选择。
 
-## 前置:安全配置(公网必做)
+## 凭据与首次启动(公网必做)
+
+账密与机器令牌**必须由部署者自己提供**,服务不为任何环境准备可复述的默认值:
 
 ```bash
-# 1. 生成强随机令牌(任选一种)
-python -c "import secrets;print(secrets.token_urlsafe(32))"     # PowerShell 亦可
-# -join ((48..57) + (97..122) | Get-Random -Count 32 | % {[char]$_})
+# 1. 生成强随机凭据(任选一种)
+python -c "import secrets;print(secrets.token_urlsafe(32))"     # AUTH_TOKEN(≥16 字符,启动时强制校验)
+python -c "import secrets;print(''.join(secrets.choice('abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789') for _ in range(16)))"  # ADMIN_PASSWORD(8~64 位)
 
-# 2. 启动时注入(登录模式 + 机器客户端令牌 + 绑到公网)
-AUTH_MODE=login AUTH_TOKEN=<上面生成的串> HOST=0.0.0.0 python webapp/app.py
+# 2. 写进服务器 .env(该文件已被 .gitignore 排除,严禁入库)
+cat >> .env <<'EOF'
+AUTH_MODE=login
+AUTH_TOKEN=<你的强随机串>
+ADMIN_PASSWORD=<你的强口令>
+HOST=0.0.0.0
+EOF
+python webapp/app.py    # .env 在启动时自动读取
 ```
 
-- 鉴权模式 `AUTH_MODE`:`login`(默认,浏览器需登录)/ `open`(免登录,仅限内网演示)。
-  首次启动会自动创建 `webapp/auth.json`:用户名默认 `admin`,初始口令取环境变量
-  `ADMIN_PASSWORD`,**没给就用 `secrets` 随机生成一枚强口令、只在控制台打印一次**——
-  不存在任何公开默认口令,请按那行输出登录后立即改密;忘记口令就删掉 `auth.json` 重启;
+凭据语义(照 `webapp/auth.py` 实现,不要凭印象改):
+
+- 启动环境里**提供了 `ADMIN_PASSWORD`** → 用它创建/轮换管理员账号,`default_credentials=false`,
+  所有接口立即可用;用户名默认 `admin`,可用 `ADMIN_USER` 改;
+- **未提供** `ADMIN_PASSWORD` → 随机生成一枚强口令只在控制台打印一次,且 `default_credentials=true`:
+  在口令被改掉之前,业务接口对**三种凭据一律 403**,只放行 `/api/health` 与 `/api/auth/*`
+  (登录、改密)。用打印的口令登录 → 看板右上角「改密」→ 门禁立即解除;
+- **存量部署补收口**:线上 `auth.json` 还是默认口令状态时,在 `.env` 里加上
+  `ADMIN_PASSWORD=<新口令>` 重启一次即自动轮换并翻转标记;已在界面改过口令的部署,
+  环境变量会被忽略,不会覆盖;
+- `AUTH_TOKEN` 短于 16 字符时服务拒绝启动(机器令牌是公网部署唯一的机器凭据,不允许弱值);
+- 忘记口令:删掉 `webapp/auth.json` 重启(回到上面两条路径之一)。
+
+其余启动配置:
+
+- 鉴权模式 `AUTH_MODE`:`login`(默认,浏览器需登录)/ `open`(免登录,仅限内网演示);
 - 受保护的 `/api/*` 认可三种凭据(任一即可):`X-API-Token: <AUTH_TOKEN>`(SDK/脚本)、
   `Authorization: Bearer <会话令牌>`(小程序;令牌取自 `POST /api/auth/login` 响应体的
   `token`,7 天有效)、`harness_session` Cookie(网页);
@@ -30,9 +50,21 @@ AUTH_MODE=login AUTH_TOKEN=<上面生成的串> HOST=0.0.0.0 python webapp/app.p
 
 服务端已内置的防护(无需配置):口令 PBKDF2 哈希存储、登录连续失败 5 次锁定 10 分钟、
 会话 HMAC 签名 + HttpOnly Cookie、API 令牌时序安全比较、文件名白名单防路径穿越、
-`.env` 写入原子替换且写前备份;容器以非 root 用户运行并自带健康检查。
+`.env` 写入原子替换且写前备份;初始口令未改期间业务接口整体 403 门禁、
+未处理异常不向客户端回显内部细节;容器以非 root 用户运行并自带健康检查。
 `webapp/auth.json` 与会话密钥、`.env` 里的令牌/密钥都已列入 .gitignore,严禁提交或外传;
 **仓库与文档里不出现任何真实地址、令牌、口令**,部署时按占位符换成你自己的值。
+
+**部署边界**:单进程文件存储 + 进程内锁,`docker compose` / systemd **只跑一个实例**;
+多实例部署时锁不跨进程,评测资产一致性没有保证(需要先换数据库存储)。
+
+## 线上探针(部署后配置一次)
+
+GitHub Actions 每天只读探测一次线上 `/api/health`,断言「服务在线 + `default_credentials=false`」,
+代码改了、线上没动这类漂移当天就会红。配置:仓库 Settings → Secrets and variables →
+Actions → New repository secret,Name 填 `LIVE_HEALTH_URL`,Value 填
+`http://<你的服务地址>/api/health`。手工触发见 Actions 页的 Live Probe → Run workflow;
+本地等价命令:`LIVE_HEALTH_URL=<同上> python scripts/probe_live.py`。
 
 ## 路线 A:内网穿透演示(最快,10 分钟)
 
@@ -114,15 +146,15 @@ WantedBy=multi-user.target
 
 1. 后端 HTTPS + 备案域名(路线 B,或路线 C 绑定自定义备案域名);
 2. 小程序管理后台 → 开发设置 → `request` 合法域名 → 添加 `https://你的域名`;
-3. `miniprogram/config.js`:填 `BASE_URL` 与 `TOKEN`,替换 `project.config.json` 的 AppID;
+3. `miniprogram/config.js`:填 `BASE_URL`(**不要再写任何令牌**,小程序走登录换会话),
+   替换 `project.config.json` 的 AppID;
 4. 提审前关闭「不校验合法域名」,真机回归一遍三个 Tab。
 
 ## 健康检查与监控
 
 ```bash
-curl https://你的域名/api/health        # {"status":"ok","app_version":"1.5.0",...}
-# 令牌开启后:
-curl -H "X-API-Token: <token>" https://你的域名/api/health
+curl https://你的域名/api/health        # {"status":"ok","app_version":"<版本>",...,"default_credentials":false,...}
+# default_credentials 必须是 false;为 true 表示初始口令未改,业务接口处于 403 门禁状态
 ```
 
 UptimeRobot 等拨测服务监控 `/api/health` 即可。

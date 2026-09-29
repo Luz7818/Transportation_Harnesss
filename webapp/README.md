@@ -34,9 +34,11 @@
 `GET /help` → `help.html`、`GET /sw.js` → `sw.js`（后一条是刻意的，见「别动」第 1 条）。
 逐文件职责见上面的文件清单，页签与端点的对应关系见「前端 ↔ 后端对应」。
 
-`assets/` 里 11 个文件有 10 个被页面或清单引用，只有 `logo-lockup.svg` 没有任何引用（核对，在仓库根执行：
-`grep -roh "/static/assets/[a-zA-Z0-9._-]*" webapp/static/index.html webapp/static/help.html webapp/static/manifest.webmanifest | sort -u`）——
-但它是 `generate_pwa_icons.py` 每次都会重写的入库产物，手删只会在下次运行时冒回来。
+`assets/` 里 11 个文件中 10 个被页面或清单引用;`logo-lockup.svg` 不被看板页面引用,
+但自 1.6.0 起作为 README 顶部的项目标识使用(核对,在仓库根执行:
+`grep -roh "/static/assets/[a-zA-Z0-9._-]*" webapp/static/index.html webapp/static/help.html webapp/static/manifest.webmanifest | sort -u`
+只覆盖看板侧;README 侧用相对路径引用)——
+它是 `generate_pwa_icons.py` 每次都会重写的入库产物,手删只会在下次运行时冒回来。
 
 ## 后端：路由分组
 

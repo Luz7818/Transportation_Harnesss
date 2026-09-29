@@ -35,7 +35,7 @@ ruff --version
 
 ```
 0.141.1 0.52.4 0.28.1 12.0.0 8.3.5
-1.5.0
+1.6.0
 ruff 0.16.7
 ```
 
@@ -47,7 +47,7 @@ ruff 0.16.7
 | `HOST` / `PORT` | 监听地址与端口（重启生效） | 默认 `127.0.0.1:8765`，只有本机可访问 |
 | `AUTH_MODE` | `login`（默认，浏览器要登录）/ `open`（免登录，仅限内网演示）（重启生效） | 按 `login` 走，未登录访问受保护接口得 `401` |
 | `AUTH_TOKEN` | 机器客户端令牌，`X-API-Token` 那条通道（重启生效） | 该通道不参与裁决，只能用会话令牌或 Cookie |
-| `ADMIN_USER` / `ADMIN_PASSWORD` | 首次创建 `webapp/auth.json` 时的初始账号口令（之后请在界面改） | 用户名 `admin`，口令随机生成并只在控制台打印一次 |
+| `ADMIN_USER` / `ADMIN_PASSWORD` | 部署者自己提供的管理员账号口令:创建账号即视为已设置;对「默认口令未改」的存量部署,重启时就地轮换 | 用户名 `admin`,口令随机生成只打印一次,且改掉口令前业务接口一律 403(见第 3 节) |
 | `SETTINGS_ENABLED` | 开启 `/api/settings` 在线读写 `.env`（默认关） | 看板「设置」页恒得 `403` |
 | `COOKIE_SECURE` | HTTPS 部署时设 `1`，会话 Cookie 只经加密通道回传 | Cookie 允许经 http 回传 |
 | `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` | 接任意 OpenAI 兼容端点（`base_url` + `api_key` 两枚齐了才启用） | 整条 LLM 链路走离线确定性 Mock |
@@ -85,12 +85,13 @@ curl http://127.0.0.1:8765/api/health
 ```
 
 ```json
-{"status":"ok","app_version":"1.5.0","auth_mode":"open","default_credentials":true,
- "versions":["v0","v1","v2"],"case_count":16,"evalset_count":2,"report_count":11}
+{"status":"ok","app_version":"1.6.0","auth_mode":"open","default_credentials":true,
+ "versions":["v0","v1","v2"],"case_count":16,"evalset_count":2}
 ```
 
-`case_count`/`report_count` 会随沉淀与运行增长；`default_credentials` 是
-「首次创建账号后还没在界面改过口令」的布尔标记，不代表存在某个公开默认口令。
+`case_count`/`report_count` 会随沉淀与运行增长;`default_credentials` 是
+「初始口令还没改掉」的布尔标记 —— 为 `true` 时业务接口处于 403 门禁状态
+(登录模式),改口令或提供 `ADMIN_PASSWORD` 后翻转为 `false`。
 
 想按默认的登录模式跑（更接近公网部署形态）：
 
@@ -99,12 +100,17 @@ python webapp/app.py
 ```
 
 首次启动会在 `webapp/auth.json`（已 gitignore）里建账号：没给 `ADMIN_PASSWORD` 时随机生成一枚
-强口令并只在控制台打印一次，用户名默认 `admin`。看板会先落到登录页，用那枚口令登录后
-在侧边栏左下角改密。之后未登录访问受保护接口都会得到 `401`：
+强口令并只在控制台打印一次，用户名默认 `admin`。**在口令被改掉之前，业务接口对一切凭据
+（含机器令牌与已登录会话）一律 `403`，只放行 `/api/health` 与 `/api/auth/*`**：
+用那枚口令登录后看板会自动弹出「修改密码」，改完门禁立即解除。
+之后未登录访问受保护接口得到 `401`：
 
 ```json
 {"detail":"未登录或会话已过期"}
 ```
+
+想一次到位（推荐公网部署用）：启动前在环境或 `.env` 里设好 `ADMIN_PASSWORD` 与强随机
+`AUTH_TOKEN`，服务起来即是收口状态，无需手动改密。步骤与轮换通道见 [DEPLOY.md](../DEPLOY.md)。
 
 PWA：在 `localhost` 或 HTTPS 下，浏览器地址栏的「安装」即可得到独立窗口与图标；
 断网后仍能浏览最后一次加载的看板数据（Service Worker 缓存了页面壳与 GET 接口结果）。
@@ -182,7 +188,7 @@ Markdown 报告 -> reports\report_evolution_<时间>.md
 | 参数 | 作用 | 注意 |
 | --- | --- | --- |
 | `--evalset` | 用哪个评测集 | 默认 `evalset_v1` |
-| `--baseline` | 基线版本；只验证登记在它之后的版本 | 默认 `v0`；**不要传最后一个已登记版本（`v2`）**，会崩（第 9 节） |
+| `--baseline` | 基线版本；只验证登记在它之后的版本 | 默认 `v0`;传最末登记版本(现为 `v2`)会得到明确报错退出码 1(第 9 节) |
 | `EVOLVE_MAX_ROUNDS`（环境变量） | 单轮运行的迭代上限 | 默认 2；设 1 时未验证版本会列在「待验证版本」里而不是被丢弃 |
 
 ### 4.3 端到端校验（改完必须绿）
@@ -352,11 +358,11 @@ docker logs -f transportation-harness
 | `缺少依赖 'fastapi':请先在当前 Python 环境执行  pip install -r requirements.txt` | `python webapp/app.py` 的进程里没有装 FastAPI（虚拟环境没激活，或装到了另一个解释器） | 先 `pip install -r requirements.txt`，再确认 `python --version` 与 `pip` 指向同一个环境 |
 | `ModuleNotFoundError: No module named 'harness_client'` | 没装仓库内 SDK（`tests/test_sdk.py` 与所有 SDK 示例都要它） | `pip install ./sdk`；CI 里这一步是显式的一步，别指望仓库根目录能 import 到 |
 | 裸 `pytest` 收集期 `ModuleNotFoundError: No module named 'harness'`、退出码 2 | `pytest` 不把当前目录放进 `sys.path`（`python -m pytest` 才会），`pyproject.toml` 里的 `pythonpath = ["."]` 就是修这个的 | 别删那一行；被误删后重新加回 `[tool.pytest.ini_options] pythonpath` |
-| `python -m pytest tests/test_sdk.py -q` 得到 `harness_client.errors.HarnessAuthError: [401] 用户名或密码错误`（1 error） | 该文件的 `server_url` 夹具在真 uvicorn 进程里首次导入 `webapp.app`，于是读的是**本机** `webapp/auth.json` 的口令，而不是 `conftest.py` 里的测试口令；跑全量时前序测试已把 store 固化成测试账号，所以只在单独跑它时暴露 | 跑全量 `python -m pytest`，或 `python -m pytest tests/test_settings_api.py tests/test_sdk.py -q`（本机实测 exit 0）。别为了让它单跑而把测试口令写进真实 `auth.json` |
 | `POST /api/cases` 得 `400 {"detail":"路段 'S-99' 不在该数据集中(可用:S-01, S-02, …)"}` | `segment` 必须是所选数据集中存在的路段 ID | 先 `GET /api/segments/{dataset}` 或看板下拉取合法 ID；数据集名写错会得到 `404 未知数据集 …` |
 | `python scripts/run_eval.py --version v9` → `argument --version: invalid choice: 'v9' (choose from 'v0', 'v1', 'v2')`，退出码 2 | 版本必须已在 `pipeline/versions.py` 的 `PIPELINES` 里登记 | 想验新版本就照第 5 节末登记 `analyze_v3`；只是打错则改用 `v0/v1/v2` |
 | `python scripts/run_eval.py --evalset no_such_set` → `FileNotFoundError: [Errno 2] No such file or directory: '…\\evalsets\\no_such_set.json'` | CLI 直读文件，不做 404 包装 | 评测集名取 `evalsets/*.json` 的文件名；HTTP 侧同样的错误会返回 `404 评测集不存在 …(可选:…)` |
-| `python -m harness.evolve --baseline v2` → `IndexError: list index out of range`（`harness/report.py` 里 `versions[-2]`）；HTTP 侧 `POST /api/evolve/run {"baseline":"v2"}` → `500 {"detail":"服务器内部错误:IndexError: list index out of range"}` | 基线是最后一个已登记版本时，本轮没有任何待验证版本，报告渲染取倒数第二个版本就越界 | 基线传「上一个版本」（登记 v3 之后用 `--baseline v2`）；只想看单版本表现用 `python scripts/run_eval.py --version v2` |
+| `python -m harness.evolve --baseline v2` → `错误:'v2' 已是最新登记版本,其后没有待验证的版本…`（退出码 1）；HTTP 侧 `POST /api/evolve/run {"baseline":"v2"}` → `400` 同文案 | 基线传了最末登记版本,其后没有可验证的迭代版本(1.6.0 起明确报错,不再 IndexError) | 基线传「上一个版本」（登记 v3 之后用 `--baseline v2`）；只想看单版本表现用 `python scripts/run_eval.py --version v2` |
+| 受保护业务接口得 `403 {"detail":"初始口令尚未修改,业务接口暂不开放:…"}`（登录模式，机器令牌/已登录会话同样被挡） | 初始口令未改（`/api/health` 的 `default_credentials` 为 true），门禁只放行 `/api/health` 与 `/api/auth/*` | 用控制台打印的初始口令登录 → 看板「改密」;或在启动环境设 `ADMIN_PASSWORD` 后重启(部署者自备凭据,见 [DEPLOY.md](../DEPLOY.md)) |
 | `GET /api/settings` → `403 {"detail":"运行时配置接口未启用:/api/settings 能读写服务器本地的 .env(含密钥),默认关闭。确需使用请在服务启动环境里设 SETTINGS_ENABLED=1 并重启服务;开启后非本机访问仍必须携带已登录会话。"}` | 该接口默认关闭，且只在启动时读一次 | 在服务器环境里设 `SETTINGS_ENABLED=1` 并重启；机器令牌 `X-API-Token` 永远不能用于该接口（设计如此，见 [AGENTS.md](../AGENTS.md) 鉴权事实） |
 | 从本机以外访问 `/api/settings` → `403 {"detail":"/api/settings 仅允许本机直连或已登录会话访问。…"}`；经 Nginx 反代后从本机访问也被拒 | 反代之后 TCP 对端恒为 `127.0.0.1`，但请求带 `X-Forwarded-For` 等转发头 → 不算「本机直连」 | 带已登录会话（Bearer 或 Cookie），或在服务器本机浏览器里打开 `127.0.0.1:8765` |
 | 受保护接口得 `401 {"detail":"未登录或会话已过期"}` | 三种凭据都没带或都无效 | 依次检查：`X-API-Token` 是否等于服务端 `AUTH_TOKEN`（改了要重启）、会话令牌/Cookie 是否过期（7 天）、`AUTH_MODE` 是否 `login` |
@@ -393,9 +399,10 @@ docker logs -f transportation-harness
 ruff check .
 python -m pytest
 python scripts/verify.py
+python scripts/check_release.py
 ```
 
-通过标准：`All checks passed!`、`190 passed`、末行 `VERIFY PASS`，三条退出码都是 0。
-这三条就是 CI 的全部步骤；动了端点还要 `python scripts/export_openapi.py` 重导规范并同步
-`docs/API.md`、`webapp/static/help.html`、`sdk/`。各项改动对应跑什么，见 [AGENTS.md](../AGENTS.md)
-的「改动后的验证」。
+通过标准：`All checks passed!`、`199 passed`、末行 `VERIFY PASS`、末行 `RELEASE CHECK PASS`，
+四条退出码都是 0。这四条就是 CI 的全部步骤；动了端点还要 `python scripts/export_openapi.py`
+重导规范并同步 `docs/API.md`、`webapp/static/help.html`、`sdk/`。各项改动对应跑什么，
+见 [AGENTS.md](../AGENTS.md) 的「改动后的验证」。

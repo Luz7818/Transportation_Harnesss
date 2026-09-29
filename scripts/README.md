@@ -15,22 +15,26 @@
 | `run_eval.py` | 单版本评测 CLI：重放 → 判分 → 打印逐用例结果 → 归档 JSON | `reports/report_<v>_<时间>.json`（`--md` 再加 `.md`） | `--version` 只能取已登记版本；耗时与得分来自 `EvalResult` |
 | `verify.py` | 端到端不变量校验（CI 的第三步） | 不写（只读 `reports/` 判断归档是否齐） | 断言种子行为冻结、通过集单调不减、v2 关键数值与降级、归档存在；新沉淀用例只给 WARN（但见「注意」） |
 | `backup.py` | 评测资产一键打包 zip | `backups/harness_backup_<时间>.zip`（`backups/` 已 gitignore） | 收 `cases/`、`evalsets/`、`reports/`、`pipeline/data/`，跳过 `__pycache__` |
-| `export_openapi.py` | 离线导出 FastAPI 的 OpenAPI 3.1 规范 | `docs/openapi.json`（默认，可用 `--out` 改写别处） | 导出前把 `AUTH_MODE=login`、`AUTH_TOKEN=export-placeholder` 固定下来，保证 schema 稳定 |
+| `export_openapi.py` | 离线导出 FastAPI 的 OpenAPI 3.1 规范(含三种安全方案声明) | `docs/openapi.json`(默认,可用 `--out` 改写别处) | 无需任何环境变量:安全方案在 `webapp/app.py` 的 `_openapi_schema` 里显式声明 |
 | `generate_pwa_icons.py` | 从 `webapp/static/assets/icon.svg` 栅格化 PWA 图标四件套，并内联组合 `logo-lockup.svg`、`banner.svg` | `webapp/static/assets/` 下 4 个 PNG + 2 个 SVG（都入库） | 需要 `resvg-py`（不在 `requirements*.txt` 里，属可选工具链）；缺它直接退出并给安装提示 |
+| `check_release.py` | 发布一致性断言(CI 第四步):版本号四处同步 + `docs/openapi.json` 无漂移 | 不写(只读) | 任一断言失败退出码 1;`__init__.py` 的版本直接读源码文件,不经 import(环境里可能装着旧包) |
+| `probe_live.py` | 线上只读探针:`GET $LIVE_HEALTH_URL`,断言在线且 `default_credentials=false` | 不写(只读,不携带凭据) | 服务地址从环境变量读,不入库;失败退出码 1,给 GitHub Actions 的 Live Probe 用 |
 
 ## 和谁打交道
 
-- **上游**：`harness/`（`storage`、`ReplayRunner`）与 `pipeline/versions.py` 的 `PIPELINES`——6 个脚本先把仓库根插进
-  `sys.path` 再 import 项目包；`export_openapi.py` 只 import `webapp.app` 取 schema，不起服务。
-  核对（在仓库根执行）：`grep -c "sys.path.insert" scripts/*.py` → 只有 `generate_pwa_icons.py` 是 `0`，其余 6 个都是 `1`。
+- **上游**:`harness/`(`storage`、`ReplayRunner`)与 `pipeline/versions.py` 的 `PIPELINES`——多数脚本先把仓库根插进
+  `sys.path` 再 import 项目包;`export_openapi.py` 只 import `webapp.app` 取 schema,不起服务;
+  `check_release.py` 还会 import `harness_client`(版本断言直接读文件,不依赖安装版本)。
+  核对(在仓库根执行):`grep -c "sys.path.insert" scripts/*.py` → 只有 `generate_pwa_icons.py` 是 `0`,其余 8 个都是 `1`。
 - **下游**（被这些脚本写到）：`cases/<标签>/` 与 `evalsets/*.json`（两个 seed 脚本）、`reports/report_<v>_<时间>.json`
   与 `.md`（`run_eval.py`）、`docs/openapi.json`（`export_openapi.py`）、`webapp/static/assets/` 的 4 PNG + 2 SVG
   （`generate_pwa_icons.py`）、仓库根 `backups/`（`backup.py`，已 gitignore）。`verify.py` 只读，一个文件都不写。
-- **改这里之后要跑**：CI 只跑 `python scripts/verify.py` 这一步（复核，在仓库根执行：
-  `grep -n "scripts/verify.py" .github/workflows/ci.yml`），先在仓库根跑它，看到 `VERIFY PASS` 且退出码 0 才算过。
-  按脚本再补一条：改 `export_openapi.py` → `python scripts/export_openapi.py` 后核对 `no_drift`（命令在
-  [AGENTS.md](../AGENTS.md) 的「当前真实状态」）；改 `generate_pwa_icons.py` → `python -m pytest tests/test_pwa.py -q`。
-  本目录不被任何测试引用（复核，在仓库根执行：`grep -rn "scripts/" tests/*.py` → 无输出）。
+- **改这里之后要跑**:CI 跑 `python scripts/verify.py` 与 `python scripts/check_release.py` 两步
+  (复核,在仓库根执行:`grep -n "scripts/" .github/workflows/ci.yml`),先在仓库根跑它们,
+  看到 `VERIFY PASS` 与 `RELEASE CHECK PASS` 且退出码 0 才算过。
+  按脚本再补一条:改 `export_openapi.py` → `python scripts/export_openapi.py` 后跑 `python scripts/check_release.py` 核对无漂移;
+  改 `generate_pwa_icons.py` → `python -m pytest tests/test_pwa.py -q`。
+  本目录不被任何测试引用(复核,在仓库根执行:`grep -rn "scripts/" tests/*.py` → 无输出)。
 
 ## 命令与真实输出
 
@@ -147,8 +151,7 @@ webapp\static\assets\apple-touch-icon-180.png  (21994 bytes)
   开的 `E402` 豁免正是为这行「先插路径再 import 项目包」准备的。
 - `generate_pwa_icons.py` 覆盖的是 6 个**已入库**文件（`webapp/static/assets/` 下 4 个 PNG 加 `logo-lockup.svg`、`banner.svg`）：
   没换 `icon.svg` 就别重跑，那只会产出字节不同、内容等价的假 diff（核对：`grep -n "write_bytes\|write_text" scripts/generate_pwa_icons.py`）。
-- `export_openapi.py:19` 的注释说第 20–21 行两环境变量是「确保导出的 schema 包含 X-API-Token 安全方案」，实测不成立：
-  在本仓库根分别用 `AUTH_MODE=open` 与 `AUTH_MODE=login` 跑 `--out` 到临时目录，两份 JSON 逐键相同，且 `docs/openapi.json`
-  里只有 `components.schemas`、没有 `components.securitySchemes`。别照那句注释去找一个不存在的字段。
+- 安全方案(`securitySchemes`)不在导出脚本里,在 `webapp/app.py` 的 `_openapi_schema`(1.6.0 起显式声明,
+  核对:`grep -n "securitySchemes" webapp/app.py docs/openapi.json` 各有命中);导出脚本自身不含任何鉴权相关环境变量。
 - `backup.py` 写的 `backups/` 已被 `.gitignore` 的 `/backups/` 挡住（核对，在仓库根执行：`grep -n "/backups/" .gitignore`）：
   每跑一次多一个 zip，它不是交付物，别为「产物少了」而提交它，也别把它当评测资产读。

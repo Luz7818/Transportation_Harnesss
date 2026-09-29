@@ -13,18 +13,20 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 
 | 项 | 值 | 复核命令 |
 | --- | --- | --- |
-| 测试 | `190 passed`（本机实测 40–55 s 之间浮动，含真起 uvicorn 的 SDK 用例；耗时受机器负载影响，别当判据） | `python -m pytest` |
-| 测试分布 | 14 个文件共 190 例，最大 `test_settings_api.py` 37 例、`test_webapp.py` 34 例、`test_llm.py` 27 例 | `python -m pytest --collect-only -q` |
-| 静态检查 | `All checks passed!`，退出码 0 | `ruff check .` |
-| 端到端校验 | `VERIFY PASS`，退出码 0；雨天评测集同样 PASS | `python scripts/verify.py` |
-| OpenAPI 漂移 | `docs/openapi.json` 与 app 当前 schema 逐键一致（29 路径 / 33 操作），输出 `no_drift: True` | `python -c "import os,json,pathlib;os.environ['AUTH_MODE']='login';os.environ['AUTH_TOKEN']='export-placeholder';from webapp.app import app;live=json.dumps(app.openapi(),sort_keys=True,ensure_ascii=False);disk=json.dumps(json.loads(pathlib.Path('docs/openapi.json').read_text(encoding='utf-8')),sort_keys=True,ensure_ascii=False);print('no_drift:',live==disk)"` |
-| API 面 | `/api/*` 31 个操作（27 条路径），另有 3 条页面路由 | `python -c "import json;s=json.load(open('docs/openapi.json',encoding='utf-8'));print(len(s['paths']),sum(len(v) for v in s['paths'].values()))"` |
-| SDK 面 | 30 个公开方法（含 `close`），其中 29 个对应 API 操作 —— `/api/settings` 的 GET/PUT 刻意不接 | `python -c "import ast;print(len([n for n in ast.walk(ast.parse(open('sdk/harness_client/client.py',encoding='utf-8').read())) if isinstance(n,ast.FunctionDef) and not n.name.startswith('_')]))"` |
-| 评测资产 | 16 条 replaycase（8 个标签目录，2 个空目录）、2 个评测集（13 + 3 条）、6 个数据集、`reports/` 19 个归档文件 | `python -c "import glob;print(len(glob.glob('cases/*/*.json')),len(glob.glob('evalsets/*.json')),len(glob.glob('pipeline/data/*.json')),len(glob.glob('reports/*')))"` |
-| 得分轨迹 | evalset_v1：v0 1/13 → v1 11/13 → v2 13/13；evalset_scenario_rain：0/3 → 2/3 → 3/3 | `python scripts/verify.py` |
-| CI | 两条矩阵 job：`test (3.11)`、`test (3.12)`；此前 5/5 全红已由「pytest 缺 `pythonpath`」与「`Pillow` 未声明」两个修复解决。**这里不写"最近一次是哪个提交"**——分支每推一次它就变，写进文档同一次提交里就作废了。当前分支 HEAD 的徽章为 `passing`（复核见右）。本机没有 `gh`，但徽章与 Actions 接口对**公开仓都免认证**；要提交号与耗时再用 `/actions/runs`（匿名限 60 次/小时/IP，别拿它轮询） | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/Transportation_Harnesss/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`；步骤清单见 `.github/workflows/ci.yml` |
-| CI 步骤 | `ruff check .` → `pytest` → `python scripts/verify.py`，另装 `pip install -r requirements.txt -r requirements-dev.txt` 与 `pip install ./sdk` | `cat .github/workflows/ci.yml` |
-| 版本 | 应用与 SDK 均为 `1.5.0`（三处同步：`pyproject.toml`、`sdk/pyproject.toml`、`FastAPI(..., version=...)`） | `python -c "import webapp.app as m;print(m.app.version)"` |
+| 测试 | `199 passed`(本机实测 30–55 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
+| 测试分布 | 14 个文件共 199 例,最大 `test_webapp.py` 39 例、`test_settings_api.py` 37 例、`test_llm.py` 27 例 | `python -m pytest --collect-only -q` |
+| 静态检查 | `All checks passed!`,退出码 0 | `ruff check .` |
+| 端到端校验 | `VERIFY PASS`,退出码 0;雨天评测集同样 PASS | `python scripts/verify.py` |
+| 发布一致性 | `RELEASE CHECK PASS`:版本四处一致 + `docs/openapi.json` 与 app 当前 schema 逐键一致(29 路径) | `python scripts/check_release.py` |
+| API 面 | `/api/*` 31 个操作(27 条路径),另有 3 条页面路由 | `python -c "import json;s=json.load(open('docs/openapi.json',encoding='utf-8'));print(len(s['paths']),sum(len(v) for v in s['paths'].values()))"` |
+| SDK 面 | 30 个公开方法(含 `close`),其中 29 个对应 API 操作 —— `/api/settings` 的 GET/PUT 刻意不接 | `python -c "import ast;print(len([n for n in ast.walk(ast.parse(open('sdk/harness_client/client.py',encoding='utf-8').read())) if isinstance(n,ast.FunctionDef) and not n.name.startswith('_')]))"` |
+| 评测资产 | 16 条 replaycase(8 个标签目录,2 个空目录)、2 个评测集(13 + 3 条)、6 个数据集、`reports/` 归档随运行增长 | `python -c "import glob;print(len(glob.glob('cases/*/*.json')),len(glob.glob('evalsets/*.json')),len(glob.glob('pipeline/data/*.json')),len(glob.glob('reports/*')))"` |
+| 得分轨迹 | evalset_v1:v0 1/13 → v1 11/13 → v2 13/13;evalset_scenario_rain:0/3 → 2/3 → 3/3 | `python scripts/verify.py` |
+| CI | 两条矩阵 job:`test (3.11)`、`test (3.12)`;当前分支 HEAD 的徽章为 `passing`(复核见右)。本机没有 `gh`,但徽章与 Actions 接口对**公开仓都免认证**;要提交号与耗时再用 `/actions/runs`(匿名限 60 次/小时/IP,别拿它轮询) | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/Transportation_Harnesss/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`;步骤清单见 `.github/workflows/ci.yml` |
+| CI 步骤 | `ruff check .` → `pytest` → `python scripts/verify.py` → `python scripts/check_release.py`,另装 `pip install -r requirements.txt -r requirements-dev.txt` 与 `pip install ./sdk` | `cat .github/workflows/ci.yml` |
+| 线上探针 | `.github/workflows/probe.yml` 每天只读 `GET /api/health`,断言在线且 `default_credentials=false`;服务地址存仓库 secret `LIVE_HEALTH_URL`,**不入库**;线上未配置该 secret 或服务未收口前,探针会红 —— 这是设计,不是故障 | `cat scripts/probe_live.py` + `cat .github/workflows/probe.yml` |
+| 版本 | 应用与 SDK 均为 `1.6.0`(四处同步:根 `pyproject.toml`、`sdk/pyproject.toml`、`sdk/harness_client/__init__.py`、`FastAPI(..., version=...)`;一致性已由 check_release 断言进 CI) | `python scripts/check_release.py` |
+| 发布 | `CHANGELOG.md` 从 1.6.0 起向前记录;tag 命名 `v主.次.补` | `head -20 CHANGELOG.md` |
 
 ## 仓库地图
 
@@ -39,13 +41,13 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 | `cases/` | replaycase 库 | 按失败标签分目录，一个 case 一个 `<case_id>.json` |
 | `evalsets/` | 评测集清单 | `{"evalset_id","description","created_at","case_ids"}`，`case_ids` 顺序即重放顺序 |
 | `reports/` | 归档产物 | `report_<v>_<时间>.json`、`evolution_<时间>.json`、`report_evolution_<时间>.md` |
-| `scripts/` | 命令行工具箱 | `seed_cases.py`、`seed_scenario_cases.py`、`run_eval.py`、`verify.py`、`backup.py`、`export_openapi.py`、`generate_pwa_icons.py` |
+| `scripts/` | 命令行工具箱 | `seed_cases.py`、`seed_scenario_cases.py`、`run_eval.py`、`verify.py`、`backup.py`、`export_openapi.py`、`generate_pwa_icons.py`、`check_release.py`(版本同步+OpenAPI 漂移断言)、`probe_live.py`(线上只读探针) |
 | `sdk/` | 官方 Python SDK | `harness_client/`（client/models/cli/errors），`dist/` 下的 wheel 与 sdist 按约定入库 |
 | `miniprogram/` | 微信小程序 | 4 个 Tab + 5 个二级页，`utils/api.js` 统一带 `Authorization: Bearer` 会话令牌 |
 | `tests/` | 测试 | `conftest.py` 夹具把资产目录与 `.env`、`auth.json` 全隔离到临时目录 |
 | `docs/` | 人读参考 | `API.md`（逐端点）、`INTEGRATION.md`、`LLM.md`、`openapi.json`（生成物）、`images/`（README 截图） |
 | `Dockerfile` / `docker-compose.yml` / `DEPLOY.md` | 部署 | 容器非 root（UID 1000）、`/api/health` 健康检查、四个数据卷 |
-| `.github/workflows/ci.yml` | CI | Python 3.11/3.12 矩阵，ruff + pytest + verify |
+| `.github/workflows/ci.yml` | CI | Python 3.11/3.12 矩阵,ruff + pytest + verify + check_release;`probe.yml` 每天只读探线上健康 |
 
 ## 架构与数据流
 
@@ -98,23 +100,32 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 
 ## 鉴权事实（照 `webapp/app.py` 的 `auth_middleware` 写，不要凭印象改）
 
-`AUTH_MODE=open` 时全部放行（仅内网演示）。否则对 `/api/*`：
+`AUTH_MODE=open` 时全部放行（仅内网演示）。否则对 `/api/*` 依次判定:
 
-1. **豁免在前**：非 `/api/` 路径、`/api/auth/*`、`/api/health`、`/api/settings` 直接放行 ——
-   `/api/settings` 刻意不被通用 401 挡掉，由端点自己 `_settings_actor()` 做更严的裁决；
-2. **凭据按序裁决，任一通过即放行**：
-   1. `X-API-Token: <AUTH_TOKEN>` —— 机器令牌（SDK / 脚本 / CI），用 `hmac.compare_digest` 比较；
-   3. `Authorization: Bearer <会话令牌>` —— 小程序等带不了 Cookie 的客户端；
-   4. `harness_session` Cookie —— 网页看板（HttpOnly、`SameSite=lax`、7 天）。
-   后两者是**同一枚** HMAC 签名令牌（载荷 `用户名.过期时间`），签发与校验只在 `webapp/auth.py`；
+0. **初始口令门禁在最前**:`_AUTH_STORE` 的 `default_credentials` 为 true 时,
+   除 `/api/health` 与 `/api/auth/*` 外的全部 `/api/*` 一律 `403`(先于凭据裁决,
+   令牌与已登录会话同样被挡)。部署者必须先改掉初始口令(看板「改密」或
+   `POST /api/auth/password`),或在启动环境设 `ADMIN_PASSWORD` 后重启 ——
+   语义见 `webapp/auth.py`:环境变量提供即视为已设置(false);
+   随机生成只打印一次(true,门禁开启);存量默认口令部署重启时提供环境变量即自动轮换;
+1. **豁免在前**:非 `/api/` 路径、`/api/auth/*`、`/api/health`、`/api/settings` 直接放行 ——
+   `/api/settings` 刻意不被通用 401 挡掉,由端点自己 `_settings_actor()` 做更严的裁决
+   (但它仍受第 0 条门禁约束);
+2. **凭据按序裁决,任一通过即放行**:
+   1. `X-API-Token: <AUTH_TOKEN>` —— 机器令牌(SDK / 脚本 / CI),用 `hmac.compare_digest` 比较;
+      短于 16 字符的取值在启动时直接拒绝(`__main__` 段);
+   3. `Authorization: Bearer <会话令牌>` —— 小程序等带不了 Cookie 的客户端;
+   4. `harness_session` Cookie —— 网页看板(HttpOnly、`SameSite=lax`、7 天)。
+   后两者是**同一枚** HMAC 签名令牌(载荷 `用户名.过期时间`),签发与校验只在 `webapp/auth.py`;
 3. 三条都不通过 → `401 {"detail":"未登录或会话已过期"}`。
 
-`/api/settings` 只认两种身份：已鉴权会话（Bearer 或 Cookie）**或本机直连**。
-它**故意不认机器令牌** —— 那枚 `AUTH_TOKEN` 与小程序等客户端共用，认它就等于把
-「改服务器配置（含换令牌、看密钥）」交给任何令牌持有者。
+`/api/settings` 只认两种身份:已鉴权会话(Bearer 或 Cookie)**或本机直连**。
+它**故意不认机器令牌** —— 那枚 `AUTH_TOKEN` 与小程序等客户端共用,认它就等于把
+「改服务器配置(含换令牌、看密钥)」交给任何令牌持有者。
 「本机直连」= TCP 对端是回环地址且请求不带 `Forwarded`/`X-Forwarded-For`/`X-Real-IP`
-（反代之后对端恒为 `127.0.0.1`，所以经代理的请求一律要求会话）。
+(反代之后对端恒为 `127.0.0.1`,所以经代理的请求一律要求会话)。
 未开 `SETTINGS_ENABLED=1` 时恒为 `403`。
+未处理异常由 `on_unhandled` 兜底:客户端只收到通用 500 文案,异常细节只进服务端日志。
 
 ## 关键约定（违反会出问题的才写）
 
@@ -180,13 +191,14 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 | `cases/`、`evalsets/`、`tests/fixtures/` | `python -m pytest tests/test_storage.py -q` + `python scripts/verify.py` |
 | `harness/judge.py`、`harness/models.py` | `python -m pytest tests/test_judge.py tests/test_models.py -q` |
 | `harness/evolve.py`、`harness/report.py` | `python -m pytest tests/test_evolve.py tests/test_report.py -q` + `python -m harness.evolve` |
-| `webapp/app.py` 的路由或鉴权中间件 | `python -m pytest tests/test_webapp.py tests/test_auth.py tests/test_settings_api.py -q`，再手动开一次服务过一遍看板 |
+| `webapp/auth.py`、鉴权中间件、初始口令门禁 | `python -m pytest tests/test_webapp.py tests/test_auth.py tests/test_settings_api.py -q`,再手动开一次服务过一遍看板(含「改密前 403 → 改密后放行」) |
+| 版本号 / `docs/openapi.json` | `python scripts/check_release.py`(版本同步 + 漂移断言) |
 | `webapp/settings.py` 的键元数据 | `python -m pytest tests/test_settings_api.py -q` + 更新 `.env.example` 与看板「设置」页说明 |
 | 任何端点/请求体字段 | `python scripts/export_openapi.py` 重导 + 同步 `docs/API.md`、`webapp/static/help.html`、`sdk/`（见关键约定 4） |
 | `sdk/harness_client/*` | `python -m pip install ./sdk` 后 `python -m pytest tests/test_sdk.py -q` |
 | `webapp/static/**`（前端与 PWA） | `python -m pytest tests/test_pwa.py -q`（校验 manifest/SW/图标）+ 浏览器手测；改图标则 `python scripts/generate_pwa_icons.py` |
 | `llm/*` | `python -m pytest tests/test_llm.py -q`（全程离线 Mock） |
-| 任何代码 | `ruff check .` + `python -m pytest` + `python scripts/verify.py`（CI 就这三条） |
+| 任何代码 | `ruff check .` + `python -m pytest` + `python scripts/verify.py` + `python scripts/check_release.py`(CI 就这四条) |
 
 ## 已知坑
 
@@ -195,22 +207,12 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
   `[tool.pytest.ini_options]`）是修这个问题的：缺了它，`tests/` 全部模块在收集期
   `ModuleNotFoundError: No module named 'harness'`，退出码 2，CI 里表现为「装完依赖仍然一条测试都没跑起来」。
   别再删掉或改成靠 `conftest.py` 里 `sys.path.insert` 单点兜底 —— `conftest.py` 自己也需要先被导入。
-- **`tests/test_sdk.py` 单独跑仍会失败**（本机复现，未修）：`python -m pytest tests/test_sdk.py -q`
-  → `1 error`，用例 `TestAuthChannels::test_login_channel_me_and_cases` 在 fixture 里报
-  `harness_client.errors.HarnessAuthError: [401] 用户名或密码错误`。
-  原因：它的 `server_url` fixture 线程内起真 uvicorn，此时 `webapp.app` 在 import 期执行
-  `_AUTH_STORE = auth.load_store()`，读的是**本机真实** `webapp/auth.json`（口令与 `conftest`
-  设定的测试口令不同）；而 `make_client` 夹具是把 `AUTH_FILE` 换到 `tmp_path` 之后才首次导入
-  `webapp.app`，模块级 `_AUTH_STORE` 就此固化成测试账号。跑全量时前序文件已经把这份 store 固化，
-  所以只有「单独跑 test_sdk」或「先跑不含 `make_client` 的文件再跑它」才暴露。
-  处理：跑全量 `python -m pytest`，或 `python -m pytest tests/test_settings_api.py tests/test_sdk.py -q`
-  （已验证 exit 0）；要根治就得让 `server_url` fixture 自己 patch `AUTH_FILE`（改代码，本文档不动）。
-- **本机 `webapp/auth.json` 的 `default_credentials` 仍为 `true`**：`/api/health` 会原样回显这个布尔值。
-  它只表示「首次创建后没在界面改过口令」，不代表口令是某个公开默认值 —— 仓库里已经没有可用默认口令。
-- **`--baseline` 传最后一个已登记版本会崩**：`python -m harness.evolve --baseline v2` →
-  `IndexError: list index out of range`（`harness/report.py` 里 `versions[-2]`），
-  同参数的 `POST /api/evolve/run` → `500 {"detail":"服务器内部错误:IndexError: ..."}`。
-  现有测试只覆盖 `baseline="v1"`，所以它是绿的；别把「baseline 传当前最佳」当成永远可用。
+- **`tests/test_sdk.py` 曾单独跑失败,已修(1.6.0)**:`server_url` 夹具现在在导入
+  `webapp.app` 前后把 `AUTH_FILE` 与模块级 `_AUTH_STORE` 换到临时文件再还原;
+  别把这个隔离拆掉,否则单跑又会读到本机真实 `webapp/auth.json` 而 401。
+- **本机 `webapp/auth.json` 的 `default_credentials` 已随 1.6.0 的轮换通道翻转为 false**
+  (本地 `.env` 提供了 `ADMIN_PASSWORD` 并重启过一次);`/api/health` 会原样回显这个布尔,
+  它为 true 表示「初始口令未改、业务接口处于 403 门禁状态」,线上是否收口以探针为准。
 - **Windows 控制台/管道编码**：脚本自身有 `sys.stdout.reconfigure(encoding="utf-8")`，
   但没走这条的进程（例如你新写的脚本、或 `webapp/app.py` 的 banner）在 GBK 控制台里经管道会被
   重新解码成乱码。捕获输出前 `set PYTHONIOENCODING=utf-8`。
