@@ -27,3 +27,5 @@ jobs:
         run: pytest
       - name: 端到端校验
         run: python scripts/verify.py
+      - name: 发布一致性(版本四处同步 + OpenAPI 无漂移)
+        run: python scripts/check_release.py
