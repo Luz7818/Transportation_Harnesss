@@ -59,13 +59,17 @@ def _rel_to_project(path) -> str:
         return str(path)
 
 
-def _resolve_iterations(baseline_version: str) -> tuple[list[str], list[str]]:
+def resolve_iterations(baseline_version: str) -> tuple[list[str], list[str]]:
     """按注册顺序取基线之后的版本,依单轮上限切成(本轮验证, 待下轮验证)。"""
     registered = list(PIPELINES)
     if baseline_version not in registered:
         raise ValueError(
             f"未知基线版本 {baseline_version!r}(可选:{', '.join(registered)})")
     pending_all = registered[registered.index(baseline_version) + 1:]
+    if not pending_all:  # 基线已是最末版本:给出明确报错,而不是产出单版本报告
+        raise ValueError(
+            f"{baseline_version!r} 已是最新登记版本,其后没有待验证的版本;"
+            f"新增版本请先在 pipeline/versions.py 登记再用 --baseline {baseline_version}")
     cap = _max_rounds()
     return pending_all[:cap], pending_all[cap:]
 
@@ -73,7 +77,7 @@ def _resolve_iterations(baseline_version: str) -> tuple[list[str], list[str]]:
 def run_evolution(evalset_name: str = "evalset_v1",
                   baseline_version: str = BASELINE_VERSION) -> dict:
     """执行完整自进化循环并归档报告,返回结构化摘要(供 CLI 打印与 API 返回)。"""
-    iteration_versions, pending_versions = _resolve_iterations(baseline_version)
+    iteration_versions, pending_versions = resolve_iterations(baseline_version)
     evalset = storage.load_evalset(evalset_name)
     cases = storage.load_evalset_cases(evalset_name)
     runner = ReplayRunner()
@@ -192,7 +196,10 @@ def main() -> None:
     parser.add_argument("--baseline", default=BASELINE_VERSION,
                         help="基线版本(默认 v0;增量验证新版本时用当前最佳,如 --baseline v2)")
     args = parser.parse_args()
-    _print_summary(run_evolution(args.evalset, args.baseline))
+    try:
+        _print_summary(run_evolution(args.evalset, args.baseline))
+    except ValueError as exc:  # 基线未知 / 已是最末版本:给明确错误而非 traceback
+        sys.exit(f"错误:{exc}")
 
 
 if __name__ == "__main__":

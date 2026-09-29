@@ -66,3 +66,12 @@ def test_unknown_baseline_rejected(hermetic_storage):
 
     with pytest.raises(ValueError):
         run_evolution("evalset_v1", "v9")
+
+
+def test_tail_baseline_rejected(hermetic_storage):
+    """基线传最末登记版本(其后无待验证版本)→ 明确 ValueError,不再 IndexError。"""
+    import pytest
+
+    with pytest.raises(ValueError) as excinfo:
+        run_evolution("evalset_v1", "v2")
+    assert "没有待验证" in str(excinfo.value)

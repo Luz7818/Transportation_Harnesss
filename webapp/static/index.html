@@ -977,7 +977,7 @@ body.col-resizing .aipanel { transition: none; }
       <input id="login-pass" type="password" autocomplete="current-password" placeholder="密码">
       <div id="login-err"></div>
       <button class="btn" onclick="doLogin(this)">登 录</button>
-      <div id="login-hint">初始口令只在服务器首次启动时打印到控制台一次(未设 <code>ADMIN_PASSWORD</code> 时为随机生成),请据此登录并立即修改</div>
+      <div id="login-hint">初始口令只打印一次(未设 <code>ADMIN_PASSWORD</code> 时随机生成);改掉口令之前业务接口保持 403,登录后请立即「改密」</div>
       <div class="login-foot"><span class="linklike" onclick="showWelcome()">← 返回欢迎页</span></div>
     </div>
   </div>
@@ -1335,6 +1335,13 @@ async function doLogin(btn) {
       username: $("#login-user").value.trim(), password: $("#login-pass").value,
     });
     showWelcome(); toast(`欢迎回来,${out.username}`);
+    // 初始口令未改时业务接口是 403 门禁状态:立刻引导改密,而不是让用户逐页撞 403
+    const h = await api("/api/health");
+    if (h.default_credentials) {
+      openPasswordModal();
+      $("#pw-err").innerHTML = `<div class="hint warn">${icon("alert", 15)}
+        <span>初始口令尚未修改:改掉口令之前,业务接口一律 403,看板各页暂无数据。请设置新口令。</span></div>`;
+    }
   } catch (e) {
     $("#login-err").innerHTML = `<div id="login-hint" style="display:block;background:rgba(240,68,56,.12);border-color:rgba(240,68,56,.4);color:#fda29b">${esc(e.message)}</div>`;
   } finally { btn.disabled = false; btn.textContent = old; }
@@ -1356,7 +1363,8 @@ async function doChangePassword(btn) {
   const old = btn.textContent; btn.disabled = true; btn.textContent = "保存中…";
   try {
     await api("/api/auth/password", { old_password: $("#pw-old").value, new_password: nw });
-    closeModal(); toast("密码已修改");
+    closeModal(); toast("密码已修改,业务接口已开放");
+    loadHealth();  // 刷新 default_credentials 状态(登录页提示随之消失)
   } catch (e) {
     $("#pw-err").innerHTML = `<div class="hint warn">${icon("alert", 15)}<span>${esc(e.message)}</span></div>`;
   } finally { btn.disabled = false; btn.textContent = old; }

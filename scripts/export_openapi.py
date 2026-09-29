@@ -7,7 +7,6 @@ Postman / Apifox / Swagger UI,或用于生成各语言客户端。
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -15,10 +14,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
-
-# 确保导出的 schema 包含 X-API-Token 安全方案(app 模块导入时读取环境变量)
-os.environ.setdefault("AUTH_MODE", "login")
-os.environ.setdefault("AUTH_TOKEN", "export-placeholder")
 
 
 def main() -> None:

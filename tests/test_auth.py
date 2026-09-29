@@ -92,25 +92,64 @@ def test_change_password_rejects_short(store, admin_credentials):
         auth_mod.change_password(store, "admin", admin_credentials[1], "12345")
 
 
-def test_initial_store_has_no_public_default_password(tmp_path, monkeypatch, capsys):
-    """auth.json 不存在且未给 ADMIN_PASSWORD → 随机强口令 + 只打印一次 + 不算默认口令。"""
+def test_initial_store_random_password_counts_as_default(tmp_path, monkeypatch, capsys):
+    """auth.json 不存在且未给 ADMIN_PASSWORD → 随机强口令只打印一次,
+    且 default_credentials=true(初始口令未改:业务接口门禁保持关闭)。"""
     monkeypatch.setattr(auth_mod, "AUTH_FILE", tmp_path / "auth.json")
     monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
 
     store = auth_mod.load_store()
 
-    assert store["default_credentials"] is False          # /api/health 不再自报"仍在用默认口令"
+    assert store["default_credentials"] is True           # 未改口令 → 门禁开启
     assert auth_mod.DEFAULT_USER == "admin"
     user = store["users"][0]
     assert not auth_mod._verify_hash(user, "harness123")  # 曾经的公开默认值一律失效
     assert not auth_mod._verify_hash(user, "")            # ADMIN_PASSWORD 置空也不等于空口令
     printed = capsys.readouterr().out
-    assert "请" in printed                                 # 提示立即改密
+    assert "仅此一次打印" in printed
     # 打印出来的那枚口令确实能登录,且库里只存哈希
     token_password = printed.split("随机生成的初始口令为 ", 1)[1].split("(", 1)[0].strip()
     assert len(token_password) == auth_mod.INITIAL_PASSWORD_LENGTH
     assert auth_mod.verify_password(store, "admin", token_password)
     assert token_password not in auth_mod.AUTH_FILE.read_text(encoding="utf-8")
+
+
+def test_env_provided_password_counts_as_set(tmp_path, monkeypatch):
+    """部署者经 ADMIN_PASSWORD 提供口令 → 创建即视为已设置,门禁不开启。"""
+    monkeypatch.setattr(auth_mod, "AUTH_FILE", tmp_path / "auth.json")
+    monkeypatch.setenv("ADMIN_PASSWORD", "operator-pw-123")
+    store = auth_mod.load_store()
+    assert store["default_credentials"] is False
+    assert auth_mod.verify_password(store, "admin", "operator-pw-123")
+
+
+def test_admin_password_rotates_existing_default_store(tmp_path, monkeypatch):
+    """存量部署(default_credentials=true)重启时提供 ADMIN_PASSWORD → 就地轮换并翻转标记。"""
+    monkeypatch.setattr(auth_mod, "AUTH_FILE", tmp_path / "auth.json")
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    store = auth_mod.load_store()
+    assert store["default_credentials"] is True
+
+    monkeypatch.setenv("ADMIN_PASSWORD", "rotated-strong-pw")
+    rotated = auth_mod.load_store()
+    assert rotated["default_credentials"] is False
+    assert auth_mod.verify_password(rotated, "admin", "rotated-strong-pw")
+
+    # 界面改过口令(false)之后,环境变量被忽略:不覆盖、不重置
+    assert auth_mod.change_password(rotated, "admin", "rotated-strong-pw", "ui-pass-123")
+    monkeypatch.setenv("ADMIN_PASSWORD", "another-strong-pw")
+    again = auth_mod.load_store()
+    assert auth_mod.verify_password(again, "admin", "ui-pass-123")
+    assert not auth_mod.verify_password(again, "admin", "another-strong-pw")
+
+
+def test_admin_password_too_short_rejected(tmp_path, monkeypatch):
+    monkeypatch.setattr(auth_mod, "AUTH_FILE", tmp_path / "auth.json")
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    auth_mod.load_store()                                  # 进入 default_credentials 状态
+    monkeypatch.setenv("ADMIN_PASSWORD", "short")
+    with pytest.raises(SystemExit):
+        auth_mod.load_store()
 
 
 def test_generated_initial_password_is_random_and_strong():

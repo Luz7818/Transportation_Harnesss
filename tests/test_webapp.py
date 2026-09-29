@@ -2,6 +2,8 @@
 
 import time
 
+import pytest
+
 
 class TestAuthFlow:
     def test_health_open_without_login(self, client):
@@ -234,6 +236,64 @@ class TestOpsApi:
     def test_evolve_unknown_baseline_404(self, authed_client, hermetic_storage):
         resp = authed_client.post("/api/evolve/run", json={"baseline": "v9"})
         assert resp.status_code == 404
+
+    def test_evolve_baseline_at_tail_400(self, authed_client, hermetic_storage):
+        """基线传最末登记版本:明确 400,而不是 IndexError → 500。"""
+        resp = authed_client.post("/api/evolve/run", json={"baseline": "v2"})
+        assert resp.status_code == 400
+        assert "没有待验证" in resp.json()["detail"]
+
+
+class TestInitialPasswordGate:
+    """初始口令未修改(default_credentials=true)时的门禁:
+    仅放行 /api/health 与 /api/auth/*,其余业务接口对三种凭据一律 403。"""
+
+    @pytest.fixture
+    def gate_client(self, make_client, monkeypatch):
+        """强制 default_credentials=true 的客户端(store 口令已知,便于登录改密)。"""
+        import webapp.app as app_mod
+        import webapp.auth as auth_mod
+
+        salt = "ab" * 16
+        gated = {"secret": "s" * 64, "default_credentials": True,
+                 "users": [{"username": "admin", "salt": salt,
+                            "password_hash": auth_mod._hash(salt, "initial-pw-123")}]}
+        monkeypatch.setattr(app_mod, "_AUTH_STORE", gated)
+        with make_client() as tc:
+            yield tc
+
+    def test_gate_blocks_protected_endpoints_for_anonymous(self, gate_client):
+        assert gate_client.get("/api/cases").status_code == 403
+        assert "初始口令" in gate_client.get("/api/cases").json()["detail"]
+        assert gate_client.get("/api/health").status_code == 200
+
+    def test_gate_blocks_even_with_valid_token_and_session(self, gate_client, api_token):
+        """门禁先于凭据裁决:令牌与已登录会话在改密前同样只拿到 403。"""
+        assert gate_client.get("/api/cases",
+                               headers={"X-API-Token": api_token}).status_code == 403
+        resp = gate_client.post("/api/auth/login",
+                                json={"username": "admin", "password": "initial-pw-123"})
+        assert resp.status_code == 200
+        assert gate_client.get("/api/cases").status_code == 403  # 已登录,但门禁仍开着
+
+    def test_changing_password_opens_the_gate(self, gate_client):
+        assert gate_client.post("/api/auth/login",
+                                json={"username": "admin",
+                                      "password": "initial-pw-123"}).status_code == 200
+        resp = gate_client.post("/api/auth/password",
+                                json={"old_password": "initial-pw-123",
+                                      "new_password": "brand-new-pw"})
+        assert resp.status_code == 200
+        assert gate_client.get("/api/cases").status_code == 200  # 门禁随改密解除
+
+    def test_open_mode_bypasses_gate(self, make_client, monkeypatch):
+        import webapp.app as app_mod
+
+        monkeypatch.setattr(app_mod, "AUTH_MODE", "open")
+        monkeypatch.setattr(app_mod, "_AUTH_STORE",
+                            {"secret": "s" * 64, "default_credentials": True, "users": []})
+        with make_client() as tc:
+            assert tc.get("/api/cases").status_code == 200  # 演示模式不做门禁
 
 
 class TestBatchOpsAndDiff:

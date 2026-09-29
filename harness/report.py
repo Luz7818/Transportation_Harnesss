@@ -106,9 +106,12 @@ def render_markdown(results: dict[str, EvalResult], changelog: dict, evalset_des
                  f"(绝对提升 {_pct(last.accuracy - first.accuracy)})")
     strategies = [c for v in versions[1:] for c in changelog.get(v, {}).get("changes", [])]
     lines.append("- 优化策略:" + ";".join(strategies))
-    last_diff = diff(results[versions[-2]], results[versions[-1]])[1]
-    lines.append(f"- 回归检查:{versions[-1]} 相对 {versions[-2]} "
-                 f"{'无回归' if not last_diff else '存在回归,需回退'}")
+    if len(versions) < 2:  # 只有基线:没有可对比的迭代版本
+        lines.append("- 回归检查:无迭代版本,不适用")
+    else:
+        last_diff = diff(results[versions[-2]], results[versions[-1]])[1]
+        lines.append(f"- 回归检查:{versions[-1]} 相对 {versions[-2]} "
+                     f"{'无回归' if not last_diff else '存在回归,需回退'}")
     lines.append("- 剩余失败案例:" + (", ".join(remaining) if remaining else "无"))
     lines.append("")
     lines.append("> 评测集会随线上 badcase 持续扩充,harness 据此自进化;"

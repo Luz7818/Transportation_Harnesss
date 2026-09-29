@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "交通分析自进化 Harness",
-    "version": "1.5.0"
+    "version": "1.6.0"
   },
   "paths": {
     "/api/auth/login": {
@@ -45,7 +45,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/auth/logout": {
@@ -68,7 +69,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/auth/me": {
@@ -219,7 +221,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/help": {
@@ -239,7 +242,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/health": {
@@ -262,7 +266,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/evalsets": {
@@ -966,7 +971,7 @@
           "eval"
         ],
         "summary": "Api Evolve Run",
-        "description": "一键自进化:基线 → 逐登记版本验证(提升且无回归)→ 归档报告,返回逐轮摘要。\n\n请求体可省略(兼容旧客户端);baseline 传当前最佳版本即可增量验证新登记的版本。",
+        "description": "一键自进化:基线 → 逐登记版本验证(提升且无回归)→ 归档报告,返回逐轮摘要。\n\n请求体可省略(兼容旧客户端);baseline 传当前最佳版本即可增量验证新登记的版本,\n传最末登记版本(其后没有待验证版本)返回 400。",
         "operationId": "api_evolve_run_api_evolve_run_post",
         "requestBody": {
           "content": {
@@ -1543,6 +1548,36 @@
         ],
         "title": "ValidationError"
       }
+    },
+    "securitySchemes": {
+      "ApiToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Token",
+        "description": "机器客户端令牌(服务器环境变量 AUTH_TOKEN)"
+      },
+      "BearerSession": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "登录返回的会话令牌(小程序/脚本形态)"
+      },
+      "SessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "harness_session",
+        "description": "网页看板会话(HttpOnly,登录时下发)"
+      }
     }
-  }
+  },
+  "security": [
+    {
+      "ApiToken": []
+    },
+    {
+      "BearerSession": []
+    },
+    {
+      "SessionCookie": []
+    }
+  ]
 }

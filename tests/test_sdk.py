@@ -30,28 +30,46 @@ def _free_port() -> int:
 
 @pytest.fixture(scope="module")
 def server_url():
-    """模块级起一个真实 uvicorn 实例(随机端口,守护线程),供全部 SDK 用例共享。"""
-    import uvicorn
-    from webapp.app import app
+    """模块级起一个真实 uvicorn 实例(随机端口,守护线程),供全部 SDK 用例共享。
 
-    port = _free_port()
-    config = uvicorn.Config(app, host="127.0.0.1", port=port,
-                            log_level="warning", access_log=False)
-    server = uvicorn.Server(config)
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    base_url = f"http://127.0.0.1:{port}"
-    for _ in range(100):  # 轮询健康检查直至就绪
+    app 在 import 期执行 `_AUTH_STORE = auth.load_store()`,不隔离就会读到本机真实
+    `webapp/auth.json`(其口令与 conftest 设定的测试口令不同,登录用例必 401)。
+    因此在导入 webapp.app 之前把 AUTH_FILE 换到临时文件、导入后把模块级 store
+    重载为临时账号,模块用例结束后还原 —— 与 make_client 的隔离方式同源。
+    """
+    import tempfile
+    from pathlib import Path
+
+    import webapp.app as app_mod
+    import webapp.auth as auth_mod
+
+    with tempfile.TemporaryDirectory() as td:
+        original = (auth_mod.AUTH_FILE, app_mod._AUTH_STORE)
+        auth_mod.AUTH_FILE = Path(td) / "auth.json"
+        app_mod._AUTH_STORE = auth_mod.load_store()
         try:
-            urllib.request.urlopen(f"{base_url}/api/health", timeout=1)
-            break
-        except Exception:
-            time.sleep(0.1)
-    else:
-        raise RuntimeError("测试服务器未能启动")
-    yield base_url
-    server.should_exit = True
-    thread.join(timeout=5)
+            import uvicorn
+
+            port = _free_port()
+            config = uvicorn.Config(app_mod.app, host="127.0.0.1", port=port,
+                                    log_level="warning", access_log=False)
+            server = uvicorn.Server(config)
+            thread = threading.Thread(target=server.run, daemon=True)
+            thread.start()
+            base_url = f"http://127.0.0.1:{port}"
+            for _ in range(100):  # 轮询健康检查直至就绪
+                try:
+                    urllib.request.urlopen(f"{base_url}/api/health", timeout=1)
+                    break
+                except Exception:
+                    time.sleep(0.1)
+            else:
+                raise RuntimeError("测试服务器未能启动")
+            yield base_url
+        finally:
+            server.should_exit = True
+            thread.join(timeout=5)
+            auth_mod.AUTH_FILE, app_mod._AUTH_STORE = original
 
 
 @pytest.fixture
@@ -91,7 +109,7 @@ class TestCoreFlows:
     def test_health(self, api):
         health = api.health()
         assert health["status"] == "ok"
-        assert health["app_version"] == "1.5.0"
+        assert health["app_version"] == "1.6.0"
         assert health["versions"] == ["v0", "v1", "v2"]
 
     def test_analyze_pipeline_output(self, api):

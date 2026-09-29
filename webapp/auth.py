@@ -1,8 +1,14 @@
 """本地账号与会话:replaycase/评测资产是项目核心资产,公网或多人使用时需要登录。
 
 - 账号存储在 webapp/auth.json(首次启动自动创建,已被 .gitignore 排除):
-  初始口令优先取环境变量 ADMIN_PASSWORD;未提供时用 secrets 生成随机强口令并只在控制台
-  打印一次(仓库与文档里不存在任何可复述的默认口令,也就无需在说明书里写它);
+  账密必须由部署者自己提供 —— 启动环境里设 ADMIN_PASSWORD(/ ADMIN_USER)即用之,
+  且视为「已设置」(default_credentials=false);未提供时用 secrets 生成随机强口令
+  并只在控制台打印一次,同时 default_credentials=true —— 在口令被改掉之前,
+  app.py 的中间件只放行 /api/health 与 /api/auth/*(业务接口一律 403),
+  「忘了改口令」不再可能静默存活;
+- 已存在的 auth.json 若 default_credentials 仍为 true,重启时只要环境里提供了
+  ADMIN_PASSWORD 就地完成轮换并翻转标记 —— 这是存量部署补改口令的通道,
+  已在界面改过口令(default_credentials=false)时环境变量被忽略,绝不覆盖;
 - 密码只存 PBKDF2-HMAC-SHA256(salt + 12 万次迭代),不落明文;历史遗留的
   单轮 SHA-256 哈希在登录校验通过后透明升级为 PBKDF2;
 - 登录失败限流:同一用户名连续失败 5 次锁定 10 分钟,成功登录即清零,
@@ -78,29 +84,55 @@ def generate_initial_password() -> str:
 
 
 def load_store() -> dict:
+    store: dict
     if AUTH_FILE.exists():
-        return json.loads(AUTH_FILE.read_text(encoding="utf-8"))
-    password = os.getenv("ADMIN_PASSWORD") or ""
-    generated = not password            # 没给初始口令 → 随机生成,绝不落回任何公开默认值
-    if generated:
-        password = generate_initial_password()
-    salt = secrets.token_hex(16)
-    store = {
-        "secret": secrets.token_hex(32),
-        # 随机口令只打印这一次,不是"默认口令",因此无需在登录页提醒改密;
-        # ADMIN_PASSWORD 注入的口令沿用原语义(首次创建 → 提示改密)
-        "default_credentials": not generated,
-        "users": [{"username": DEFAULT_USER, "salt": salt,
-                   "password_hash": _hash(salt, password)}],
-    }
-    AUTH_FILE.write_text(json.dumps(store, ensure_ascii=False, indent=2), encoding="utf-8")
-    if generated:
-        print(f"[auth] 已初始化账号 {DEFAULT_USER},随机生成的初始口令为 {password}"
-              f"(仅此一次打印,请立即登录修改)")
+        store = json.loads(AUTH_FILE.read_text(encoding="utf-8"))
     else:
-        print(f"[auth] 已初始化账号 {DEFAULT_USER} / "
-              f"环境变量 ADMIN_PASSWORD 注入的密码(请登录后尽快修改)")
+        password = os.getenv("ADMIN_PASSWORD") or ""
+        generated = not password            # 没给初始口令 → 随机生成,绝不落回任何公开默认值
+        if generated:
+            password = generate_initial_password()
+        salt = secrets.token_hex(16)
+        store = {
+            "secret": secrets.token_hex(32),
+            # 部署者经 ADMIN_PASSWORD 提供的口令视为「已设置」(false);
+            # 随机口令只打印这一次,不是"默认口令",但必须改掉才算收口(true)
+            "default_credentials": generated,
+            "users": [{"username": DEFAULT_USER, "salt": salt,
+                       "password_hash": _hash(salt, password)}],
+        }
+        AUTH_FILE.write_text(json.dumps(store, ensure_ascii=False, indent=2), encoding="utf-8")
+        if generated:
+            print(f"[auth] 已初始化账号 {DEFAULT_USER},随机生成的初始口令为 {password}"
+                  f"(仅此一次打印;修改口令前业务接口保持 403)")
+        else:
+            print(f"[auth] 已初始化账号 {DEFAULT_USER} / "
+                  f"口令来自环境变量 ADMIN_PASSWORD(default_credentials=false)")
+    _rotate_default_password(store)
     return store
+
+
+def _rotate_default_password(store: dict) -> None:
+    """存量部署的口令轮换通道:auth.json 已存在且 default_credentials 仍为 true 时,
+    环境变量 ADMIN_PASSWORD 一经提供就地设置新口令并翻转标记。
+
+    只在 default_credentials=true 时生效 —— 界面改过口令(false)后环境变量被忽略,
+    避免每次重启都把口令重置回环境变量值。
+    """
+    password = os.getenv("ADMIN_PASSWORD") or ""
+    if not password or not store.get("default_credentials"):
+        return
+    if not (8 <= len(password) <= 64):
+        raise SystemExit("ADMIN_PASSWORD 长度需在 8~64 位之间(部署者提供的口令必须足够强)")
+    user = next((u for u in store["users"] if u["username"] == DEFAULT_USER), None)
+    if user is None:
+        return
+    user["salt"] = secrets.token_hex(16)
+    user["password_hash"] = _hash(user["salt"], password)
+    store["default_credentials"] = False
+    _save(store)
+    print("[auth] 检测到默认口令未修改,已用环境变量 ADMIN_PASSWORD 完成轮换"
+          "(default_credentials -> false)")
 
 
 def login_locked(username: str) -> int:

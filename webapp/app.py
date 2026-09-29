@@ -4,7 +4,9 @@
 公网部署:支持环境变量配置(见 DEPLOY.md)
   HOST=0.0.0.0 PORT=8765  监听地址/端口
   AUTH_MODE=open          免登录(仅限内网演示);默认 login
-  AUTH_TOKEN=xxx          设置后所有 /api/* 需要 X-API-Token 请求头(公网必开)
+  AUTH_TOKEN=xxx          设置后所有 /api/* 需要 X-API-Token 请求头(公网必开,≥16 字符)
+  ADMIN_PASSWORD=xxx      部署者提供的管理员口令:创建账号即视为已设置;
+                          对「初始口令未改」的存量部署则就地轮换(见 webapp/auth.py)
   CORS_ORIGINS=https://a.com,https://b.com   允许的跨域来源,默认 *
   SETTINGS_ENABLED=1      开启 /api/settings 运行时配置接口(默认关闭)
 
@@ -13,6 +15,8 @@
   2. `Authorization: Bearer <会话令牌>` —— 小程序等带不了 Cookie 的客户端;
   3. `harness_session` Cookie         —— 网页看板(HttpOnly,登录时下发)。
 会话令牌由 webapp/auth.py 的 HMAC 签名机制签发与校验,三处共用同一套,不存在第二套格式。
+初始口令未修改(default_credentials=true)期间,以上三种凭据都只对
+/api/health 与 /api/auth/* 生效,其余接口一律 403 —— 先改口令,再开放业务。
 """
 
 from __future__ import annotations
@@ -58,7 +62,7 @@ except ModuleNotFoundError as exc:
 from harness import activity as activity_mod
 from harness import report as report_mod
 from harness import storage
-from harness.evolve import run_evolution
+from harness.evolve import resolve_iterations, run_evolution
 from harness.models import CheckSpec, ReplayCase
 from harness.runner import ReplayRunner
 from llm import runtime as llm_runtime
@@ -92,7 +96,41 @@ _CASE_LOCK = threading.Lock()    # 沉淀 case + 更新评测集是复合操作,
 _EVOLVE_LOCK = threading.Lock()  # 自进化循环全库读写,不允许并发执行
 _AUTH_STORE = auth_mod.load_store()
 
-app = FastAPI(title="交通分析自进化 Harness", version="1.5.0")
+app = FastAPI(title="交通分析自进化 Harness", version="1.6.0")
+
+
+# OpenAPI 安全方案:鉴权在中间件里做,FastAPI 感知不到,这里显式声明,
+# 让导出的 schema(与 Swagger UI)如实反映三种凭据;公开端点在下方逐个豁免。
+def _openapi_schema() -> dict[str, Any]:
+    from fastapi.openapi.utils import get_openapi
+
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = get_openapi(title=app.title, version=app.version,
+                         openapi_version=app.openapi_version,
+                         description=app.description, routes=app.routes)
+    schema["components"]["securitySchemes"] = {
+        "ApiToken": {"type": "apiKey", "in": "header", "name": "X-API-Token",
+                     "description": "机器客户端令牌(服务器环境变量 AUTH_TOKEN)"},
+        "BearerSession": {"type": "http", "scheme": "bearer",
+                          "description": "登录返回的会话令牌(小程序/脚本形态)"},
+        "SessionCookie": {"type": "apiKey", "in": "cookie", "name": "harness_session",
+                          "description": "网页看板会话(HttpOnly,登录时下发)"},
+    }
+    schema["security"] = [{"ApiToken": []}, {"BearerSession": []}, {"SessionCookie": []}]
+    # 无需鉴权的端点逐个豁免(健康拨测/登录/登出/静态页);/api/auth/me 保留锁标:
+    # login 模式下未登录访问它就是 401
+    public_paths = ("/api/health", "/api/auth/login", "/api/auth/logout", "/", "/help")
+    for path, ops in schema.get("paths", {}).items():
+        if path in public_paths:
+            for op in ops.values():
+                if isinstance(op, dict):
+                    op["security"] = []
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = _openapi_schema  # type: ignore[method-assign]
 
 # allow_credentials=True 时浏览器规范禁止 Origin 为通配符 *,会直接拒绝带 Cookie 的跨域请求;
 # 因此仅在显式配置了具体来源(多实例/前后端分离部署)时才开启 credentials
@@ -143,12 +181,22 @@ async def auth_middleware(request: Request, call_next):
     """访问控制:
     - AUTH_MODE=open:全部放行(仅限内网演示);
     - /api/auth/* 与 /api/health 始终放行(登录页与拨测需要);
+    - 初始口令未修改(default_credentials=true)时,其余 /api/* 一律 403 ——
+      部署者必须先登录改掉初始口令(或启动时经 ADMIN_PASSWORD 提供),业务接口才开放;
     - /api/settings 交给端点自己做更严的准入判定(要区分本机直连与会话),
-      不能被这里的通用 401 提前挡掉,否则本机未登录用户只会看到一个"请先登录";
-    - 其余 /api/*:三种凭据按序裁决 —— X-API-Token(机器客户端)
+      但同样受上一条门禁约束;
+    - 其余情况:三种凭据按序裁决 —— X-API-Token(机器客户端)
       → Authorization: Bearer(小程序)→ 会话 Cookie(网页),任一通过即放行。
     """
     path = request.url.path
+    if (path.startswith("/api/") and AUTH_MODE != "open"
+            and _AUTH_STORE.get("default_credentials")
+            and not (path.startswith("/api/auth/") or path == "/api/health")):
+        return JSONResponse({
+            "detail": "初始口令尚未修改,业务接口暂不开放:请先登录并修改管理员口令"
+                      "(看板右上角「改密」,或 POST /api/auth/password);"
+                      "也可以在服务启动环境里设 ADMIN_PASSWORD 后重启"
+        }, status_code=403)
     exempt = (not path.startswith("/api/") or path.startswith("/api/auth/")
               or path in ("/api/health", "/api/settings"))
     if AUTH_MODE == "open" or exempt:
@@ -165,9 +213,10 @@ async def auth_middleware(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def on_unhandled(request: Request, exc: Exception):
-    """兜底:任何未处理异常都以 JSON 返回,便于前端提示与日志排查。"""
-    return JSONResponse(status_code=500,
-                        content={"detail": f"服务器内部错误:{type(exc).__name__}: {exc}"})
+    """兜底:任何未处理异常都以 JSON 返回;响应体只给通用提示,
+    异常类型与消息只进服务端日志 —— 内部路径/实现细节不回显给客户端。"""
+    print(f"[error] {request.method} {request.url.path} -> {type(exc).__name__}: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "服务器内部错误,详情见服务端日志"})
 
 
 class AnalyzeBody(BaseModel):
@@ -618,13 +667,18 @@ def api_eval_run(body: EvalRunBody) -> dict:
 def api_evolve_run(body: EvolveBody | None = None) -> dict:
     """一键自进化:基线 → 逐登记版本验证(提升且无回归)→ 归档报告,返回逐轮摘要。
 
-    请求体可省略(兼容旧客户端);baseline 传当前最佳版本即可增量验证新登记的版本。
+    请求体可省略(兼容旧客户端);baseline 传当前最佳版本即可增量验证新登记的版本,
+    传最末登记版本(其后没有待验证版本)返回 400。
     """
     evalset_name = body.evalset if body else "evalset_v1"
     baseline_version = body.baseline if body else "v0"
     if baseline_version not in PIPELINES:
         raise HTTPException(404, f"未知基线版本 {baseline_version!r}(可选:{sorted(PIPELINES)})")
     _load_evalset_or_404(evalset_name)  # 先校验,避免锁内才发现参数错误
+    try:
+        resolve_iterations(baseline_version)  # 基线未知/已是最末版本在这里就报 400
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     if not _EVOLVE_LOCK.acquire(blocking=False):
         raise HTTPException(409, "自进化循环正在运行中,请稍后再试")
     try:
@@ -728,10 +782,21 @@ def api_compare(a: str, b: str) -> dict:
 if __name__ == "__main__":
     import uvicorn
 
+    if AUTH_TOKEN and len(AUTH_TOKEN) < 16:
+        sys.exit("AUTH_TOKEN 太短(需 ≥16 字符):机器令牌是公网部署的唯一机器凭据,"
+                 "请换用强随机串(如 python -c \"import secrets;print(secrets.token_urlsafe(24))\")")
+    if AUTH_MODE == "open" and HOST not in ("127.0.0.1", "::1", "localhost"):
+        print("[warn] AUTH_MODE=open 且监听非回环地址:所有接口免登录,仅限可信内网演示")
+
     banner = f"交通分析自进化 Harness -> http://{HOST}:{PORT}(鉴权模式:{AUTH_MODE})"
     if AUTH_TOKEN:
         banner += ";机器客户端可用 X-API-Token 访问"
+    else:
+        banner += ";未设 AUTH_TOKEN,机器客户端通道关闭(小程序/SDK 走登录换令牌)"
     banner += (";运行时配置接口 /api/settings 已启用(仅本机直连或已登录会话)"
                if SETTINGS_ENABLED else ";/api/settings 未启用(设 SETTINGS_ENABLED=1 开启)")
     print(banner)
+    if _AUTH_STORE.get("default_credentials"):
+        print("[warn] 初始口令尚未修改:业务接口当前一律 403,仅开放 /api/health 与 /api/auth/*;\n"
+              "       请用初始口令登录后改密(看板右上角「改密」),或设 ADMIN_PASSWORD 后重启")
     uvicorn.run(app, host=HOST, port=PORT)

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "transportation-harness-sdk"
-version = "1.5.0"
+version = "1.6.0"
 description = "交通分析自进化 Harness 的官方 Python SDK:评测、自进化、Case 管理、版本对比一站式客户端"
 readme = "README.md"
 requires-python = ">=3.11"
