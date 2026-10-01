@@ -13,28 +13,32 @@
 
 "use strict";
 
-const SHELL_CACHE = "harness-shell-v2";
+const SHELL_CACHE = "harness-shell-v7";
 const API_CACHE = "harness-api-v1";
 
 const SHELL_ASSETS = [
   "/",
   "/help",
-  "/static/assets/icon.svg",
-  "/static/assets/icon-192.png",
-  "/static/assets/icon-512.png",
-  "/static/assets/icon-maskable-512.png",
-  "/static/assets/hero-bg.svg",
-  "/static/assets/hero-bg-light.svg",
-  "/static/assets/banner.svg",
-  "/static/assets/texture-light.svg",
-  "/static/assets/texture-dark.svg",
+  "/static/assets/icon.svg?v=6",
+  "/static/assets/icon-192.png?v=6",
+  "/static/assets/icon-512.png?v=6",
+  "/static/assets/icon-maskable-512.png?v=6",
+  "/static/assets/hero-bg.svg?v=6",
+  "/static/assets/hero-bg-light.svg?v=6",
+  "/static/assets/banner.svg?v=6",
+  "/static/assets/texture-light.svg?v=6",
+  "/static/assets/texture-dark.svg?v=6",
   "/static/manifest.webmanifest",
 ];
 
 self.addEventListener("install", (event) => {
+  // 预缓存强制过网(cache: "reload"):绝不吞浏览器里可能已过期的旧 HTTP 缓存条目
   event.waitUntil(
     caches.open(SHELL_CACHE)
-      .then((cache) => cache.addAll(SHELL_ASSETS))
+      .then((cache) => Promise.all(SHELL_ASSETS.map((url) =>
+        fetch(url, { cache: "reload" })
+          .then((resp) => (resp.ok ? cache.put(url, resp) : Promise.reject(new Error(url))),
+      ))))
       .then(() => self.skipWaiting()),
   );
 });
@@ -57,7 +61,7 @@ self.addEventListener("message", (event) => {
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
-  const network = fetch(request)
+  const network = fetch(request, { cache: "no-cache" })
     .then((resp) => {
       if (resp.ok) cache.put(request, resp.clone());
       return resp;
@@ -69,7 +73,9 @@ async function staleWhileRevalidate(request, cacheName) {
 async function networkFirst(request, cacheName, fallbackUrl) {
   const cache = await caches.open(cacheName);
   try {
-    const resp = await fetch(request);
+    // no-cache:强制与服务器条件重验。浏览器 HTTP 缓存里可能躺着过期旧页
+    // (启发式缓存以缓存时刻的 Last-Modified 计 TTL,改文件前的旧条目能活数小时)
+    const resp = await fetch(request, { cache: "no-cache" });
     if (resp.ok) cache.put(request, resp.clone());
     return resp;
   } catch (err) {

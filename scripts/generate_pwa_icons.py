@@ -78,7 +78,7 @@ def banner_svg() -> str:
     pills = [
         ("评测驱动 · 自进化 · 回归守护", "#c7d2fe", "rgba(129,140,248,.45)", 338),
         ("实测 7.7% → 100%", "#6ee7b7", "rgba(52,211,153,.5)", 218),
-        ("全程零回归", "#93c5fd", "rgba(96,165,250,.5)", 150),
+        ("全程零回归", "#aabbb2", "rgba(148,163,157,.5)", 150),
     ]
     pill_marks, x = [], 300
     for text, fg, bd, w in pills:
@@ -95,34 +95,34 @@ def banner_svg() -> str:
  viewBox="0 0 1280 400" role="img" aria-label="Transportation Harness · 交通分析自进化评测系统">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#05080f"/>
-      <stop offset=".55" stop-color="#0b1226"/>
-      <stop offset="1" stop-color="#1b1140"/>
+      <stop offset="0" stop-color="#090b12"/>
+      <stop offset=".55" stop-color="#0e1220"/>
+      <stop offset="1" stop-color="#171d2b"/>
     </linearGradient>
     <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4f46e5"/>
-      <stop offset=".55" stop-color="#7c3aed"/>
-      <stop offset="1" stop-color="#22d3ee"/>
+      <stop offset="0" stop-color="#818cf8"/>
+      <stop offset=".55" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#a5b4fc"/>
     </linearGradient>
     <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#f2f5fb"/>
       <stop offset="1" stop-color="#a5b4fc"/>
     </linearGradient>
     <linearGradient id="trail" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
-      <stop offset=".5" stop-color="#67e8f9" stop-opacity=".8"/>
-      <stop offset="1" stop-color="#a5f3fc" stop-opacity="0"/>
+      <stop offset="0" stop-color="#818cf8" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#a5b4fc" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#c7d2fe" stop-opacity="0"/>
     </linearGradient>
     <radialGradient id="blobP" cx=".5" cy=".5" r=".5">
-      <stop offset="0" stop-color="#7c3aed" stop-opacity=".3"/>
-      <stop offset="1" stop-color="#7c3aed" stop-opacity="0"/>
+      <stop offset="0" stop-color="#94a0bc" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#94a0bc" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="blobC" cx=".5" cy=".5" r=".5">
-      <stop offset="0" stop-color="#22d3ee" stop-opacity=".22"/>
-      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+      <stop offset="0" stop-color="#6366f1" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#6366f1" stop-opacity="0"/>
     </radialGradient>
     <pattern id="dots" width="46" height="46" patternUnits="userSpaceOnUse">
-      <circle cx="2" cy="2" r="1.3" fill="#8ea2c9" opacity=".13"/>
+      <circle cx="2" cy="2" r="1.3" fill="#94a0bc" opacity=".12"/>
     </pattern>
     <filter id="blurL" x="-60%" y="-60%" width="220%" height="220%">
       <feGaussianBlur stdDeviation="14"/>
@@ -145,22 +145,22 @@ def banner_svg() -> str:
   <g transform="rotate(-16 1040 175)" fill="none">
     <ellipse cx="1040" cy="175" rx="228" ry="80" stroke="url(#ring)" stroke-width="4.5"
              stroke-dasharray="1130 290" stroke-linecap="round" opacity=".62"/>
-    <path d="M1256 144 L 1272 162 L 1252 177" stroke="#22d3ee" stroke-width="6"
+    <path d="M1256 144 L 1272 162 L 1252 177" stroke="#a5b4fc" stroke-width="6"
          stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
     <circle cx="812" cy="175" r="7" fill="#a5b4fc" opacity=".9"/>
-    <circle cx="965" cy="97" r="8" fill="#34d399" opacity=".95"/>
-    <circle cx="1160" cy="122" r="5.5" fill="#67e8f9" opacity=".9"/>
+    <circle cx="965" cy="97" r="8" fill="#818cf8" opacity=".95"/>
+    <circle cx="1160" cy="122" r="5.5" fill="#a5b4fc" opacity=".9"/>
   </g>
 
   <!-- 天际线与路面 -->
-  <g fill="#0a0f28" opacity=".95">
+  <g fill="#0b0e13" opacity=".95">
     <rect x="560" y="306" width="40" height="60"/><rect x="608" y="322" width="48" height="44"/>
     <rect x="1120" y="286" width="44" height="80"/>
     <rect x="1172" y="312" width="52" height="54"/>
   </g>
-  <path d="M-20 374 L 1300 374 L 1300 336 L -20 336 Z" fill="#0d142e"/>
-  <path d="M-20 336 H 1300" stroke="#2b3660" stroke-width="2" opacity=".7"/>
-  <path d="M-20 356 H 1300" stroke="#67e8f9" stroke-width="4.5"
+  <path d="M-20 374 L 1300 374 L 1300 336 L -20 336 Z" fill="#12161f"/>
+  <path d="M-20 336 H 1300" stroke="#2f3a52" stroke-width="2" opacity=".7"/>
+  <path d="M-20 356 H 1300" stroke="#a5b4fc" stroke-width="4.5"
         stroke-linecap="round" stroke-dasharray="30 24" opacity=".5"/>
 
   <!-- 品牌区:内联应用图标 + 字标 -->

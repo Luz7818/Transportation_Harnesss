@@ -56,6 +56,7 @@ try:
     from fastapi.responses import FileResponse, JSONResponse
     from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel
+    from starlette.types import Scope
 except ModuleNotFoundError as exc:
     sys.exit(f"缺少依赖 {exc.name!r}:请先在当前 Python 环境执行  pip install -r requirements.txt")
 
@@ -142,7 +143,22 @@ app.add_middleware(
     allow_headers=["*", "X-API-Token", "Authorization"],
     allow_credentials=not _allow_all_origins,
 )
-app.mount("/static", StaticFiles(directory=ROOT / "webapp" / "static"), name="static")
+class _RevalidateStaticFiles(StaticFiles):
+    """静态资产带 `Cache-Control: no-cache`:浏览器每次都按 etag 条件重验。
+
+    前端 SW 对 /static/* 是 stale-while-revalidate,若资产可被浏览器启发式缓存
+    (StaticFiles 默认不发 Cache-Control),SW 预缓存的 install 取到的也可能是
+    旧 HTTP 缓存,换壳后用户会长时间停在旧视觉。no-cache + etag = 立即重验,
+    命中则 304,不命中才回 200。
+    """
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
+app.mount("/static", _RevalidateStaticFiles(directory=ROOT / "webapp" / "static"), name="static")
 
 
 def _bearer_token(request: Request) -> str | None:
@@ -399,19 +415,23 @@ def _validate_case_body(body: CaseBody, segments: list[dict]) -> None:
 
 @app.get("/", tags=["pages"])
 def index() -> FileResponse:
-    return FileResponse(ROOT / "webapp" / "static" / "index.html")
+    # 页面壳与 SW 同样禁启发式缓存:no-cache = 每次 etag 条件重验,改壳即刷新可见
+    return FileResponse(ROOT / "webapp" / "static" / "index.html",
+                        headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/help", tags=["pages"])
 def help_center() -> FileResponse:
     """文档中心:核心概念 / 工作流 / 全量 API 参考(人读版;交互式调试见 /docs)。"""
-    return FileResponse(ROOT / "webapp" / "static" / "help.html")
+    return FileResponse(ROOT / "webapp" / "static" / "help.html",
+                        headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/sw.js", tags=["pages"], include_in_schema=False)
 def service_worker() -> FileResponse:
     """Service Worker 必须从根路径提供(SW 的作用域 = 脚本所在目录),否则无法控制页面。"""
-    return FileResponse(ROOT / "webapp" / "static" / "sw.js", media_type="application/javascript")
+    return FileResponse(ROOT / "webapp" / "static" / "sw.js", media_type="application/javascript",
+                        headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/health", tags=["metadata"])

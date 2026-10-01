@@ -3,43 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b1020">
+<meta name="theme-color" content="#10131f">
 <script>
 try { document.documentElement.dataset.theme = localStorage.getItem("harness_theme") || "light"; }
 catch (e) { document.documentElement.dataset.theme = "light"; }
 </script>
 <title>文档中心 · Transportation Harness</title>
-<link rel="icon" type="image/svg+xml" href="/static/assets/icon.svg">
-<link rel="apple-touch-icon" href="/static/assets/apple-touch-icon-180.png">
+<link rel="icon" type="image/svg+xml" href="/static/assets/icon.svg?v=6">
+<link rel="apple-touch-icon" href="/static/assets/apple-touch-icon-180.png?v=6">
 <link rel="manifest" href="/static/manifest.webmanifest">
 <style>
 :root {
-  --bg: #f5f6fa; --surface: #fff; --line: #e7eaf3; --line-2: #d8deeb;
-  --t1: #0f1728; --t2: #3f4c63; --t3: #69758c; --t4: #98a2b8;
+  --bg: #f4f5f8; --surface: #fff; --line: #e3e7f0; --line-2: #d2d8e8;
+  --t1: #131722; --t2: #3f4a63; --t3: #6a7590; --t4: #95a0b8;
   --primary: #4f46e5; --primary-h: #4338ca; --primary-soft: #eef1ff;
   --ok: #079455; --ok-soft: #e7f6ef; --warn: #b54708; --warn-soft: #fef4e6;
   --bad: #b42318; --bad-soft: #feecea; --info: #175cd3; --info-soft: #eaf1fd;
-  --code-bg: #f7f9fd; --code-line: #e3e8f2; --code-text: #1e2a3d; --code-head: #64748b;
-  --code-btn-bg: #eceff7; --code-btn-text: #5b6a86; --code-btn-hover: #e0e6f2; --code-btn-hover-text: #1f2937;
-  --code-c: #9099ad; --code-s: #059669; --code-k: #4f46e5;
+  --code-bg: #f5f7fc; --code-line: #dfe3f0; --code-text: #1c2620; --code-head: #61726a;
+  --code-btn-bg: #eaeef8; --code-btn-text: #5d688c; --code-btn-hover: #dde7e1; --code-btn-hover-text: #1b2620;
+  --code-c: #8c9b93; --code-s: #059669; --code-k: #6366f1;
   --shadow-xs: 0 1px 2px rgba(16,24,40,.05);
   --shadow-sm: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.04);
-  --topbar-bg: rgba(255,255,255,.85); --thead-bg: #fafbfe; --row-line: #f0f2f8;
-  --chip-bg: #f1f3f9; --surface-2: #f7f8fc; --row-hover: #f8faff;
+  --topbar-bg: rgba(255,255,255,.85); --thead-bg: #f8f9fd; --row-line: #edf0f8;
+  --chip-bg: #eff1f9; --surface-2: #f4f6fb; --row-hover: #f4f7fd;
 }
 html[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0b101e; --surface: #131a2e; --line: #222c48; --line-2: #2d3957;
-  --t1: #e8edf8; --t2: #c3cce1; --t3: #93a0bd; --t4: #5f6c8f;
-  --primary: #818cf8; --primary-h: #6d78f0; --primary-soft: rgba(99,102,241,.18);
+  --bg: #0e111c; --surface: #151928; --line: #262c44; --line-2: #323c58;
+  --t1: #e7ebf6; --t2: #c3cbe2; --t3: #919cb9; --t4: #606c8a;
+  --primary: #818cf8; --primary-h: #6366f1; --primary-soft: rgba(99,102,241,.18);
   --ok: #34d399; --ok-soft: rgba(52,211,153,.13); --warn: #fbbf24; --warn-soft: rgba(251,191,36,.13);
   --bad: #f87171; --bad-soft: rgba(248,113,113,.13); --info: #6ea8fe; --info-soft: rgba(110,168,254,.13);
-  --topbar-bg: rgba(11,16,30,.8); --thead-bg: #16203a; --row-line: #1e2946;
-  --chip-bg: #1a2340; --surface-2: #1a2340; --row-hover: #182141;
-  --code-bg: #0c1322; --code-line: rgba(255,255,255,.08); --code-text: #dbe4f5; --code-head: #8b98ad;
-  --code-btn-bg: rgba(255,255,255,.08); --code-btn-text: #aab6cc;
+  --topbar-bg: rgba(11,16,30,.8); --thead-bg: #182032; --row-line: #1f2942;
+  --chip-bg: #1a1f30; --surface-2: #1a1f30; --row-hover: #19223a;
+  --code-bg: #10141f; --code-line: rgba(255,255,255,.08); --code-text: #d7e4dc; --code-head: #8d97b5;
+  --code-btn-bg: rgba(255,255,255,.08); --code-btn-text: #a5b5ac;
   --code-btn-hover: rgba(255,255,255,.15); --code-btn-hover-text: #fff;
-  --code-c: #64748b; --code-s: #86efac; --code-k: #a5b4fc;
+  --code-c: #61726a; --code-s: #86efac; --code-k: #a5b4fc;
   --shadow-xs: 0 1px 2px rgba(0,0,0,.35);
   --shadow-sm: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.25);
 }
@@ -59,12 +59,17 @@ html[data-theme="dark"] .ep, html[data-theme="dark"] .card-block { background: v
 html[data-theme="dark"] .back-top { background: var(--surface); border-color: var(--line); }
 html[data-theme="dark"] code.inline { background: rgba(129,140,248,.14); border-color: var(--line);
   color: #c7d2fe; }
+/* 纸面颗粒:与看板一致的 tooth */
+body::after { content: ""; position: fixed; inset: 0; z-index: 40; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E") repeat; opacity: .025; }
+html[data-theme="dark"] body::after { opacity: .038; }
+@media (prefers-reduced-transparency: reduce) { body::after { display: none } }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg) url("/static/assets/texture-light.svg") repeat; color: var(--t1);
-       font: 14px/1.75 "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+body { margin: 0; background: var(--bg) url("/static/assets/texture-light.svg?v=6") repeat; color: var(--t1);
+       font: 14px/1.75 "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei", system-ui, sans-serif;
        -webkit-font-smoothing: antialiased; }
-html[data-theme="dark"] body { background: var(--bg) url("/static/assets/texture-dark.svg") repeat; }
+html[data-theme="dark"] body { background: var(--bg) url("/static/assets/texture-dark.svg?v=6") repeat; }
 ::selection { background: rgba(79,70,229,.18); }
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -111,8 +116,8 @@ p { margin: 0 0 12px; color: var(--t2); font-size: 13.5px; }
 ul.plain { margin: 0 0 12px; padding-left: 20px; color: var(--t2); font-size: 13.5px; }
 ul.plain li { margin-bottom: 5px; }
 b, strong { color: var(--t1); }
-code.inline { background: #eef0f7; border: 1px solid var(--line); border-radius: 6px;
-              padding: 1px 6px; font-size: 12.5px; color: #3730a3;
+code.inline { background: #eaeef8; border: 1px solid var(--line); border-radius: 6px;
+              padding: 1px 6px; font-size: 12.5px; color: #14523c;
               font-family: Consolas, "Courier New", monospace; }
 
 .card-block { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
@@ -150,7 +155,7 @@ td code, th code { font-size: 12px; }
       box-shadow: var(--shadow-xs); margin-bottom: 18px; overflow: hidden; scroll-margin-top: 84px; }
 .ep-head { display: flex; align-items: center; gap: 12px; padding: 13px 20px; cursor: pointer;
            user-select: none; }
-.ep-head:hover { background: #fafbfe; }
+.ep-head:hover { background: #f8f9fd; }
 .method { flex: none; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; border-radius: 7px;
           padding: 3px 10px; font-family: Consolas, monospace; }
 .method.get { background: var(--info-soft); color: var(--info); }
@@ -212,7 +217,7 @@ td code, th code { font-size: 12px; }
 <body>
 
 <header class="doc-top">
-  <div class="brand"><img src="/static/assets/icon.svg" alt="">Transportation Harness<small>文档中心</small></div>
+  <div class="brand"><img src="/static/assets/icon.svg?v=6" alt="">Transportation Harness<small>文档中心</small></div>
   <div class="actions">
     <button class="btn-top" id="theme-toggle" title="切换明暗主题" aria-label="切换明暗主题">◐</button>
     <a class="btn-top" href="/">← 返回工作台</a>
@@ -221,7 +226,7 @@ td code, th code { font-size: 12px; }
 </header>
 
 <div class="brand-banner">
-  <img src="/static/assets/banner.svg" alt="Transportation Harness · 交通分析自进化评测系统">
+  <img src="/static/assets/banner.svg?v=6" alt="Transportation Harness · 交通分析自进化评测系统">
 </div>
 
 <div class="doc-layout">

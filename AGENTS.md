@@ -37,7 +37,7 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 | `harness/` | 评测框架（领域无关） | `models.py` 数据结构 / `storage.py` 落盘与路径安全 / `runner.py` 重放 / `judge.py` 判分路由 / `report.py` 报告渲染 / `evolve.py` 自进化 / `activity.py` 看板时间流 |
 | `pipeline/` | 被测对象 | `versions.py` 一处登记 `PIPELINES`/`CHANGELOG`；`data/*.json` 6 个情景数据集（数据即场景，代码不含工况） |
 | `llm/` | LLM 层（可选装配） | `runtime.py` OpenAI 兼容 + Mock 降级、`judge.py` `conclusion_quality`、`workflows.py` 草稿/诊断、`store.py` 缓存+审计+草稿、`mocks.py` 离线确定性输出 |
-| `webapp/` | HTTP 服务 + 前端 | `app.py` 全部端点与鉴权中间件、`auth.py` PBKDF2 口令 + HMAC 会话 + 登录限流、`settings.py` `.env` 读写与掩码、`static/index.html` 单文件看板（2899 行，含全部 JS）、`static/help.html` 文档中心、`static/sw.js` + `manifest.webmanifest` PWA |
+| `webapp/` | HTTP 服务 + 前端 | `app.py` 全部端点与鉴权中间件、`auth.py` PBKDF2 口令 + HMAC 会话 + 登录限流、`settings.py` `.env` 读写与掩码、`static/index.html` 单文件看板（3199 行，含全部 JS）、`static/help.html` 文档中心、`static/sw.js` + `manifest.webmanifest` PWA |
 | `cases/` | replaycase 库 | 按失败标签分目录，一个 case 一个 `<case_id>.json` |
 | `evalsets/` | 评测集清单 | `{"evalset_id","description","created_at","case_ids"}`，`case_ids` 顺序即重放顺序 |
 | `reports/` | 归档产物 | `report_<v>_<时间>.json`、`evolution_<时间>.json`、`report_evolution_<时间>.md` |
@@ -174,7 +174,7 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 | 加数据集 / 改工况参数 | `pipeline/data/*.json` | 容量、流量、车速都是数据，管线零改动 |
 | 加判分检查类型 | `harness/judge.py` + `harness/models.py` | 新 `type` 要在两个文件同步，并补 `tests/test_judge.py` |
 | 加 API 端点 | `webapp/app.py` | 之后 `python scripts/export_openapi.py` 重导，并同步 `docs/API.md` 与 `static/help.html` |
-| 改看板页面 / 加前端功能 | `webapp/static/index.html` | 2899 行的单文件应用，无构建步骤 |
+| 改看板页面 / 加前端功能 | `webapp/static/index.html` | 3199 行的单文件应用，无构建步骤 |
 | 换 Logo / PWA 图标 | `webapp/static/assets/icon.svg` → `python scripts/generate_pwa_icons.py` | 全套图标从这张 SVG 母版栅格化 |
 | 加 LLM 能力（新工作流） | `llm/workflows.py` | 强制 JSON Schema + 必须有降级路径，设计原则见 `docs/LLM.md` |
 | 接入别的 LLM 供应商 | 只改环境变量，无需动代码 | 任意 OpenAI 兼容端点，见 `.env.example` |

@@ -13,23 +13,23 @@
   "background_color": "#10183a",
   "categories": ["productivity", "utilities"],
   "icons": [
-    { "src": "/static/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/static/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/static/assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "/static/assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "/static/assets/icon-192.png?v=6", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/static/assets/icon-512.png?v=6", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/static/assets/icon-maskable-512.png?v=6", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/static/assets/icon.svg?v=6", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [
     {
       "name": "评测看板",
       "short_name": "看板",
       "url": "/",
-      "icons": [{ "src": "/static/assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/static/assets/icon-192.png?v=6", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "文档中心",
       "short_name": "文档",
       "url": "/help",
-      "icons": [{ "src": "/static/assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/static/assets/icon-192.png?v=6", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
