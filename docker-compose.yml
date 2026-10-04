@@ -2,6 +2,10 @@ services:
   harness:
     build: .
     container_name: transportation-harness
+    # .env 里的全部变量(ADMIN_PASSWORD/COOKIE_SECURE/LLM_* 等)整体透传进容器,
+    # 缺 .env 时 compose 直接报错——AUTH_TOKEN ≥16 字符是硬性启动条件
+    env_file:
+      - .env
     ports:
       # 生产建议改为 "127.0.0.1:8765:8765",只让 Nginx 反代对外(见 DEPLOY.md 路线 B)
       - "8765:8765"
