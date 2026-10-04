@@ -124,7 +124,8 @@ button { font: inherit; }
             border: 0; cursor: pointer; background: transparent; color: #a7b1cf; font: inherit;
             text-align: left; padding: 9px 12px; border-radius: 10px; margin-bottom: 3px;
             font-weight: 500; font-size: 13.5px; min-width: 0;
-            transition: background .15s, color .15s; }
+            transition: background .15s, color .15s, transform .12s; }
+.nav-item:active { transform: scale(.98); }
 .nav-item .nv-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
 .nav-item.active { background: rgba(99,102,241,.18); color: #fff; }
@@ -182,7 +183,8 @@ button { font: inherit; }
         color: var(--t3); box-shadow: var(--shadow-xs); white-space: nowrap; }
 .chip .ico-svg { color: var(--t4); }
 
-main { padding: 24px 32px 64px; max-width: 1160px; width: 100%; margin: 0 auto;
+main { --main-pad-t: 24px; --main-pad-x: 32px; padding: var(--main-pad-t) var(--main-pad-x) 64px;
+       max-width: 1160px; width: 100%; margin: 0 auto; position: relative;
        container-type: inline-size; }
 /* 工作区被分栏拖拽/窗口压缩到很窄时,双栏卡片改为纵向堆叠,保证内容完整可读 */
 @container (max-width: 520px) {
@@ -198,12 +200,57 @@ section.page { display: none; }
 section.page.active { display: block; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes rise { from { opacity: 0; transform: translateY(7px); } }
-/* 页签内容级联入场:容器不再整体位移,由直接子元素带 45ms 级差依次浮起 */
-section.page.active > * { animation: rise .34s var(--ease-out) both; }
-section.page.active > :nth-child(2) { animation-delay: 45ms; }
-section.page.active > :nth-child(3) { animation-delay: 90ms; }
-section.page.active > :nth-child(4) { animation-delay: 135ms; }
-section.page.active > :nth-child(n+5) { animation-delay: 175ms; }
+/* 页签切换:交叉淡化 —— 旧页转为绝对定位覆盖层原地淡出,新页同时滑入接管,
+   两态全程重叠、无空帧,消除「先消失再出现」的闪烁感;方向随导航位置 */
+section.page.active { animation: pageIn .3s var(--ease-out) both; }
+@keyframes pageIn { from { opacity: 0; transform: translateY(12px); } }
+section.page.active.enter-down { animation-name: pageInDown; }
+@keyframes pageInDown { from { opacity: 0; transform: translateY(-12px); } }
+/* 子元素只做纯透明度级差(位移交给整块),避免多层错动读成抖动 */
+section.page.active > * { animation: fadeIn .34s var(--ease-out) both; }
+section.page.active > :nth-child(2) { animation-delay: 30ms; }
+section.page.active > :nth-child(3) { animation-delay: 60ms; }
+section.page.active > :nth-child(4) { animation-delay: 90ms; }
+section.page.active > :nth-child(n+5) { animation-delay: 120ms; }
+/* 旧页覆盖层:与新页同帧交叉淡出,ease-out 让前半程保持高覆盖 */
+section.page.leaving-up, section.page.leaving-down { display: block; position: absolute; z-index: 1;
+  top: var(--main-pad-t, 24px); left: var(--main-pad-x, 32px); right: var(--main-pad-x, 32px);
+  pointer-events: none; animation: pageOut .26s var(--ease-out) both; }
+section.page.leaving-down { animation-name: pageOutDown; }
+@keyframes pageOut { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes pageOutDown { to { opacity: 0; transform: translateY(6px); } }
+
+/* ============ 页签切换 · View Transitions(支持的原生浏览器走这条高阶路径) ============
+   浏览器对旧/新页各拍一张快照后做形变:旧页缩小上浮、轻微虚化「没入景深」,
+   新页从下方带缩放「抵达对焦」—— Apple 式纵深推进,远比平面淡入淡出有层次 */
+section.page.active { view-transition-name: page; }
+::view-transition-group(page) { animation-duration: .34s; animation-timing-function: var(--ease-out); }
+::view-transition-old(page), ::view-transition-new(page) {
+  animation-duration: .34s; animation-timing-function: var(--ease-out); animation-fill-mode: both; }
+html[data-nav-dir="down"]::view-transition-old(page) { animation-name: vtRecedeUp; }
+html[data-nav-dir="down"]::view-transition-new(page) { animation-name: vtArriveUp; }
+html[data-nav-dir="up"]::view-transition-old(page) { animation-name: vtRecedeDown; }
+html[data-nav-dir="up"]::view-transition-new(page) { animation-name: vtArriveDown; }
+@keyframes vtRecedeUp { to { opacity: 0; transform: translateY(-14px) scale(.985); filter: blur(2.5px); } }
+@keyframes vtArriveUp { from { opacity: 0; transform: translateY(20px) scale(.988); } }
+@keyframes vtRecedeDown { to { opacity: 0; transform: translateY(14px) scale(.985); filter: blur(2.5px); } }
+@keyframes vtArriveDown { from { opacity: 0; transform: translateY(-20px) scale(.988); } }
+
+/* ============ 视图切换(开始页/登录/工作台)· 纵深推进 ============
+   进入更深层(去登录/进工作台):整体朝观者推进 —— 旧页放大虚化掠过,新页自后方追上对焦;
+   退回浅层(回开始页/退出):整体向后收回 —— 旧页缩小退远,新页自前方落定 */
+html[data-vt]::view-transition-old(root), html[data-vt]::view-transition-new(root) {
+  animation-duration: .42s; animation-timing-function: var(--ease-out); animation-fill-mode: both; }
+html[data-vt="in"]::view-transition-old(root) { animation-name: viewPushOut; }
+html[data-vt="in"]::view-transition-new(root) { animation-name: viewPushIn; }
+html[data-vt="out"]::view-transition-old(root) { animation-name: viewPullOut; }
+html[data-vt="out"]::view-transition-new(root) { animation-name: viewPullIn; }
+@keyframes viewPushOut { to { opacity: 0; transform: scale(1.06); filter: blur(3px); } }
+@keyframes viewPushIn { from { opacity: 0; transform: scale(.97); } }
+@keyframes viewPullOut { to { opacity: 0; transform: scale(.96); filter: blur(3px); } }
+@keyframes viewPullIn { from { opacity: 0; transform: scale(1.05); } }
+/* VT 接管视图退入场时,抑制 .hidden 摘除自带的入场动画(快照捕获的已是终态) */
+html.vt-run #app:not(.hidden), html.vt-run .fullscreen:not(.hidden) { animation: none; }
 
 /* ================= 卡片 ================= */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
@@ -855,6 +902,14 @@ th.col-sel, td.col-sel { width: 34px; text-align: center; }
 .tp-item .row-sel { margin-left: auto; }
 .tp-empty { padding: 24px 12px; text-align: center; color: var(--t3); font-size: 12px; }
 .tp-foot { padding: 10px 14px 13px; border-top: 1px solid var(--line); font-size: 11px; color: var(--t4); line-height: 1.5; }
+/* 任务区切换(评测报告 ↔ Case 库):整块沿切换方向浮入,列表项再做轻级差淡入;
+   动画由 JS 仅在页签切换时挂 .tp-enter —— 选中 / 筛选重绘不重播,不闪 */
+#taskpanel.tp-enter :is(#tp-head-slot, #tp-list) { animation: rise .34s var(--ease-out) both; }
+#taskpanel.tp-enter #tp-list > * { animation: fadeIn .26s var(--ease-out) both; }
+#taskpanel.tp-enter #tp-list > :nth-child(2) { animation-delay: 30ms; }
+#taskpanel.tp-enter #tp-list > :nth-child(3) { animation-delay: 60ms; }
+#taskpanel.tp-enter #tp-list > :nth-child(4) { animation-delay: 90ms; }
+#taskpanel.tp-enter #tp-list > :nth-child(n+5) { animation-delay: 120ms; }
 
 #ai-rail { width: 36px; flex: none; height: 100vh; border: 0; border-left: 1px solid var(--line);
            background: var(--surface); color: var(--t3); cursor: pointer; display: flex; flex-direction: column;
@@ -921,7 +976,9 @@ body.col-resizing .taskpanel { transition: none; }
 .topbar-panetoggle { width: 30px; height: 30px; flex: none; border: 0; background: transparent;
                      border-radius: 8px; color: var(--t3); cursor: pointer;
                      display: flex; align-items: center; justify-content: center; margin-right: 2px;
-                     transition: background .15s, color .15s; }
+                     transition: background .15s, color .15s;
+                     /* 与页签标题行垂直对齐:图标中心 = 标题行中心,不再悬在标题与副标题之间 */
+                     align-self: flex-start; margin-top: -1px; }
 .topbar-panetoggle:hover { background: var(--chip-bg); color: var(--t1); }
 #app.has-task:not(.task-collapsed) .topbar-panetoggle { background: var(--chip-bg); color: var(--t2); }
 #app:not(.has-task) .topbar-panetoggle { display: none; }
@@ -1052,7 +1109,8 @@ button[disabled] .ico-svg { animation: hv-spin .9s linear infinite; }
                flex-wrap: wrap; padding: 10px 16px; }
   .side-foot .user-box { margin-top: 0; }
   .main { height: auto; overflow: visible; }
-  main, .topbar { padding-left: 16px; padding-right: 16px; }
+  main { --main-pad-x: 16px; }
+  .topbar { padding-left: 16px; padding-right: 16px; }
   .row, .row3 { grid-template-columns: 1fr; }
   .loopback { display: none; }
   .step { min-width: 108px; }
@@ -1490,19 +1548,64 @@ function animateBars(scope = document) {
 const TASK_RENDERERS = { dashboard: renderDashboard, cases: renderCases };  // 需要「任务区(左) + 工作区(中)」协作的页面
 function switchTab(tab) {
   try { sessionStorage.setItem("harness_tab", tab); } catch {}  // 刷新工作台后恢复所在页签
+  /* 导航高亮与标题即时反馈,不随内容动画等待 */
   $$(".nav-item[data-tab]").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-  $$("main section").forEach(s => s.classList.toggle("active", s.id === "tab-" + tab));
   const [t, sub] = TITLES[tab];
   $("#page-title").textContent = t; $("#page-sub").textContent = sub;
   for (const el of [$("#page-title"), $("#page-sub")]) {   // 标题随内容轻浮起,而非瞬间换字
     el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap");
   }
-  $("#scroll-area").scrollTo({ top: 0 });
-  const hasTask = !!TASK_RENDERERS[tab];
-  $("#app").classList.toggle("has-task", hasTask);
 
-  if (hasTask) TASK_RENDERERS[tab]();  // 任务页:同时渲染左栏列表与中栏工作区
-  else renderers[tab]();
+  /* 方向感:沿导航向下切换 → 新内容自下方滑入、旧页向上让位;向上切换反之 */
+  const TAB_ORDER = ["dashboard", "cases", "compare", "analyze", "settings"];
+  const current = document.querySelector("main section.page.active");
+  const goingDown = !current
+    || TAB_ORDER.indexOf(tab) >= TAB_ORDER.indexOf(current.id.replace("tab-", ""));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const applySwap = () => {
+    const [t, sub] = TITLES[tab];
+    $("#page-title").textContent = t; $("#page-sub").textContent = sub;
+    for (const el of [$("#page-title"), $("#page-sub")]) {   // 回退路径:标题轻浮起(VT 路径由快照融合接管)
+      el.classList.remove("swap"); void el.offsetWidth; el.classList.add("swap");
+    }
+    /* 覆盖层交叉淡化(仅无 View Transitions 的回退路径);连点防竞态 */
+    $$("main section.leaving").forEach(s => {
+      clearTimeout(s._leaveT);
+      s.classList.remove("leaving", "leaving-up", "leaving-down");
+    });
+    $$("main section").forEach(s => {
+      s.classList.remove("enter-up", "enter-down");
+      if (s.id === "tab-" + tab) {
+        void s.offsetWidth;   // 同页签重进时入场动画也能重放
+        s.classList.add(goingDown ? "enter-up" : "enter-down");
+      }
+      s.classList.toggle("active", s.id === "tab-" + tab);
+    });
+    if (!canViewTransition() && current && current.id !== "tab-" + tab && current.childElementCount > 0 && !reduced) {
+      current.classList.add(goingDown ? "leaving-up" : "leaving-down");
+      clearTimeout(current._leaveT);
+      current._leaveT = setTimeout(() =>
+        current.classList.remove("leaving", "leaving-up", "leaving-down"), 280);
+    }
+    $("#scroll-area").scrollTo({ top: 0 });
+    const hasTask = !!TASK_RENDERERS[tab];
+    $("#app").classList.toggle("has-task", hasTask);
+    if (hasTask) {
+      TASK_RENDERERS[tab]();   // 任务页:同时渲染左栏列表与中栏工作区
+      const tp = $("#taskpanel");   // 任务区随页签整块浮入;播完摘除,选中/筛选重绘不重播
+      tp.classList.remove("tp-enter"); void tp.offsetWidth; tp.classList.add("tp-enter");
+      clearTimeout(switchTab._tpT);
+      switchTab._tpT = setTimeout(() => tp.classList.remove("tp-enter"), 700);
+    } else renderers[tab]();
+  };
+
+  /* 主路径:View Transitions 快照形变(旧页没入景深 / 新页抵达对焦);
+     回退路径:无该 API 的浏览器走覆盖层交叉淡化 */
+  if (canViewTransition()) {
+    document.documentElement.dataset.navDir = goingDown ? "down" : "up";
+    withViewTransition(applySwap);
+  } else applySwap();
 }
 
 /* ============ 主题(明/暗) ============ */
@@ -1533,16 +1636,62 @@ $$("[data-hero-toggle]").forEach(btn =>
 
 /* ============ 视图分流与登录 ============ */
 const views = { welcome: $("#view-welcome"), login: $("#view-login"), app: $("#app") };
+/* 支持 View Transitions 的浏览器:视图/页签切换走快照形变,并抑制 .hidden 摘除自带的入场动画。
+   文档不可见(遮挡/后台)时跳过过渡 —— 快照形变依赖渲染帧,不可见时回调会被无限推迟 */
+const canViewTransition = () =>
+  typeof document.startViewTransition === "function"
+  && !document.hidden
+  && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (typeof document.startViewTransition === "function") document.documentElement.classList.add("vt-run");
+
+/* 快照形变封装:DOM 更新放进 VT 回调;回调若因渲染暂停被无限推迟(遮挡/后台),
+   350ms 兜底直接落地,视图交换绝不挂起 —— 之后渲染恢复时形变仍会补播 */
+function withViewTransition(applySwap) {
+  if (!canViewTransition()) { applySwap(); return undefined; }
+  let ran = false;
+  const once = () => { if (ran) return; ran = true; applySwap(); };
+  const bail = setTimeout(once, 350);
+  const vt = document.startViewTransition(() => { clearTimeout(bail); once(); });
+  return vt;
+}
+
+/* 视图切换(开始页 ↔ 登录 ↔ 工作台):纵深推进 —— 按视图层级定方向 */
+const VIEW_DEPTH = { welcome: 0, login: 1, app: 2 };
 function showView(name) {
-  for (const [k, el] of Object.entries(views)) {
-    if (k === name) {
-      clearTimeout(el._hideT);   // 取消尚未完成的退场,防止把当前视图藏掉
-      el.classList.remove("closing", "hidden");
-    } else if (!el.classList.contains("hidden")) {
-      animateHide(el);           // 旧视图淡出,与新视图入场交叠为交叉淡化
+  const prev = Object.keys(views).find(k => !views[k].classList.contains("hidden"));
+  const applySwap = () => {
+    for (const [k, el] of Object.entries(views)) {
+      if (k === name) {
+        clearTimeout(el._hideT);   // 取消尚未完成的退场,防止把当前视图藏掉
+        el.classList.remove("closing", "hidden");
+      } else if (!el.classList.contains("hidden")) {
+        if (canViewTransition()) {  // VT:退场交给快照,直接归位
+          clearTimeout(el._hideT);
+          el.classList.remove("closing");
+          el.classList.add("hidden");
+        } else animateHide(el);     // 回退:旧视图淡出,与新视图入场交叠为交叉淡化
+      }
     }
+    try { sessionStorage.setItem("harness_view", name); } catch {}  // 供刷新后就地恢复
+  };
+
+  if (prev && prev !== name && canViewTransition()) {
+    delete document.documentElement.dataset.navDir;   // 页签形变标记不带入视图形变
+    document.documentElement.dataset.vt = VIEW_DEPTH[name] > VIEW_DEPTH[prev] ? "in" : "out";
+    const vt = withViewTransition(applySwap);
+    if (vt) {
+      showView._vt = vt;
+      vt.finished.finally(() => {   // 只清理自己那次的标记,避免误删后一次切换的
+        if (showView._vt === vt) {
+          delete document.documentElement.dataset.vt;
+          showView._vt = null;
+        }
+      });
+    } else showView._vt = null;
+  } else {
+    applySwap();
+    showView._vt = null;
   }
-  try { sessionStorage.setItem("harness_view", name); } catch {}  // 供刷新后就地恢复
 }
 function showWelcome() { showView("welcome"); }
 function showLogin() { $("#login-err").innerHTML = ""; showView("login"); $("#login-user").focus(); }
@@ -1553,8 +1702,12 @@ function showApp(username) {
   showView("app");
   let tab = null;
   try { tab = sessionStorage.getItem("harness_tab"); } catch {}
-  // 走 switchTab 以统一挂载任务区布局;刷新后恢复上次所在页签(仅认已注册的页签)
-  switchTab(TASK_RENDERERS[tab] || renderers[tab] ? tab : "dashboard");
+  let went = false;
+  const go = () => { if (went) return; went = true; switchTab(TASK_RENDERERS[tab] || renderers[tab] ? tab : "dashboard"); };
+  if (showView._vt) {
+    showView._vt.finished.finally(go).catch(() => {});   // 两拍衔接:链在 finished( promise )上
+    setTimeout(go, 900);                                 // 渲染暂停时兜底触发
+  } else go();
   loadHealth(); initAiPanel();
 }
 async function enterApp() {
@@ -1575,6 +1728,8 @@ async function boot() {
     if (v === "app") { const u = await who(); if (u) return showApp(u); return showLogin(); }
   }
   const u = await who();
+  /* 等待鉴权期间用户可能已自行导航(弱网/慢回包):已进入工作台则不再落回壳视图 */
+  if (views.app.classList.contains("hidden") === false) return;
   if (u) showWelcome(); else showLogin();
 }
 async function doLogin(btn) {
