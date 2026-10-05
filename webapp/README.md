@@ -108,4 +108,4 @@
 - 不要手改 `webapp/auth.json`、也不要把它或 `.env` 的内容摘进任何文档；
   登录页与看板都不显示口令，`/api/settings` 对密钥只回掩码。
 - 前端没有构建步骤，`index.html` 里的 JS 就是最终产物：不要在仓库里另建 `src/`+`dist/` 双份，
-  那会让「改了前端但产物没重编」这类漂移重新出现（根目录 `dist/harness-frontend.zip` 是历史打包物，已 gitignore）。
+  那会让「改了前端但产物没重编」这类漂移重新出现（根目录 `dist/harness-frontend.zip` 历史打包残留已于 2026-10-05 清理。）
