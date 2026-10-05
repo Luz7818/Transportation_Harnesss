@@ -20,13 +20,13 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 | 发布一致性 | `RELEASE CHECK PASS`:版本四处一致 + `docs/openapi.json` 与 app 当前 schema 逐键一致(29 路径) | `python scripts/check_release.py` |
 | API 面 | `/api/*` 31 个操作(27 条路径),另有 3 条页面路由 | `python -c "import json;s=json.load(open('docs/openapi.json',encoding='utf-8'));print(len(s['paths']),sum(len(v) for v in s['paths'].values()))"` |
 | SDK 面 | 30 个公开方法(含 `close`),其中 29 个对应 API 操作 —— `/api/settings` 的 GET/PUT 刻意不接 | `python -c "import ast;print(len([n for n in ast.walk(ast.parse(open('sdk/harness_client/client.py',encoding='utf-8').read())) if isinstance(n,ast.FunctionDef) and not n.name.startswith('_')]))"` |
-| 评测资产 | 16 条 replaycase(8 个标签目录,2 个空目录)、2 个评测集(13 + 3 条)、6 个数据集、`reports/` 归档随运行增长 | `python -c "import glob;print(len(glob.glob('cases/*/*.json')),len(glob.glob('evalsets/*.json')),len(glob.glob('pipeline/data/*.json')),len(glob.glob('reports/*')))"` |
+| 评测资产 | 18 条 replaycase(8 个标签目录)、2 个评测集(15 + 3 条)、6 个数据集、`reports/` 归档随运行增长 | `python -c "import glob;print(len(glob.glob('cases/*/*.json')),len(glob.glob('evalsets/*.json')),len(glob.glob('pipeline/data/*.json')),len(glob.glob('reports/*')))"` |
 | 得分轨迹 | evalset_v1:v0 1/13 → v1 11/13 → v2 13/13;evalset_scenario_rain:0/3 → 2/3 → 3/3 | `python scripts/verify.py` |
 | CI | 两条矩阵 job:`test (3.11)`、`test (3.12)`;当前分支 HEAD 的徽章为 `passing`(复核见右)。本机没有 `gh`,但徽章与 Actions 接口对**公开仓都免认证**;要提交号与耗时再用 `/actions/runs`(匿名限 60 次/小时/IP,别拿它轮询) | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/Transportation_Harnesss/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`;步骤清单见 `.github/workflows/ci.yml` |
 | CI 步骤 | `ruff check .` → `pytest` → `python scripts/verify.py` → `python scripts/check_release.py`,另装 `pip install -r requirements.txt -r requirements-dev.txt` 与 `pip install ./sdk` | `cat .github/workflows/ci.yml` |
 | 线上探针 | `.github/workflows/probe.yml` 每天只读 `GET /api/health`,断言在线且 `default_credentials=false`;服务地址存仓库 secret `LIVE_HEALTH_URL`,**不入库**;线上未配置该 secret 或服务未收口前,探针会红 —— 这是设计,不是故障 | `cat scripts/probe_live.py` + `cat .github/workflows/probe.yml` |
-| 版本 | 应用与 SDK 均为 `1.6.0`(四处同步:根 `pyproject.toml`、`sdk/pyproject.toml`、`sdk/harness_client/__init__.py`、`FastAPI(..., version=...)`;一致性已由 check_release 断言进 CI) | `python scripts/check_release.py` |
-| 发布 | `CHANGELOG.md` 从 1.6.0 起向前记录;tag 命名 `v主.次.补` | `head -20 CHANGELOG.md` |
+| 版本 | 应用与 SDK 均为 `2.0.0`(四处同步:根 `pyproject.toml`、`sdk/pyproject.toml`、`sdk/harness_client/__init__.py`、`FastAPI(..., version=...)`;一致性已由 check_release 断言进 CI) | `python scripts/check_release.py` |
+| 发布 | `CHANGELOG.md` 从 2.0.0 起向前记录;tag 命名 `v主.次.补` | `head -20 CHANGELOG.md` |
 
 ## 仓库地图
 
