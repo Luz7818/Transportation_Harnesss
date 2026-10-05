@@ -153,14 +153,9 @@ def analyze_v1(segments: list[dict]) -> dict:
     }
 
 
-def analyze_v2(segments: list[dict]) -> dict:
-    """v2(第 2 轮:边界与聚合优化)——在 v1 基础上精修:
-
-    - 边界升级:V/C ∈ [0.75, 0.8) 且速度比 < 0.35 → 升级为「拥堵」(贴近真实通行体验);
-    - 全局拥堵指数改为按流量加权,并对单点 V/C 做 1.2 封顶;
-    - 空数据集/零有效路段输出空结果集,全局指数为 null,不报错;
-    - 拥堵路段按饱和度降序排列;单次遍历完成统计,减少重复计算。
-    """
+def _analyze(segments: list[dict], *, version: str, band: tuple[float, float],
+             speed_ratio: float) -> dict:
+    """v2/v3 共用的分析核:公式、加权、排序、降级完全一致,只差升级带与速度比上限。"""
     rows, missing = [], []
     sat_raw_by_id: dict[str, float] = {}  # 保留未取整的 V/C,供边界升级/加权/排序使用
     for seg in segments:
@@ -177,7 +172,7 @@ def analyze_v2(segments: list[dict]) -> dict:
         speed, ffs = seg["speed"], seg["free_flow_speed"]
         ratio_raw = speed / ffs
         level = _classify_by_saturation(sat_raw)
-        if ESCALATION_BAND[0] <= sat_raw < ESCALATION_BAND[1] and ratio_raw < ESCALATION_SPEED_RATIO:
+        if band[0] <= sat_raw < band[1] and ratio_raw < speed_ratio:
             level = "拥堵"  # 边界升级:饱和度逼近上限且车速已显著下降
         sat_raw_by_id[seg["segment_id"]] = sat_raw
         rows.append({
@@ -205,10 +200,22 @@ def analyze_v2(segments: list[dict]) -> dict:
                f"缓行 {cnt.get('缓行', 0)}、拥堵 {cnt.get('拥堵', 0)}、严重拥堵 {cnt.get('严重拥堵', 0)};"
                f"全局拥堵指数(流量加权){'无' if global_index is None else global_index}。")
     return {
-        "version": "v2", "segments": rows, "congested_segments": congested,
+        "version": version, "segments": rows, "congested_segments": congested,
         "global_congestion_index": global_index, "recommendations": recommendations,
         "summary": summary,
     }
+
+
+def analyze_v2(segments: list[dict]) -> dict:
+    """v2(第 2 轮:边界与聚合优化)——在 v1 基础上精修:
+
+    - 边界升级:V/C ∈ [0.75, 0.8) 且速度比 < 0.35 → 升级为「拥堵」(贴近真实通行体验);
+    - 全局拥堵指数改为按流量加权,并对单点 V/C 做 1.2 封顶;
+    - 空数据集/零有效路段输出空结果集,全局指数为 null,不报错;
+    - 拥堵路段按饱和度降序排列;单次遍历完成统计,减少重复计算。
+    """
+    return _analyze(segments, version="v2", band=ESCALATION_BAND,
+                    speed_ratio=ESCALATION_SPEED_RATIO)
 
 
 def analyze_v3(segments: list[dict]) -> dict:
@@ -220,55 +227,8 @@ def analyze_v3(segments: list[dict]) -> dict:
     - v2 的升级带是 v3 的子集,故对既有场景只扩不缩(verify.py 断言 v3 与 v2 在 base 上判定一致);
     - 其余公式、加权、排序、降级与 v2 完全一致。
     """
-    rows, missing = [], []
-    sat_raw_by_id: dict[str, float] = {}  # 保留未取整的 V/C,供边界升级/加权/排序使用
-    for seg in segments:
-        if seg.get("volume") is None:
-            missing.append(seg["segment_id"])
-            rows.append({
-                "segment_id": seg["segment_id"], "name": seg["name"],
-                "classification": MISSING_LEVEL, "saturation": None, "delay_index": None,
-                "speed_ratio": None, "status": "数据缺失(volume 缺失)", "volume": None,
-            })
-            continue
-        capacity = seg["capacity_per_lane"] * seg["lane_count"]
-        sat_raw = seg["volume"] / capacity
-        speed, ffs = seg["speed"], seg["free_flow_speed"]
-        ratio_raw = speed / ffs
-        level = _classify_by_saturation(sat_raw)
-        if (V3_ESCALATION_BAND[0] <= sat_raw < V3_ESCALATION_BAND[1]
-                and ratio_raw < V3_ESCALATION_SPEED_RATIO):
-            level = "拥堵"  # 排队回溢升级:饱和度逼近上限且地点车速已降至自由流一半以下
-        sat_raw_by_id[seg["segment_id"]] = sat_raw
-        rows.append({
-            "segment_id": seg["segment_id"], "name": seg["name"], "classification": level,
-            "saturation": round(sat_raw, 2),
-            "delay_index": round(max(0.0, (ffs - speed) / ffs), 2),
-            "speed_ratio": round(ratio_raw, 2), "status": "ok", "volume": seg["volume"],
-        })
-
-    valid = [r for r in rows if r["status"] == "ok"]
-    congested = [r["segment_id"] for r in sorted(
-        (r for r in rows if r["classification"] in CONGESTED_LEVELS),
-        key=lambda r: sat_raw_by_id[r["segment_id"]], reverse=True)]
-    total_volume = sum(r["volume"] for r in valid)
-    global_index = (round(sum(r["volume"] * min(sat_raw_by_id[r["segment_id"]], SATURATION_CAP)
-                              for r in valid) / total_volume, 4)
-                    if valid else None)
-    recommendations = [
-        {"segment_id": r["segment_id"], "text": _advice(r["classification"], r["name"])}
-        for r in rows if r["classification"] in CONGESTED_LEVELS
-    ]
-    cnt = _summary_counts(valid)
-    summary = (f"共分析 {len(segments)} 个路段(有效 {len(valid)} 个,数据缺失 {len(missing)} 个):"
-               f"按饱和度 V/C 五级划分,畅通 {cnt.get('畅通', 0)}、基本畅通 {cnt.get('基本畅通', 0)}、"
-               f"缓行 {cnt.get('缓行', 0)}、拥堵 {cnt.get('拥堵', 0)}、严重拥堵 {cnt.get('严重拥堵', 0)};"
-               f"全局拥堵指数(流量加权){'无' if global_index is None else global_index}。")
-    return {
-        "version": "v3", "segments": rows, "congested_segments": congested,
-        "global_congestion_index": global_index, "recommendations": recommendations,
-        "summary": summary,
-    }
+    return _analyze(segments, version="v3", band=V3_ESCALATION_BAND,
+                    speed_ratio=V3_ESCALATION_SPEED_RATIO)
 
 
 PIPELINES = {
