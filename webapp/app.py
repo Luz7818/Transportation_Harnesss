@@ -33,17 +33,19 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# 行解析器必须在 .env 加载前就位;settings 是叶子模块,此处提前导入无环
+from webapp.settings import _parse_env_lines
+
 
 def _load_dotenv(path: Path) -> None:
-    """极简 .env 加载(零依赖):KEY=VALUE 逐行,忽略注释;已存在的环境变量优先于文件。"""
+    """启动期把 .env 并入进程环境(零依赖):已存在的环境变量优先于文件。
+
+    行解析与 webapp/settings.read_env_file 共用 `_parse_env_lines` 一份实现;
+    这里只定义落点:setdefault 进 os.environ,空键跳过。
+    """
     if not path.is_file():
         return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        key, value = key.strip(), value.strip().strip('"').strip("'")
+    for key, value in _parse_env_lines(path.read_text(encoding="utf-8")).items():
         if key:
             os.environ.setdefault(key, value)
 

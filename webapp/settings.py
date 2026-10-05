@@ -1,6 +1,6 @@
 """运行时配置(.env)读写:Web 看板「系统设置」面板背后的唯一写入通道。
 
-约定(与 webapp/app.py 的 `_load_dotenv` 解析格式严格一致):
+约定(行解析与 webapp/app.py 的启动期加载共用 `_parse_env_lines` 一份实现):
 
 - 只操作项目根的 `.env`(已 gitignored,永不入库);逐行 `KEY=VALUE`,
   注释、空行与本模块不认识的键**原样保留**,改哪几行只动哪几行;
@@ -98,18 +98,24 @@ def mask_secret(value: str) -> str:
     return f"{value[:2]}***({len(value)})"
 
 
-def read_env_file() -> dict[str, str]:
-    """解析 .env 为键值(同名键取最后一次);文件不存在返回空 dict。"""
-    if not ENV_FILE.is_file():
-        return {}
+def _parse_env_lines(text: str) -> dict[str, str]:
+    """KEY=VALUE 逐行解析(与 app.py 启动期加载共用,两处口径必须严格一致):
+    忽略空行与 # 注释;同名键取最后一次;值去两侧成对引号;空键行保留(调用方自行取舍)。"""
     values: dict[str, str] = {}
-    for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+    for line in text.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#") or "=" not in stripped:
             continue
         key, _, value = stripped.partition("=")
         values[key.strip()] = value.strip().strip('"').strip("'")
     return values
+
+
+def read_env_file() -> dict[str, str]:
+    """解析 .env 为键值(同名键取最后一次);文件不存在返回空 dict。"""
+    if not ENV_FILE.is_file():
+        return {}
+    return _parse_env_lines(ENV_FILE.read_text(encoding="utf-8"))
 
 
 def _line_key(line: str) -> str | None:
