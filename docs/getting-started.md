@@ -110,7 +110,7 @@ python webapp/app.py
 ```
 
 想一次到位（推荐公网部署用）：启动前在环境或 `.env` 里设好 `ADMIN_PASSWORD` 与强随机
-`AUTH_TOKEN`，服务起来即是收口状态，无需手动改密。步骤与轮换通道见 [DEPLOY.md](../DEPLOY.md)。
+`AUTH_TOKEN`，服务起来即是收口状态，无需手动改密。步骤与轮换通道见 [DEPLOY.md](DEPLOY.md)。
 
 PWA：在 `localhost` 或 HTTPS 下，浏览器地址栏的「安装」即可得到独立窗口与图标；
 断网后仍能浏览最后一次加载的看板数据（Service Worker 缓存了页面壳与 GET 接口结果）。
@@ -308,7 +308,7 @@ curl -X POST http://127.0.0.1:8765/api/llm/drafts -H "Content-Type: application/
 每个请求带 `Authorization: Bearer <令牌>`；无令牌、令牌过期或后端回 `401` 都会清掉本地令牌并跳登录页。
 开发阶段在微信开发者工具「详情 → 本地设置」勾选「不校验合法域名…TLS 版本以及 HTTPS 证书」，
 手机首次进入需在小程序「…」→ 打开调试放行 http。
-正式发布要 HTTPS + 已备案域名并在小程序后台配 `request` 合法域名（清单在 [DEPLOY.md](../DEPLOY.md)）。
+正式发布要 HTTPS + 已备案域名并在小程序后台配 `request` 合法域名（清单在 [DEPLOY.md](DEPLOY.md)）。
 细节与页面清单见 [miniprogram/README.md](../miniprogram/README.md)。
 
 ## 7. Python SDK 与命令行
@@ -358,7 +358,7 @@ v2 于 evalset_v1:13/13 通过(100.0%)
 `/api/health` 做健康检查、`cases/`、`evalsets/`、`reports/`、`pipeline/data/`、`drafts/`、
 `llm_cache/` 挂成数据卷**（容器重建不丢评测资产）。三条路线（内网穿透演示 /
 云服务器 Docker + Nginx + HTTPS / 免费托管平台）与 systemd 常驻写法、备份 cron、
-小程序发布清单都在 [DEPLOY.md](../DEPLOY.md)。
+小程序发布清单都在 [DEPLOY.md](DEPLOY.md)。
 
 最快的容器起法（先按 `.env.example` 准备 `.env`，公网必须设强随机 `AUTH_TOKEN`）：
 
@@ -378,7 +378,7 @@ docker logs -f transportation-harness
 | `python scripts/run_eval.py --version v9` → `argument --version: invalid choice: 'v9' (choose from 'v0', 'v1', 'v2', 'v3')`，退出码 2 | 版本必须已在 `pipeline/versions.py` 的 `PIPELINES` 里登记 | 想验新版本就照第 5 节末登记 `analyze_v4`；只是打错则改用已登记版本 |
 | `python scripts/run_eval.py --evalset no_such_set` → `FileNotFoundError: [Errno 2] No such file or directory: '…\\evalsets\\no_such_set.json'` | CLI 直读文件，不做 404 包装 | 评测集名取 `evalsets/*.json` 的文件名；HTTP 侧同样的错误会返回 `404 评测集不存在 …(可选:…)` |
 | `python -m harness.evolve --baseline v3` → `错误:'v3' 已是最新登记版本,其后没有待验证的版本…`（退出码 1）；HTTP 侧 `POST /api/evolve/run {"baseline":"v2"}` → `400` 同文案 | 基线传了最末登记版本,其后没有可验证的迭代版本(1.6.0 起明确报错,不再 IndexError) | 基线传「上一个版本」（登记 v4 之后用 `--baseline v3`）；只想看单版本表现用 `python scripts/run_eval.py --version v3` |
-| 受保护业务接口得 `403 {"detail":"初始口令尚未修改,业务接口暂不开放:…"}`（登录模式，机器令牌/已登录会话同样被挡） | 初始口令未改（`/api/health` 的 `default_credentials` 为 true），门禁只放行 `/api/health` 与 `/api/auth/*` | 用控制台打印的初始口令登录 → 看板「改密」;或在启动环境设 `ADMIN_PASSWORD` 后重启(部署者自备凭据,见 [DEPLOY.md](../DEPLOY.md)) |
+| 受保护业务接口得 `403 {"detail":"初始口令尚未修改,业务接口暂不开放:…"}`（登录模式，机器令牌/已登录会话同样被挡） | 初始口令未改（`/api/health` 的 `default_credentials` 为 true），门禁只放行 `/api/health` 与 `/api/auth/*` | 用控制台打印的初始口令登录 → 看板「改密」;或在启动环境设 `ADMIN_PASSWORD` 后重启(部署者自备凭据,见 [DEPLOY.md](DEPLOY.md)) |
 | `GET /api/settings` → `403 {"detail":"运行时配置接口未启用:/api/settings 能读写服务器本地的 .env(含密钥),默认关闭。确需使用请在服务启动环境里设 SETTINGS_ENABLED=1 并重启服务;开启后非本机访问仍必须携带已登录会话。"}` | 该接口默认关闭，且只在启动时读一次 | 在服务器环境里设 `SETTINGS_ENABLED=1` 并重启；机器令牌 `X-API-Token` 永远不能用于该接口（设计如此，见 [AGENTS.md](../AGENTS.md) 鉴权事实） |
 | 从本机以外访问 `/api/settings` → `403 {"detail":"/api/settings 仅允许本机直连或已登录会话访问。…"}`；经 Nginx 反代后从本机访问也被拒 | 反代之后 TCP 对端恒为 `127.0.0.1`，但请求带 `X-Forwarded-For` 等转发头 → 不算「本机直连」 | 带已登录会话（Bearer 或 Cookie），或在服务器本机浏览器里打开 `127.0.0.1:8765` |
 | 受保护接口得 `401 {"detail":"未登录或会话已过期"}` | 三种凭据都没带或都无效 | 依次检查：`X-API-Token` 是否等于服务端 `AUTH_TOKEN`（改了要重启）、会话令牌/Cookie 是否过期（7 天）、`AUTH_MODE` 是否 `login` |

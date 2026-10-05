@@ -1,16 +1,16 @@
 FROM python:3.12-slim
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
+COPY pyproject.toml README.md ./
 COPY harness/ ./harness/
 COPY llm/ ./llm/
 COPY pipeline/ ./pipeline/
+COPY webapp/ ./webapp/
+RUN pip install --no-cache-dir .
+
 COPY cases/ ./cases/
 COPY evalsets/ ./evalsets/
 COPY reports/ ./reports/
-COPY webapp/ ./webapp/
 COPY scripts/ ./scripts/
 
 # 以非 root 运行:即使容器被攻破也难以篡改宿主机文件;

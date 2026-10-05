@@ -12,7 +12,7 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-[快速开始](#快速开始) · [能力总览](#能力总览) · [架构](#架构) · [安全模型](#安全模型) · [部署](DEPLOY.md) · [Roadmap](#roadmap)
+[快速开始](#快速开始) · [能力总览](#能力总览) · [架构](#架构) · [安全模型](#安全模型) · [部署](docs/DEPLOY.md) · [Roadmap](#roadmap)
 
 </div>
 
@@ -55,7 +55,7 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 ```
 
 完整步骤(含真实报错与处理办法)见 [docs/getting-started.md](docs/getting-started.md);
-公网部署、凭据生成与线上探针见 [DEPLOY.md](DEPLOY.md)。
+公网部署、凭据生成与线上探针见 [DEPLOY.md](docs/DEPLOY.md)。
 
 ## 实测战绩
 
@@ -108,7 +108,7 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 
 三条分层硬约束:`harness/` 不 import `pipeline/`/`llm/`/`webapp/`(框架可迁移);
 `llm/` 是增强层不是依赖层(任何 LLM 功能失败都有确定性降级路径);
-客户端只走 HTTP API,不 import 后端模块。设计理由详见 [ARCHITECTURE.md](ARCHITECTURE.md)。
+客户端只走 HTTP API,不 import 后端模块。设计理由详见 [ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
 ## 安全模型
 
@@ -125,7 +125,7 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 
 - [ ] **2.0 真实数据接入**:换掉合成快照(公开轨迹集或外业采集),数据集记录 `source`/`captured_at`;当前快照仍为合成口径
 - [x] **2.1 前向迭代留痕**:rc-0014/rc-0015 沉淀 → evolve → v3 归档(2.0.0)
-- [x] **2.2 交付形态收口**:单实例约束写明(DEPLOY.md),`--baseline` 末端版本明确 400(1.6.0)
+- [x] **2.2 交付形态收口**:单实例约束写明(docs/DEPLOY.md),`--baseline` 末端版本明确 400(1.6.0)
 - [x] **2.3 真实模型判分**:qwen3.8-27b 判分归档,Mock 1.0 vs 真实 0.70(见 [docs/LLM.md](docs/LLM.md))
 - [ ] **2.4 线上化**:HTTPS + 备案域名,小程序正式发布(或明确定位为内网演示端)
 - [ ] **发布**:tag + GitHub Release 附 SDK wheel;版本一致性断言已进 CI(1.6.0)

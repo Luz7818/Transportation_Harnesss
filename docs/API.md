@@ -31,7 +31,7 @@ Transportation Harness 的全部能力通过一套 REST API 暴露,网页看板�
 同一条中间件裁决三种凭据,**按下列顺序判定,任一通过即放行**。
 第 0 步是**初始口令门禁**(先于一切凭据):`/api/health` 的 `default_credentials` 为 true 时
 (部署者还没提供/改掉初始口令),除 `/api/health` 与 `/api/auth/*` 外的全部 `/api/*`
-对三种凭据一律 `403`,直到口令被改掉或启动环境提供 `ADMIN_PASSWORD`。各凭据语义见 [DEPLOY.md](../DEPLOY.md):
+对三种凭据一律 `403`,直到口令被改掉或启动环境提供 `ADMIN_PASSWORD`。各凭据语义见 [DEPLOY.md](DEPLOY.md):
 
 | 顺序 | 凭据 | 给谁用 | 来源 |
 | --- | --- | --- | --- |
@@ -608,11 +608,11 @@ print(summary["best"], summary["stop_reason"])
 
 **微信小程序**:修改 `miniprogram/config.js` 的 `BASE_URL`(不要写任何令牌),
 登录页换会话令牌后 `utils/api.js` 自动携带 `Authorization: Bearer <token>` 头。
-正式发布需 HTTPS + 备案域名,清单见 [DEPLOY.md](../DEPLOY.md)。
+正式发布需 HTTPS + 备案域名,清单见 [DEPLOY.md](DEPLOY.md)。
 
 ## 相关文档
 
 - [README](../README.md) — 项目总览、架构图与快速开始
-- [ARCHITECTURE](../ARCHITECTURE.md) — 架构分层与设计决策
-- [DEPLOY](../DEPLOY.md) — 公网部署三条路线与小程序发布清单
+- [ARCHITECTURE](ARCHITECTURE.md) — 架构分层与设计决策
+- [DEPLOY](DEPLOY.md) — 公网部署三条路线与小程序发布清单
 - 运行实例的[文档中心](http://127.0.0.1:8765/help)与[交互式 API](http://127.0.0.1:8765/docs)

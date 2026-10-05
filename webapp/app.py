@@ -1,7 +1,7 @@
 """Web 界面后端:把 harness 的能力(分析提交 / Case 管理 / 评测看板 / 版本对比 / 一键自进化)暴露为 HTTP API。
 
 本地启动:python webapp/app.py(默认 http://127.0.0.1:8765)
-公网部署:支持环境变量配置(见 DEPLOY.md)
+公网部署:支持环境变量配置(见 docs/DEPLOY.md)
   HOST=0.0.0.0 PORT=8765  监听地址/端口
   AUTH_MODE=open          免登录(仅限内网演示);默认 login
   AUTH_TOKEN=xxx          设置后所有 /api/* 需要 X-API-Token 请求头(公网必开,≥16 字符)

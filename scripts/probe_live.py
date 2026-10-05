@@ -36,7 +36,7 @@ def main() -> int:
         problems.append(f"status={health.get('status')!r}(应为 'ok')")
     if health.get("default_credentials") is not False:
         problems.append("default_credentials 不为 false —— 初始口令未修改,"
-                        "业务接口处于 403 门禁状态,请按 DEPLOY.md「凭据与首次启动」收口")
+                        "业务接口处于 403 门禁状态,请按 docs/DEPLOY.md「凭据与首次启动」收口")
     print(f"线上版本 {health.get('app_version')},auth_mode {health.get('auth_mode')},"
           f"{health.get('case_count')} cases")
     if problems:

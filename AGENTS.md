@@ -46,7 +46,7 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 | `miniprogram/` | 微信小程序 | 4 个 Tab + 5 个二级页，`utils/api.js` 统一带 `Authorization: Bearer` 会话令牌 |
 | `tests/` | 测试 | `conftest.py` 夹具把资产目录与 `.env`、`auth.json` 全隔离到临时目录 |
 | `docs/` | 人读参考 | `API.md`（逐端点）、`INTEGRATION.md`、`LLM.md`、`openapi.json`（生成物）、`images/`（README 截图） |
-| `Dockerfile` / `docker-compose.yml` / `DEPLOY.md` | 部署 | 容器非 root（UID 1000）、`/api/health` 健康检查、四个数据卷 |
+| `Dockerfile` / `docker-compose.yml` / `docs/DEPLOY.md` | 部署 | 容器非 root（UID 1000）、`/api/health` 健康检查、四个数据卷 |
 | `.github/workflows/ci.yml` | CI | Python 3.11/3.12 矩阵,ruff + pytest + verify + check_release;`probe.yml` 每天只读探线上健康 |
 
 ## 架构与数据流
@@ -180,7 +180,7 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 | 接入别的 LLM 供应商 | 只改环境变量，无需动代码 | 任意 OpenAI 兼容端点，见 `.env.example` |
 | 沉淀首批种子 case / 重置资产 | `python scripts/seed_cases.py` | 雨天场景另用 `seed_scenario_cases.py` |
 | 备份评测资产 | `python scripts/backup.py` | 打包 `cases/`、`evalsets/`、`reports/` |
-| 部署 / 更新公网 | 见 [DEPLOY.md](DEPLOY.md) | Docker 路线一条命令，小程序发布清单也在里面 |
+| 部署 / 更新公网 | 见 [DEPLOY.md](docs/DEPLOY.md) | Docker 路线一条命令，小程序发布清单也在里面 |
 
 ## 改动后的验证
 
@@ -247,8 +247,8 @@ FastAPI 单进程服务 + 文件型评测资产的交通分析自进化评测系
 ## 延伸阅读
 
 上手与故障排查 [docs/getting-started.md](docs/getting-started.md) · 架构决策的理由
-[ARCHITECTURE.md](ARCHITECTURE.md) · 逐端点参考 [docs/API.md](docs/API.md) · 程序化接入 [docs/INTEGRATION.md](docs/INTEGRATION.md) ·
-LLM 设计 [docs/LLM.md](docs/LLM.md) · 部署 [DEPLOY.md](DEPLOY.md) ·
+[ARCHITECTURE.md](docs/ARCHITECTURE.md) · 逐端点参考 [docs/API.md](docs/API.md) · 程序化接入 [docs/INTEGRATION.md](docs/INTEGRATION.md) ·
+LLM 设计 [docs/LLM.md](docs/LLM.md) · 部署 [DEPLOY.md](docs/DEPLOY.md) ·
 各目录说明 `harness/README.md`、`pipeline/README.md`、`llm/README.md`、`webapp/README.md`、
 `scripts/README.md`、`cases/README.md`、`evalsets/README.md`、`sdk/README.md`、
 `miniprogram/README.md`、`tests/README.md`。

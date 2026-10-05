@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     ports:
-      # 生产建议改为 "127.0.0.1:8765:8765",只让 Nginx 反代对外(见 DEPLOY.md 路线 B)
+      # 生产建议改为 "127.0.0.1:8765:8765",只让 Nginx 反代对外(见 docs/DEPLOY.md 路线 B)
       - "8765:8765"
     environment:
       # 公网部署务必设置强随机令牌,客户端以 X-API-Token 头携带

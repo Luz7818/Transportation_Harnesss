@@ -90,7 +90,7 @@ python scripts/backup.py --out D:/备份目录
 
 （默认输出目录是仓库根的 `backups/`，脚本按绝对路径打印；`--out` 给相对路径时按其原样打印，
 例如 `tmpbak\harness_backup_20260927_033533.zip`。）体积随 `reports/` 增长；
-服务器上按 cron 每日跑（写法见 [DEPLOY.md](../DEPLOY.md) 的备份一节）。
+服务器上按 cron 每日跑（写法见 [DEPLOY.md](../docs/DEPLOY.md) 的备份一节）。
 
 ```bash
 python scripts/export_openapi.py

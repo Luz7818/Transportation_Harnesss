@@ -13,8 +13,8 @@
 | 环境 | Base URL | 说明 |
 | --- | --- | --- |
 | 本地开发 | `http://127.0.0.1:8765` | `python webapp/app.py` 启动 |
-| 云服务器 | `http://<你的服务器地址>:8765` | 自己的公网 IP 或域名;Docker 常驻部署见 [DEPLOY.md](../DEPLOY.md) |
-| 正式发布 | `https://<你的备案域名>` | Nginx + HTTPS(小程序合法域名要求),见 DEPLOY.md 路线 B |
+| 云服务器 | `http://<你的服务器地址>:8765` | 自己的公网 IP 或域名;Docker 常驻部署见 [DEPLOY.md](DEPLOY.md) |
+| 正式发布 | `https://<你的备案域名>` | Nginx + HTTPS(小程序合法域名要求),见 docs/DEPLOY.md 路线 B |
 
 > 仓库与文档里不出现任何真实地址、令牌或口令:上面这些尖括号占位符,
 > 请换成**你自己部署时填的值**(地址在服务器 `.env` 的 `HOST`/反代域名里,
@@ -146,5 +146,5 @@ with httpx.Client(base_url=BASE,
 
 - [docs/API.md](API.md) —— 全端点参考手册
 - [docs/LLM.md](LLM.md) —— LLM 智能层设计
-- [DEPLOY.md](../DEPLOY.md) —— 部署形态与公网接入
+- [DEPLOY.md](DEPLOY.md) —— 部署形态与公网接入
 - [sdk/](../sdk/) —— Python SDK 源码与构建产物
