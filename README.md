@@ -54,7 +54,7 @@ python -m harness.evolve                     # 基线 → 逐版本验证 → �
 python scripts/verify.py                     # 端到端不变量校验,预期 VERIFY PASS
 ```
 
-完整步骤(含真实报错与处理办法)见 [docs/getting-started.md](docs/getting-started.md);
+完整步骤(含真实报错与处理办法)见 [docs/GET-START.md](docs/GET-START.md);
 公网部署、凭据生成与线上探针见 [DEPLOY.md](docs/DEPLOY.md)。
 
 ## 实测战绩

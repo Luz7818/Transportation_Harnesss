@@ -134,7 +134,7 @@ webapp\static\assets\apple-touch-icon-180.png  (21994 bytes)
   这只对第 [4] 组成立。第 [2] 组的单调性是对**全量通过集**做的：如果新用例恰好被 v0 判对、
   被 v1/v2 判错，就会 `FAIL v1 通过集 ⊇ v0 通过集(丢失 ['rc-00NN'])` 并返回退出码 1。
   这不是回归（回归指老用例被改坏），处理见
-  [docs/getting-started.md](../docs/getting-started.md) 的常见故障表。
+  [docs/GET-START.md](../docs/GET-START.md) 的常见故障表。
 - `seed_cases.py` / `seed_scenario_cases.py` 会**整体重写**清单文件：如果你在 `evalsets/*.json` 里
   手工排过 `case_ids` 顺序（重放顺序就是它），跑种子脚本会打回去。
 - 种子脚本写的用例与 `tests/fixtures/cases/` 不是同一份：夹具快照多一条 `rc-0014`，
