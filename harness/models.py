@@ -12,6 +12,9 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
 
+# 拥堵等级的全集(五级 + 数据缺失占位)。webapp 与 llm 的校验都以此为准,别再各写一份。
+VALID_LEVELS = ("畅通", "基本畅通", "缓行", "拥堵", "严重拥堵", "数据缺失")
+
 
 @dataclass
 class CheckSpec:

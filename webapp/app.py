@@ -66,7 +66,7 @@ from harness import activity as activity_mod
 from harness import report as report_mod
 from harness import storage
 from harness.evolve import resolve_iterations, run_evolution
-from harness.models import CheckSpec, ReplayCase
+from harness.models import VALID_LEVELS, CheckSpec, ReplayCase
 from harness.runner import ReplayRunner
 from llm import runtime as llm_runtime
 from llm import store as llm_store
@@ -93,7 +93,6 @@ _LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost"}
 # 反向代理痕迹头:出现任意一个,就说明"对端地址"属于代理而非真实客户端
 _PROXY_HINT_HEADERS = ("forwarded", "x-forwarded-for", "x-real-ip")
 
-VALID_LEVELS = ("畅通", "基本畅通", "缓行", "拥堵", "严重拥堵", "数据缺失")
 
 _CASE_LOCK = threading.Lock()    # 沉淀 case + 更新评测集是复合操作,整体串行化
 _EVOLVE_LOCK = threading.Lock()  # 自进化循环全库读写,不允许并发执行

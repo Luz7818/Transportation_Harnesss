@@ -13,13 +13,12 @@ from __future__ import annotations
 from datetime import datetime
 
 from harness import storage
+from harness.models import VALID_LEVELS
 from harness.runner import ReplayRunner
 from pipeline.versions import PIPELINES
 
 from llm import store
 from llm.runtime import get_runtime
-
-VALID_LEVELS = ("畅通", "基本畅通", "缓行", "拥堵", "严重拥堵", "数据缺失")
 
 DRAFT_SYSTEM = (
     "你是交通分析评测系统的坏例沉淀助手。根据用户对某路段分析结果的反馈,起草一条可重放的评测用例。\n"
