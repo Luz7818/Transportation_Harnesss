@@ -10,3 +10,5 @@ llm_cache/
 drafts/
 # 前端打包产物(本地构建输出,不参与文档)
 dist/
+# LLM 运行期追加日志(纯 JSONL 运行产物,已 gitignore,文件组织检查的豁免登记)
+llm_runs.jsonl
