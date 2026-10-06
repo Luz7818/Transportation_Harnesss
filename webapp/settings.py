@@ -24,7 +24,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+from harness.paths import PROJECT_ROOT as ROOT
+
 ENV_FILE = ROOT / ".env"
 BACKUP_DIR = ROOT / "backups"
 BACKUP_KEEP = 20                    # .env 备份只保留最近 N 份

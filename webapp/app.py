@@ -29,11 +29,16 @@ import threading
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+# 源码直跑(python webapp/app.py)时先把仓库根放进 sys.path,四个顶层包才可导入;
+# 打包 exe 模式下模块都在 PyInstaller 归档内,此步多余但无害
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
-# 行解析器必须在 .env 加载前就位;settings 是叶子模块,此处提前导入无环
+# 行解析器必须在 .env 加载前就位;settings 是叶子模块,此处提前导入无环。
+# ROOT 交给 harness.paths 统一定位:打包 exe 时由启动器经 HARNESS_HOME 重定向数据家目录
+from harness.paths import PROJECT_ROOT as ROOT
+
 from webapp.settings import _parse_env_lines
 
 
@@ -60,7 +65,7 @@ try:
     from pydantic import BaseModel
     from starlette.types import Scope
 except ModuleNotFoundError as exc:
-    sys.exit(f"缺少依赖 {exc.name!r}:请先在当前 Python 环境执行  pip install -r requirements.txt")
+    sys.exit(f"缺少依赖 {exc.name!r}:请先在当前 Python 环境执行  pip install -e .")
 
 from harness import activity as activity_mod
 from harness import report as report_mod
@@ -800,7 +805,12 @@ def api_compare(a: str, b: str) -> dict:
     }
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """启动服务:校验部署参数 → 打印横幅 → uvicorn 拉起。
+
+    源码直跑(python webapp/app.py)与 exe 启动器(packaging/exe_entry.py)共用这一入口,
+    参数校验与 banner 逻辑只此一份。
+    """
     import uvicorn
 
     if AUTH_TOKEN and len(AUTH_TOKEN) < 16:
@@ -821,3 +831,7 @@ if __name__ == "__main__":
         print("[warn] 初始口令尚未修改:业务接口当前一律 403,仅开放 /api/health 与 /api/auth/*;\n"
               "       请用初始口令登录后改密(看板右上角「改密」),或设 ADMIN_PASSWORD 后重启")
     uvicorn.run(app, host=HOST, port=PORT)
+
+
+if __name__ == "__main__":
+    main()

@@ -29,9 +29,11 @@ import os
 import secrets
 import threading
 import time
-from pathlib import Path
 
-AUTH_FILE = Path(__file__).resolve().parent / "auth.json"
+from harness.paths import PROJECT_ROOT
+
+# 源码模式下与历史路径(webapp/auth.json)完全一致;exe 模式跟随 HARNESS_HOME 数据家目录
+AUTH_FILE = PROJECT_ROOT / "webapp" / "auth.json"
 SESSION_TTL = 7 * 24 * 3600
 DEFAULT_USER = os.getenv("ADMIN_USER", "admin")
 

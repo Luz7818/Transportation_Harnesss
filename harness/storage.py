@@ -12,8 +12,8 @@ import threading
 from pathlib import Path
 
 from harness.models import ReplayCase
+from harness.paths import PROJECT_ROOT
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CASES_DIR = PROJECT_ROOT / "cases"
 EVALSETS_DIR = PROJECT_ROOT / "evalsets"
 DATA_DIR = PROJECT_ROOT / "pipeline" / "data"

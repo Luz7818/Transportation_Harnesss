@@ -23,6 +23,9 @@ dev = [
     "Pillow>=10",   # tests/test_pwa.py 校验 PWA 图标与 maskable 透明通道
     "ruff>=0.5",
 ]
+exe = [
+    "pyinstaller>=6.0",   # packaging/harness.spec 单文件封装;平时跑门禁不需要装
+]
 
 [tool.setuptools]
 # 四个顶层包显式列出:flat-layout 自动发现会因多包歧义报错
