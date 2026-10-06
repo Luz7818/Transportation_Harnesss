@@ -121,3 +121,15 @@
   目录说明去掉 requirements 行、dist/ 描述改为「清理后会再生成」；sdk/ 子目录补 `dist/`；
   tests/README 引用 AGENTS 章节名「当前真实状态」→「当前状态」；
   `CHANGELOG.md` 兑现删除（内容已逐条在档，抽查「石墨绿暗底」「口令门禁」等条目命中）。
+
+## 2026-10-06 · 线上服务下线处置（TODO 任务 1 走①）
+
+- **决策**：线上 TCP 8765 自 10-02 起连续失联 6 天（每日 Live Probe 连败,最后一次
+  success 停在 09-30),本机 Secrets 无主机 SSH/面板凭据,「修复重启」不可执行;
+  按 TODO 任务 1 预案①执行下线。
+- **动作**：删除 `.github/workflows/probe.yml`(连带 README 徽章,防 404);
+  README 安全模型/Roadmap、AGENTS「当前状态/已知坑」、GIT.md「CI 与线上探针」、
+  DEPLOY.md 探针节全部改注下线状态与复活路径。
+- **复活路径**：主机恢复后按 DEPLOY.md 重新部署(记得先改初始口令、确认 2.0.0 版本),
+  从 `git log --oneline -- "**/probe.yml"` 取恢复点还原探针工作流,重配
+  `LIVE_HEALTH_URL` secret;`scripts/probe_live.py` 保留可本地探测。

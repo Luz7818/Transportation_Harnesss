@@ -89,7 +89,7 @@
 
 ## Git 索引
 
-- Git 规范：[docs/GIT.md](docs/GIT.md)（评测归档的处理规则、敏感信息绝不入库、CI 与探针、
+- Git 规范：[docs/GIT.md](docs/GIT.md)（评测归档的处理规则、敏感信息绝不入库、CI、
   一批一提交）
 
 ## 当前状态
@@ -107,7 +107,7 @@
 | 得分轨迹 | evalset_v1:v0 1/13 → v1 11/13 → v2 13/13;evalset_scenario_rain:0/3 → 2/3 → 3/3 | `python scripts/verify.py` |
 | CI | 两条矩阵 job:`test (3.11)`、`test (3.12)`;当前分支 HEAD 的徽章为 `passing`(复核见右)。本机没有 `gh`,但徽章与 Actions 接口对**公开仓都免认证**;要提交号与耗时再用 `/actions/runs`(匿名限 60 次/小时/IP,别拿它轮询) | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/Transportation_Harnesss/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`;步骤清单见 `.github/workflows/ci.yml` |
 | CI 步骤 | `ruff check .` → `pytest` → `python scripts/verify.py` → `python scripts/check_release.py`,另装 `pip install -e .[dev]`（requirements 已并入 pyproject 单源）与 `pip install ./sdk` | `cat .github/workflows/ci.yml` |
-| 线上探针 | `.github/workflows/probe.yml` 每天只读 `GET /api/health`,断言在线且 `default_credentials=false`;服务地址存仓库 secret `LIVE_HEALTH_URL`,**不入库**;线上未配置该 secret 或服务未收口前,探针会红 —— 这是设计,不是故障（当前线上失联，处置决策见 `TODO.md` 任务 1） | `cat scripts/probe_live.py` + `cat .github/workflows/probe.yml` |
+| 线上服务 | **已下线**（2026-10-06 决策）：TCP 8765 自 10-02 起连续失联 6 天,本机无主机访问渠道,每日探针连败失去信号价值。已撤 `probe.yml` 与 README 徽章;`scripts/probe_live.py` 保留(复活时本地探测用)。复活路径见 [DEPLOY.md](docs/DEPLOY.md) 与 HISTORY 当日条目 | `git log --oneline -- "**/probe.yml"`(恢复点) |
 | 版本 | 应用与 SDK 均为 `2.0.0`(四处同步:根 `pyproject.toml`、`sdk/pyproject.toml`、`sdk/harness_client/__init__.py`、`FastAPI(..., version=...)`;一致性已由 check_release 断言进 CI) | `python scripts/check_release.py` |
 | 发布 | `HISTORY.md` 从 2.0.0 起向前记录;tag 命名 `v主.次.补` | `head -20 HISTORY.md` |
 
@@ -119,7 +119,7 @@
 - **`tests/test_sdk.py` 的隔离夹具别拆**：`server_url` 会把 `AUTH_FILE` 与 `_AUTH_STORE`
   换到临时文件，拆了单跑就读到本机真实 `webapp/auth.json` 而 401。
 - **本机 `webapp/auth.json` 的 `default_credentials` 已翻转为 false**（1.6.0 轮换通道）；
-  `/api/health` 原样回显该布尔，线上是否收口以探针为准。
+  `/api/health` 原样回显该布尔。线上服务已下线（2026-10-06），复活部署后按 DEPLOY.md 重配探针。
 - **Windows 控制台/管道编码**：捕获输出前 `set PYTHONIOENCODING=utf-8`（脚本自身有
   `reconfigure`，但没走这条的进程在 GBK 控制台经管道会乱码）。
 - **评测脚本会往 `reports/` 写文件**：干净工作区试跑后，要么一起提交（归档即历史），

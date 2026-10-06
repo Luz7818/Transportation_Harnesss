@@ -8,7 +8,6 @@
 让算法的每一次迭代都必须通过「提升且无回归」的门禁才算数。
 
 [![CI](https://github.com/Luz7818/Transportation_Harnesss/actions/workflows/ci.yml/badge.svg)](https://github.com/Luz7818/Transportation_Harnesss/actions/workflows/ci.yml)
-[![Live Probe](https://github.com/Luz7818/Transportation_Harnesss/actions/workflows/probe.yml/badge.svg)](https://github.com/Luz7818/Transportation_Harnesss/actions/workflows/probe.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -118,8 +117,8 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 - 机器令牌 `AUTH_TOKEN` 短于 16 字符时服务拒绝启动;小程序走「登录换会话令牌」,
   不存在静态令牌;口令 PBKDF2 存储 + 登录限流 + 会话 HMAC 签名;
 - 未处理异常只回显通用提示,细节进服务端日志;文件名全部过白名单防路径穿越;
-- CI 自带发布一致性断言(版本四处同步 + OpenAPI 无漂移);GitHub Actions 每天只读探针
-  守护线上部署的「在线 + 初始口令已改」状态。
+- CI 自带发布一致性断言(版本四处同步 + OpenAPI 无漂移)。线上服务已于 2026-10-06 **下线**
+  (连续失联 6 天、无主机访问渠道,决策见 HISTORY);每日探针随之下撤,复活时恢复。
 
 ## Roadmap
 
@@ -127,7 +126,7 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 - [x] **2.1 前向迭代留痕**:rc-0014/rc-0015 沉淀 → evolve → v3 归档(2.0.0)
 - [x] **2.2 交付形态收口**:单实例约束写明(docs/DEPLOY.md),`--baseline` 末端版本明确 400(1.6.0)
 - [x] **2.3 真实模型判分**:qwen3.8-27b 判分归档,Mock 1.0 vs 真实 0.70(见 [docs/LLM.md](docs/LLM.md))
-- [ ] **2.4 线上化**:HTTPS + 备案域名,小程序正式发布(或明确定位为内网演示端)
+- [ ] **2.4 线上化**:HTTPS + 备案域名,小程序正式发布(或明确定位为内网演示端)。线上服务已下线(2026-10-06),复活部署走 [DEPLOY.md](docs/DEPLOY.md)
 - [ ] **发布**:tag + GitHub Release 附 SDK wheel;版本一致性断言已进 CI(1.6.0)
 
 ## 已知局限

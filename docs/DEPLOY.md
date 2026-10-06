@@ -60,6 +60,9 @@ python webapp/app.py    # .env 在启动时自动读取
 
 ## 线上探针(部署后配置一次)
 
+> **当前状态(2026-10-06)**:线上服务已下线,每日探针工作流(`probe.yml`)已随之下撤,
+> 本节内容保留作为复活部署时的配置指引。
+
 GitHub Actions 每天只读探测一次线上 `/api/health`,断言「服务在线 + `default_credentials=false`」,
 代码改了、线上没动这类漂移当天就会红。配置:仓库 Settings → Secrets and variables →
 Actions → New repository secret,Name 填 `LIVE_HEALTH_URL`,Value 填

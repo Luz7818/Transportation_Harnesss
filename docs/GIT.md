@@ -21,8 +21,9 @@
 ## CI 与线上探针
 
 - `ci.yml`：Python 3.11/3.12 矩阵，四条门禁。
-- `probe.yml`：每天只读 `GET /api/health`，断言在线且 `default_credentials=false`；
-  服务未配置 secret 或未收口前探针会红——**这是设计，不是故障**。
+- `probe.yml` 已随线上服务下线移除（2026-10-06）：服务连续失联 6 天，每日探针连败失去
+  信号价值。复活部署后从 git 历史恢复（`git log --oneline -- "**/probe.yml"`），
+  重新配置 `LIVE_HEALTH_URL` secret 即可。
 
 ## 发布
 
