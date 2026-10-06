@@ -16,7 +16,7 @@
 | `settings.py` | `.env` 的读、掩码、校验、原子写与写前备份；`SETTING_SPECS` 是键的唯一元数据来源（是否密钥 / 是否需重启 / 说明 / 示例） | 谁能访问由 `app.py::_settings_actor()` 决定，本模块不含 HTTP 或鉴权代码 |
 | `__init__.py` | 空 | 包标记 |
 | `auth.json` | 本机账号库（口令哈希 + 会话签名密钥 `secret` + `default_credentials` 标记） | **已 gitignore，严禁提交**；删掉重启会重建并随机生成新初始口令 |
-| `static/index.html` | 应用壳：欢迎页 + 登录页 + 三栏工作台（5 个页签，侧栏/任务区可收起为图标轨）+ 常驻 AI 面板 + 命令面板 + 深浅主题（全站同步） | 单文件 3126 行，含全部 CSS/JS，无框架无 CDN；改前端就是改这个文件 |
+| `static/index.html` | 应用壳：欢迎页 + 登录页 + 三栏工作台（5 个页签，侧栏/任务区可收起为图标轨）+ 常驻 AI 面板 + 命令面板 + 深浅主题（全站同步） | 单文件 3354 行，含全部 CSS/JS，无框架无 CDN；改前端就是改这个文件 |
 | `static/help.html` | 文档中心（`/help`，免登录）：核心概念、工作流、接口参考、错误码 | 内容与 `docs/API.md` 同构，改一份必须改另一份 |
 | `static/sw.js` | Service Worker：页面壳预缓存、`/static/*` stale-while-revalidate、`/api/*` network-first 回退缓存、非 GET 与 `/api/auth/*` 直连 | 必须从根路径提供（`GET /sw.js`），SW 作用域 = 脚本所在目录；缓存名带版本 `harness-shell-v4` / `harness-api-v1` |
 | `static/manifest.webmanifest` | PWA 清单：`start_url`/`scope` 为 `/`、`display: standalone`、4 个图标、2 个快捷方式（`/` 与 `/help`） | 可安装性字段由 `tests/test_pwa.py` 断言 |
@@ -26,7 +26,7 @@
 
 | 子目录 | 负责 |
 | --- | --- |
-| `static/` | 零构建前端的根：4 个入口文件（`index\.html` 2982 行、`help.html` 935 行、`sw.js` 106 行、`manifest.webmanifest` 35 行）加 `assets/` 的 11 个图标与背景（4 PNG + 7 SVG），共 15 个文件 |
+| `static/` | 零构建前端的根：4 个入口文件（`index\.html` 3354 行、`help.html` 940 行、`sw.js` 112 行、`manifest.webmanifest` 35 行）加 `assets/` 的 11 个图标与背景（4 PNG + 7 SVG），共 15 个文件 |
 
 本目录唯一的二级目录（`__pycache__/` 已 gitignore）。规模核对（在仓库根执行：
 `python -X utf8 -c "import glob;print(len(glob.glob('webapp/static/*')),len(glob.glob('webapp/static/assets/*')))"` → `5 11`）。
@@ -108,4 +108,5 @@
 - 不要手改 `webapp/auth.json`、也不要把它或 `.env` 的内容摘进任何文档；
   登录页与看板都不显示口令，`/api/settings` 对密钥只回掩码。
 - 前端没有构建步骤，`index.html` 里的 JS 就是最终产物：不要在仓库里另建 `src/`+`dist/` 双份，
-  那会让「改了前端但产物没重编」这类漂移重新出现（根目录 `dist/harness-frontend.zip` 历史打包残留已于 2026-10-05 清理。）
+  那会让「改了前端但产物没重编」这类漂移重新出现（根目录 `dist/` 的历史残留 2026-10-05 清理过一次；
+  exe 冒烟仍会再生成 `dist/TransportationHarness.exe` 与 `dist/harness-home/`，本机运行态，勿提交。）

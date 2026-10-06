@@ -135,7 +135,7 @@ WantedBy=multi-user.target
 
 无需自己管服务器,适合小团队;免费档有休眠/限额,注意数据卷:
 
-- **Render**:New → Web Service → 连接仓库;Build `pip install -r requirements.txt`,
+- **Render**:New → Web Service → 连接仓库;Build `pip install -e .`,
   Start `python webapp/app.py`;环境变量里配 `AUTH_TOKEN`;挂 Disk 到 `/app/reports`、`/app/cases`、`/app/evalsets`;
 - **Fly.io**:`fly launch`(识别 Dockerfile)→ `fly deploy`;用 `fly volumes` 挂同样三个目录。
 

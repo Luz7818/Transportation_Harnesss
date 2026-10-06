@@ -11,8 +11,8 @@
   可重放 replaycase → 版本化评测集 → 逐版本验证「提升且无回归」→ 归档报告。
 - 核心功能：评测重放、一键自进化、badcase 沉淀（看板/小程序/API）、PWA 看板、Python SDK/CLI、
   LLM 智能层（草稿/判分/诊断，全可降级）。
-- 技术栈：Python 3.11+，运行时 `fastapi` + `uvicorn`（复核：`cat requirements.txt`——已并入
-  pyproject 单源，见提交 `f834605`）。
+- 技术栈：Python 3.11+，运行时 `fastapi` + `uvicorn`（复核：`pyproject.toml` 的
+  `dependencies`——requirements 两文件已并入 pyproject 单源，见提交 `f834605`）。
 - 详情：[README.md](README.md)、[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## 开发原则
@@ -96,8 +96,8 @@
 
 | 项 | 值 | 复核命令 |
 | --- | --- | --- |
-| 测试 | `208 passed`(本机实测 30–55 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
-| 测试分布 | 14 个文件共 208 例,最大 `test_webapp.py` 39 例、`test_settings_api.py` 37 例、`test_llm.py` 30 例 | `python -m pytest --collect-only -q` |
+| 测试 | `210 passed`(本机实测 30–55 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
+| 测试分布 | 15 个文件共 210 例,最大 `test_webapp.py` 39 例、`test_settings_api.py` 37 例、`test_llm.py` 30 例 | `python -m pytest --collect-only -q` |
 | 静态检查 | `All checks passed!`,退出码 0 | `ruff check .` |
 | 端到端校验 | `VERIFY PASS`,退出码 0;雨天评测集同样 PASS | `python scripts/verify.py` |
 | 发布一致性 | `RELEASE CHECK PASS`:版本四处一致 + `docs/openapi.json` 与 app 当前 schema 逐键一致(29 路径) | `python scripts/check_release.py` |

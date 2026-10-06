@@ -60,10 +60,10 @@ Python SDK、CLI 四个客户端，默认全程离线确定性（LLM 走 Mock）
 
 | 路径 | 职责 | 关键点 |
 | --- | --- | --- |
-| `harness/` | 评测框架（领域无关） | `models.py` / `storage.py` / `runner.py` / `judge.py` / `report.py` / `evolve.py` / `activity.py` |
+| `harness/` | 评测框架（领域无关） | `paths.py`（项目根定位,exe 模式读 `HARNESS_HOME`）/ `models.py` / `storage.py` / `runner.py` / `judge.py` / `report.py` / `evolve.py` / `activity.py` |
 | `pipeline/` | 被测对象 | `versions.py` 一处登记 `PIPELINES`/`CHANGELOG`；`data/*.json` 6 个情景数据集（数据即场景，代码不含工况） |
 | `llm/` | LLM 层（可选装配） | `runtime.py`、`judge.py`（`conclusion_quality`）、`workflows.py`、`store.py`、`mocks.py` |
-| `webapp/` | HTTP 服务 + 前端 | `app.py` 全部端点与鉴权中间件、`auth.py`、`settings.py`、`static/index.html` 单文件看板（3199 行）、`static/help.html`、`sw.js` PWA |
+| `webapp/` | HTTP 服务 + 前端 | `app.py` 全部端点与鉴权中间件、`auth.py`、`settings.py`、`static/index.html` 单文件看板（3354 行）、`static/help.html`、`sw.js` PWA |
 | `cases/` | replaycase 库 | 按失败标签分目录，一 case 一 JSON |
 | `evalsets/` | 评测集清单 | `case_ids` 顺序即重放顺序 |
 | `reports/` | 归档产物 | `report_<v>_<时间>.json`、`evolution_*.json`、`report_evolution_*.md` |

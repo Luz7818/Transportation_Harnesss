@@ -19,7 +19,7 @@
 > 用途：给第一次打开这个仓库的人。看完知道它是什么、能不能解决你的问题、怎么在离线环境里跑起来。
 > 事实与约束的单一来源是 [AGENTS.md](AGENTS.md);逐端点参考在 [docs/API.md](docs/API.md)。
 
-## 为什么需要它
+## 要解决的问题
 
 线上分析系统最贵的三件事:**badcase 散在聊天记录里没人认领**、**改好一处改坏三处**、
 **新版本好不好全靠嘴说**。本项目把这三件事变成可执行、可复核的闭环:
@@ -40,7 +40,7 @@
 ## 快速开始
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 
 # Windows cmd;PowerShell 用 $env:AUTH_MODE="open";Linux/macOS 用 AUTH_MODE=open python webapp/app.py
 set AUTH_MODE=open && python webapp/app.py
@@ -149,7 +149,7 @@ OpenAPI 并同步 `docs/API.md` 与 `webapp/static/help.html`;文档遵循工作
 ## 环境要求
 
 Python 3.11+。运行时依赖只有 `fastapi` 与 `uvicorn`,开发/测试另需 `pytest`、`httpx`、`ruff`、`Pillow`
-(复核:`cat requirements.txt requirements-dev.txt`)。默认全程离线:不需要网络、不需要模型密钥。
+(复核:`pyproject.toml` 的 `dependencies` 与 `[dev]` 组)。默认全程离线:不需要网络、不需要模型密钥。
 
 ## 许可
 

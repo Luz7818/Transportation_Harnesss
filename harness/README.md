@@ -14,6 +14,7 @@
 
 | 文件 | 干什么 | 备注 |
 | --- | --- | --- |
+| `paths.py` | 项目根定位（全仓唯一）：源码模式按本文件位置向上找仓库根；exe 封装模式优先读启动器设的 `HARNESS_HOME` | `cases/`、`evalsets/`、`reports/`、`.env`、`static/` 都从这里出发；其余模块一律引用这里，不要自写 `Path(__file__)` 向上找（契约见 `../packaging/README.md`） |
 | `models.py` | 四个数据结构：`CheckSpec`（单条判分规则）、`ReplayCase`、`CaseResult`、`EvalResult` | 只有 `to_dict()`/`from_dict()`；`from_dict` 会丢弃未知字段，所以加字段是兼容的、改名不是 |
 | `storage.py` | 落盘读写：`cases/`（按标签分目录）、`evalsets/`、`pipeline/data/`、`reports/` | 原子写（临时文件 + `os.replace`）+ 进程锁 + 路径白名单 `_safe_name()`；`delete_case()` 同步清理所有评测集清单 |
 | `judge.py` | 判分器：`RuleJudge`（`classify`/`metric`/`no_crash`/`recommendations`/`congested_empty`）、`HeuristicJudge`（`conclusion_keyword`）、`CompositeJudge`（按 `spec.type` 路由）、`case_score()` | 路由不到 judge 时该检查判失败并写明「没有任何 judge 支持规则类型 X」；`LLMJudge` 在 `llm/judge.py`，懒加载、失败即退回纯规则 |

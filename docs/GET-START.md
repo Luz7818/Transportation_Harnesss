@@ -10,8 +10,8 @@
 | --- | --- | --- |
 | 操作系统 | Windows / Linux / macOS 均可（本手册的命令以 Windows cmd 为准，另给 PowerShell 与 Linux 写法） | — |
 | Python | 3.11 以上（`pyproject.toml` 的 `requires-python`；CI 跑 3.11 与 3.12） | `python --version` → 本机 `Python 3.12.0` |
-| 运行时依赖 | 只有 `fastapi` 与 `uvicorn`（`requirements.txt`） | 第 2 节 |
-| 开发/测试依赖 | `pytest`、`httpx`、`ruff`、`Pillow`（`requirements-dev.txt`） | 第 2 节 |
+| 运行时依赖 | 只有 `fastapi` 与 `uvicorn`（`pyproject.toml` 的 `dependencies`） | 第 2 节 |
+| 开发/测试依赖 | `pytest`、`httpx`、`ruff`、`Pillow`（`pyproject.toml` 的 `[dev]` 组） | 第 2 节 |
 | 网络 | **用不到**。评测、判分、自进化全程本地；LLM 不配密钥时走离线确定性 Mock | — |
 | 密钥 | 无。真实模型、公网部署、小程序发布才分别需要模型密钥、服务器、备案域名 | 第 6/8 节 |
 | 想装成 PWA | Chrome / Edge 等现代浏览器，且地址是 `localhost` 或 HTTPS | 第 3 节 |
@@ -20,7 +20,7 @@
 ## 2. 装好它
 
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt
+pip install -e .[dev]
 pip install ./sdk
 ```
 
@@ -371,7 +371,7 @@ docker logs -f transportation-harness
 
 | 现象 / 报错原文 | 原因 | 处理 |
 | --- | --- | --- |
-| `缺少依赖 'fastapi':请先在当前 Python 环境执行  pip install -r requirements.txt` | `python webapp/app.py` 的进程里没有装 FastAPI（虚拟环境没激活，或装到了另一个解释器） | 先 `pip install -r requirements.txt`，再确认 `python --version` 与 `pip` 指向同一个环境 |
+| `缺少依赖 'fastapi':请先在当前 Python 环境执行  pip install -e .` | `python webapp/app.py` 的进程里没有装 FastAPI（虚拟环境没激活，或装到了另一个解释器） | 先 `pip install -e .`，再确认 `python --version` 与 `pip` 指向同一个环境 |
 | `ModuleNotFoundError: No module named 'harness_client'` | 没装仓库内 SDK（`tests/test_sdk.py` 与所有 SDK 示例都要它） | `pip install ./sdk`；CI 里这一步是显式的一步，别指望仓库根目录能 import 到 |
 | 裸 `pytest` 收集期 `ModuleNotFoundError: No module named 'harness'`、退出码 2 | `pytest` 不把当前目录放进 `sys.path`（`python -m pytest` 才会），`pyproject.toml` 里的 `pythonpath = ["."]` 就是修这个的 | 别删那一行；被误删后重新加回 `[tool.pytest.ini_options] pythonpath` |
 | `POST /api/cases` 得 `400 {"detail":"路段 'S-99' 不在该数据集中(可用:S-01, S-02, …)"}` | `segment` 必须是所选数据集中存在的路段 ID | 先 `GET /api/segments/{dataset}` 或看板下拉取合法 ID；数据集名写错会得到 `404 未知数据集 …` |
@@ -384,7 +384,7 @@ docker logs -f transportation-harness
 | 受保护接口得 `401 {"detail":"未登录或会话已过期"}` | 三种凭据都没带或都无效 | 依次检查：`X-API-Token` 是否等于服务端 `AUTH_TOKEN`（改了要重启）、会话令牌/Cookie 是否过期（7 天）、`AUTH_MODE` 是否 `login` |
 | 登录得到 `429 {"detail":"失败次数过多,账号已锁定,请 600 秒后重试"}` | 同一用户名连续失败 5 次锁定 10 分钟（服务端限流） | 等倒计时结束；小程序/脚本不要自动重试，那只会延长锁定 |
 | 看板一直停在登录页、控制台没有 `Set-Cookie` | 反向代理改了协议或 `COOKIE_SECURE=1` 却在用 http | http 部署别设 `COOKIE_SECURE`；HTTPS 部署设 `COOKIE_SECURE=1` 并用 https 访问 |
-| `python -m pytest` 报 `Pillow` 缺失（`tests/test_pwa.py` 收集期） | `Pillow` 在 `requirements-dev.txt` 里声明（校验 PWA 图标尺寸与 maskable 透明通道），干净环境没装 | `pip install -r requirements.txt -r requirements-dev.txt`；这两类「胖本地环境跑得过、干净环境跑不过」的坑已在 CI 修过一轮 |
+| `python -m pytest` 报 `Pillow` 缺失（`tests/test_pwa.py` 收集期） | `Pillow` 在 `pyproject.toml` 的 `[dev]` 组里声明（校验 PWA 图标尺寸与 maskable 透明通道），干净环境没装 | `pip install -e .[dev]`；这类「胖本地环境跑得过、干净环境跑不过」的坑已在 CI 修过一轮 |
 | Windows 管道里中文变成 `δ¼Ựѹ` 之类乱码 | 控制台/子进程按 GBK(cp936) 编解码，而捕获方按 UTF-8 解 | 捕获前 `set PYTHONIOENCODING=utf-8`（评测与校验脚本自带 UTF-8 重配置，第三方输出未必） |
 | 跑完评测/自进化后 `git status` 多出 `reports/…` 若干文件 | 这些命令就是会写归档（`report_*`、`evolution_*.json`、`.md`） | 归档即历史，正常一起提交；只是试跑就删掉新增文件再提交，别留半套不一致的归档 |
 | `python scripts/verify.py` 报 `FAIL  v1 通过集 ⊇ v0 通过集(丢失 ['rc-0014'])`，同时 `[4]` 只给 WARN | 新沉淀的用例基线恰好判对、v1/v2 判错：`[2]` 单调性是对全量通过集做的，新用例也会参与；脚本头注释「新用例只 WARN 不判失败」只对 `[4]` 成立 | 这不是回归（回归的定义是「老用例被改坏」）。要么把该用例的期望改成与现有分级口径一致，要么接受这条 FAIL 并把 `rc-0014` 当作 v3 的靶子，等 v3 修好后 `[2]` 自然绿 |

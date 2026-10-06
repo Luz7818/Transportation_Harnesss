@@ -25,7 +25,7 @@
 - **上游**:`harness/`(`storage`、`ReplayRunner`)与 `pipeline/versions.py` 的 `PIPELINES`——多数脚本先把仓库根插进
   `sys.path` 再 import 项目包;`export_openapi.py` 只 import `webapp.app` 取 schema,不起服务;
   `check_release.py` 还会 import `harness_client`(版本断言直接读文件,不依赖安装版本)。
-  核对(在仓库根执行):`grep -c "sys.path.insert" scripts/*.py` → 只有 `generate_pwa_icons.py` 是 `0`,其余 8 个都是 `1`。
+  核对(在仓库根执行):`grep -c "sys.path.insert" scripts/*.py` → `generate_pwa_icons.py` 与 `probe_live.py` 是 `0`,其余 7 个都是 `1`。
 - **下游**（被这些脚本写到）：`cases/<标签>/` 与 `evalsets/*.json`（两个 seed 脚本）、`reports/report_<v>_<时间>.json`
   与 `.md`（`run_eval.py`）、`docs/openapi.json`（`export_openapi.py`）、`webapp/static/assets/` 的 4 PNG + 2 SVG
   （`generate_pwa_icons.py`）、仓库根 `backups/`（`backup.py`，已 gitignore）。`verify.py` 只读，一个文件都不写。
@@ -146,7 +146,7 @@ webapp\static\assets\apple-touch-icon-180.png  (21994 bytes)
   `SEED_V0_PASSED = {"rc-0013"}`、`SEED_V1_FAILED = {"rc-0009", "rc-0010"}`、`EXPECT_V2_GLOBAL_INDEX = 0.7944`（`TOL = 0.005`）。
   为了让某次改动变绿去动它们等于拆门禁；要动得同时复核 `cases/` 与 `pipeline/data/`（见 [AGENTS.md](../AGENTS.md) 关键约定 10）。
   核对（在仓库根执行）：`grep -n "^SEED_\|^EXPECT_V2\|^TOL" scripts/verify.py` → 5 行。
-- 六个脚本开头那行 `sys.path.insert(0, 仓库根)` 不能删：`python scripts/x.py` 只把 `scripts/` 放进 `sys.path[0]`，
+- 7 个脚本开头那行 `sys.path.insert(0, 仓库根)` 不能删：`python scripts/x.py` 只把 `scripts/` 放进 `sys.path[0]`，
   删掉它连在仓库根跑都直接 `ModuleNotFoundError: No module named 'harness'`；`pyproject.toml` 给 `scripts/*.py`
   开的 `E402` 豁免正是为这行「先插路径再 import 项目包」准备的。
 - `generate_pwa_icons.py` 覆盖的是 6 个**已入库**文件（`webapp/static/assets/` 下 4 个 PNG 加 `logo-lockup.svg`、`banner.svg`）：

@@ -106,3 +106,18 @@
   鉴权事实/常见任务表合并重写为九件口径的 ARCHITECTURE；`AGENTS.md` 重写为规范入口；
   `CHANGELOG.md` 并入本文件后删除；清理 `transportation_harness.egg-info/` 本机残留。
 - 变更缘由：落位《项目整体规范.md》九件必建。
+
+## 2026-10-06 · 文档核查修复（requirements 断链收口 + 数字对齐实测）
+
+- **requirements 断链收口**：README 快速开始改 `pip install -e .`；GET-START 安装/故障表、
+  DEPLOY.md Render 构建命令、AGENTS 技术栈复核命令、webapp/app.py 缺依赖报错文案共 7 处
+  从 `requirements*.txt` 改为 pyproject 单源口径（文件已于 f834605 删除，文档与报错没跟上）。
+- **数字对齐实测**：tests/README 190→210（15 个文件，补 test_packaging_paths 行，
+  webapp 39/llm 30/auth 17/versions 19/evolve 7），fixtures 差异口径改为
+  「快照不含 rc-0015」（生产库 18 条已反超快照 17 条）；cases/README 16→18、
+  目录 10→8、结论缺失/边界处理补 rc-0015/rc-0014；webapp/README 与 ARCHITECTURE 的
+  index.html 行数三处统一为 3354（help 940、sw.js 112）；AGENTS 测试 208→210/15 文件。
+- **杂项**：scripts/README 的 sys.path.insert 计数改「7 个脚本、2 个为 0」；
+  目录说明去掉 requirements 行、dist/ 描述改为「清理后会再生成」；sdk/ 子目录补 `dist/`；
+  tests/README 引用 AGENTS 章节名「当前真实状态」→「当前状态」；
+  `CHANGELOG.md` 兑现删除（内容已逐条在档，抽查「石墨绿暗底」「口令门禁」等条目命中）。
