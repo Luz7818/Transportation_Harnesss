@@ -14,5 +14,6 @@ llm_cache
 llm_runs.jsonl
 drafts
 *.md
+!README.md
 *.png
 *.log

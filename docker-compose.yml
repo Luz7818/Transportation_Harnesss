@@ -1,6 +1,9 @@
 services:
   harness:
     build: .
+    # 镜像定名:docker compose up --build 的产物叫这个名字,离线交付的
+    # docker load 也按它对号入座(随版本发布同步升位)
+    image: transportation-harness:2.1.0
     container_name: transportation-harness
     # .env 里的全部变量(ADMIN_PASSWORD/COOKIE_SECURE/LLM_* 等)整体透传进容器,
     # 缺 .env 时 compose 直接报错——AUTH_TOKEN ≥16 字符是硬性启动条件
