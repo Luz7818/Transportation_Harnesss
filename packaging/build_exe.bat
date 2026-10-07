@@ -11,7 +11,7 @@ if errorlevel 1 (
 )
 
 if not exist .venv (
-    echo [build] First build: creating venv and installing fastapi/uvicorn/pyinstaller ...
+    echo [build] First build: creating venv and installing fastapi/uvicorn/pywebview/pyinstaller ...
     python -m venv .venv
     if errorlevel 1 exit /b 1
     .venv\Scripts\python -m pip install --upgrade pip

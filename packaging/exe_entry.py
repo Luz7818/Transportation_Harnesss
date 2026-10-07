@@ -37,6 +37,8 @@ _LOG_MAX_BYTES = 5 * 1024 * 1024     # 日志超限清空重来:它只服务排�
 _WINDOW_TITLE = "交通分析自进化 Harness"
 _HEALTH_WAIT_SECONDS = 10            # 等 uvicorn 就绪的上限(首启解包+播种在秒级,足够)
 _ATTACH_PARENT_PROCESS = -11         # kernel32 AttachConsole 的标准参数
+_MB_ERROR = 0x10                     # MessageBoxW 类型:错误图标
+_MB_INFO = 0x40                      # MessageBoxW 类型:信息图标
 
 # 供 __main__ 选择报错方式(MessageBox 或黑窗);main() 内赋值
 _log_path: Path | None = None
@@ -139,14 +141,14 @@ def _error_console(title: str, detail: str) -> None:
         input()
 
 
-def _messagebox(title: str, detail: str) -> None:
+def _messagebox(title: str, detail: str, icon: int = _MB_ERROR) -> None:
     """GUI 模式的报错/提示:原生 MessageBox,无黑窗、无需 WebView2。"""
     if os.name != "nt":
         print(f"{title}: {detail.rstrip()}", file=sys.stderr)
         return
     import ctypes
 
-    ctypes.windll.user32.MessageBoxW(0, detail.rstrip(), f"{_WINDOW_TITLE} - {title}", 0x10)
+    ctypes.windll.user32.MessageBoxW(0, detail.rstrip(), f"{_WINDOW_TITLE} - {title}", icon)
 
 
 def _fatal(title: str, detail: str) -> None:
@@ -230,19 +232,30 @@ def _note_initial_password(home: Path, captured: str) -> None:
             + captured, encoding="utf-8")
 
 
+def _already_running(base_url: str) -> None:
+    """单实例提示:端口上已有一个本程序实例在跑(信息图标,不是报错)。"""
+    _messagebox("程序已在运行",
+                f"已在监听 {base_url},请使用已打开的窗口;\n"
+                "如需重新启动,请先结束原进程(任务管理器中的 TransportationHarness)。",
+                icon=_MB_INFO)
+
+
 def _run_gui(webapp_app) -> int:
     """GUI 主流程:单实例探测 → 守护线程起服务 → 健康就绪 → 开窗口至关窗停机。"""
     base_url = _window_url(webapp_app.HOST, webapp_app.PORT)
     if _probe_health(base_url) is not None:
-        _messagebox("程序已在运行",
-                    f"已在监听 {base_url},请使用已打开的窗口;\n"
-                    "如需重新启动,请先结束原进程(任务管理器中的 TransportationHarness)。")
+        _already_running(base_url)
         return 0
 
     server = webapp_app.make_server()
     worker = threading.Thread(target=server.run, daemon=True, name="uvicorn")
     worker.start()
     if not _wait_healthy(base_url, worker):
+        if _probe_health(base_url) is not None:
+            # 启动窗口期内另一实例抢先绑定成功(双击竞态):同样按单实例处理,
+            # 此刻本线程已死于端口占用,再探测到的是对方 —— 不给用户看裸 traceback
+            _already_running(base_url)
+            return 0
         raise RuntimeError("服务线程未能就绪(端口被占用或启动失败,详见运行日志末尾)")
 
     import webview
