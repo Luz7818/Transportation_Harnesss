@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from pathlib import Path
 
 from harness.models import EvalResult
@@ -39,7 +40,7 @@ def diff(prev: EvalResult, cur: EvalResult) -> tuple[list[str], list[str]]:
 def build_payload(er: EvalResult, changelog: dict) -> dict:
     """单个版本的评测结果 → JSON(供 webapp 看板/对比接口使用)。"""
     meta = changelog.get(er.version, {})
-    payload = er.to_dict()
+    payload = asdict(er)
     payload["version_name"] = meta.get("name", "")
     payload["changes"] = meta.get("changes", [])
     return payload

@@ -60,9 +60,6 @@ class CheckResult:
     passed: bool
     detail: str
 
-    def to_dict(self) -> dict:
-        return asdict(self)
-
 
 @dataclass
 class ReplayCase:
@@ -76,6 +73,8 @@ class ReplayCase:
     notes: str = ""
 
     def to_dict(self) -> dict:
+        # to_dict 只在 CheckSpec/ReplayCase 手写:keywords 元组要转成 list 才是纯 JSON 原生
+        # (asdict 递归会保留 tuple);CaseResult/EvalResult 无特殊字段,直接用 asdict() 即可。
         d = asdict(self)
         d["checks"] = [c.to_dict() for c in self.checks]
         return d
@@ -100,11 +99,6 @@ class CaseResult:
     error: str | None = None
     duration_ms: float = 0.0
 
-    def to_dict(self) -> dict:
-        d = asdict(self)
-        d["checks"] = [c.to_dict() for c in self.checks]
-        return d
-
 
 @dataclass
 class EvalResult:
@@ -117,8 +111,3 @@ class EvalResult:
     label_stats: dict[str, dict[str, int]]
     results: list[CaseResult] = field(default_factory=list)
     duration_ms: float = 0.0
-
-    def to_dict(self) -> dict:
-        d = asdict(self)
-        d["results"] = [r.to_dict() for r in self.results]
-        return d

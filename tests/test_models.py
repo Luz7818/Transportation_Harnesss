@@ -1,5 +1,7 @@
 """harness.models:数据结构序列化/反序列化的往返一致性。"""
 
+from dataclasses import asdict
+
 from harness.models import CaseResult, CheckSpec, ReplayCase
 
 
@@ -31,7 +33,8 @@ def test_replay_case_tolerates_unknown_fields():
     assert restored.checks == []
 
 
-def test_case_result_to_dict_nested():
+def test_case_result_asdict_nested():
+    """CaseResult/EvalResult 没有手写 to_dict:asdict 递归展开嵌套 checks/results。"""
     result = CaseResult(case_id="rc-0001", title="t", label="l", version="v2",
                         passed=True, score=1.0)
-    assert result.to_dict()["checks"] == []
+    assert asdict(result)["checks"] == []
