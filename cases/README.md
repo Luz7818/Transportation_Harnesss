@@ -21,6 +21,11 @@
 ## 子目录
 
 **一级子目录 = 失败标签**（`label` 经 `storage.safe_label()` 净化的结果）。8 个目录、18 条用例。
+**中文目录名是刻意的评测类别名**，不是待国际化文案：目录名 = 每条 case JSON 的 `label` 字段
+（沉淀时经 `safe_label()` 即时开目录），又与 `llm/mocks.py` 的标签关键词映射、
+`tests/fixtures/cases/` 快照目录、`reports/` 冻结归档与 `HISTORY.md` 既有条目共用同一套词表。
+改英文 slug 得连动 35 个 JSON 的 `label`（生产 18 + 快照 17）+ 功能代码 + 测试断言，而冻结归档与只追加的
+HISTORY 永远留着旧名 —— 断链不可避免，收益为零，故刻意保留。
 逐目录计数（复核，在仓库根执行；`-X utf8` 是为了在 GBK 控制台里也不乱码）：
 `python -X utf8 -c "import os,glob;print({d:len(glob.glob(os.path.join('cases',d,'*.json'))) for d in os.listdir('cases') if os.path.isdir(os.path.join('cases',d))})"`
 
