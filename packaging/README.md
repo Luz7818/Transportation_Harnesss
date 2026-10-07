@@ -13,7 +13,7 @@
 | `harness.spec` | PyInstaller 配置：onefile + windowed；种子资产经 `datas` 打入 exe | `dist/`、`build/`（均已 gitignore） |
 | `build_exe.bat` | 一键构建：首次自动在 `packaging/.venv` 建独立环境装 fastapi/uvicorn/pywebview/pyinstaller，再跑 PyInstaller | `packaging/.venv/`（gitignore 的 `.venv/` 规则覆盖） |
 | `build_deploy.py` | 一键组装私有化部署交付包（见下节） | `dist/deploy/` 暂存目录与 `dist/*.zip`（gitignore） |
-| `部署说明.md` | 随部署包分发的一页说明书：部署三步、验收、备份/升级 | 不写 |
+| `deploy-guide.md` | 随部署包分发的一页部署说明书：部署三步、验收、备份/升级 | 不写 |
 
 ## 构建与使用
 
@@ -54,10 +54,10 @@ python packaging/build_deploy.py
 ```
 
 产出 `dist/TransportationHarness-deploy-<版本>.zip`：源码树 + Dockerfile/compose +
-`.env.example` + docs/DEPLOY.md + scripts/（probe/backup 零依赖脚本）+《部署说明》。
+`.env.example` + docs/DEPLOY.md + scripts/（probe/backup 零依赖脚本）+ `deploy-guide.md`（部署说明）。
 本机装有 Docker 时额外 `docker build` + `docker save`，zip 内含镜像 tar（目标机
 `docker load` 免网络）；未装 Docker 自动降级为在线构建包并提示。装包前会扫描并拒绝
-`.env`/`auth.json`/日志混入交付物。目标机的部署/验收/升级步骤见包内《部署说明》与
+`.env`/`auth.json`/日志混入交付物。目标机的部署/验收/升级步骤见包内 `deploy-guide.md`（部署说明）与
 [docs/DEPLOY.md](../docs/DEPLOY.md) 的「路线 B+」。
 
 ## 和谁打交道

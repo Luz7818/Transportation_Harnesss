@@ -189,3 +189,11 @@
   (4f839618cae9),免网络部署路径成立;
 - 打包机若遇 Docker Hub 直连超时:先 `docker pull docker.m.daocloud.io/library/python:3.12-slim`
   再 `docker tag` 为 `python:3.12-slim`(或给引擎配 registry-mirrors),构建流程无需改动。
+
+## 2026-10-07 · 部署说明书文件名 ASCII 化
+
+- `packaging/部署说明.md` 更名 `packaging/deploy-guide.md`:《项目整体规范.md》§1.5 规定
+  除仓根 `目录说明.md` 外文件名一律英文小写加连字符(中文文件名在 GitHub 变百分号编码链接,
+  命令行要转义);交付包内文件与 `build_deploy.py` 复制路径同步更名,说明书内容(中文)不变;
+- 引用同步:packaging/README 文件清单与「构建与使用」、docs/DEPLOY「路线 B+」、TODO 完成记录;
+  上方 v2.1.0 条目按「HISTORY 只追加、禁改写」保留旧名,以本条为准。

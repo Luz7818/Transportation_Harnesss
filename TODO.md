@@ -22,6 +22,6 @@
 
 ## 完成记录
 
-- [x] 双轨交付：桌面 exe GUI 收口（单实例竞态修复/信息图标）+ 私有化部署交付包（build_deploy.py + 部署说明）+ .dockerignore 修复 + v2.1.0 四处同步/tag/wheel —— 2026-10-07（见 HISTORY.md v2.1.0）
+- [x] 双轨交付：桌面 exe GUI 收口（单实例竞态修复/信息图标）+ 私有化部署交付包（build_deploy.py + 部署说明，该文件后更名 `deploy-guide.md`）+ .dockerignore 修复 + v2.1.0 四处同步/tag/wheel —— 2026-10-07（见 HISTORY.md v2.1.0）
 - [x] 遗留清理（batch_demo_ids/空目录/dist 残留）、v2/v3 合并 `_analyze`、文档数字对齐 2.0.0 —— 2026-10-05（核查报告整理轮）
 - [x] 文档九件体系迁移 + egg-info 清理 —— 2026-10-05（见 HISTORY.md 对应条目）

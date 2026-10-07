@@ -138,10 +138,10 @@ WantedBy=multi-user.target
 
 在**装有 Docker 的打包机**上执行 `python packaging/build_deploy.py`,仓库根产出
 `dist/TransportationHarness-deploy-<版本>.zip`:源码 + Dockerfile/compose + `.env.example`
-+ 本文档 + scripts/(probe/backup 零依赖脚本) + 《部署说明》;打包机有网络/镜像缓存时
++ 本文档 + scripts/(probe/backup 零依赖脚本) + `deploy-guide.md`(部署说明);打包机有网络/镜像缓存时
 还会内含 `docker save` 的镜像 tar(目标机 `docker load` 免网络,否则在线构建)。
 
-目标机解压后按包内《部署说明》三步走:`cp .env.example .env` 填凭据 →
+目标机解压后按包内 `deploy-guide.md`(部署说明)三步走:`cp .env.example .env` 填凭据 →
 `docker compose up -d --build`(含 tar 则 `docker load` + `up -d`)→ probe 验收;
 本文件其余章节(凭据语义/反代/备份/监控)对交付包同样适用。
 

@@ -4,7 +4,7 @@
 
 包内容(在线构建形态,目标机需 Docker + 基础镜像网络):
   源码树 + Dockerfile/docker-compose.yml/.dockerignore + .env.example
-  + docs/DEPLOY.md + scripts/(probe_live/backup 零依赖) + 部署说明.md
+  + docs/DEPLOY.md + scripts/(probe_live/backup 零依赖) + deploy-guide.md(部署说明)
 本机装有 Docker 时额外执行 docker build → docker save,zip 内含镜像 tar,
 目标机 `docker load` 后可免网络部署;无 Docker 自动跳过并提示。
 """
@@ -54,7 +54,7 @@ def main() -> int:
         shutil.copytree(ROOT / name, stage / name, ignore=_IGNORE)
     (stage / "docs").mkdir()
     shutil.copy2(ROOT / "docs" / "DEPLOY.md", stage / "docs" / "DEPLOY.md")
-    shutil.copy2(ROOT / "packaging" / "部署说明.md", stage / "部署说明.md")
+    shutil.copy2(ROOT / "packaging" / "deploy-guide.md", stage / "deploy-guide.md")
 
     leaked = [p.relative_to(stage) for p in stage.rglob("*")
               if p.name in _FORBIDDEN or p.name.endswith(".log")]
