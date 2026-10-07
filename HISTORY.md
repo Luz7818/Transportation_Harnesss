@@ -177,3 +177,15 @@
   OpenAPI 重导(`info.version` 随动),SDK wheel 重建入 `sdk/dist/`(2.1.0)
 - 文档:DEPLOY.md 增「路线 B+ 交付包部署」;packaging/README 改双轨口径并补部署轨文件;
   TODO 任务 2 更新(tag 已打、wheel 已备,Release 页上传待确认);README Roadmap 增 2.5
+
+## 2026-10-07 · 更正:v2.1.0 镜像构建与离线交付已在真机验证
+
+- 上一条 v2.1.0 里「本机无 Docker,镜像构建未实测」的表述已过时:Docker Desktop 4.94
+  (引擎 29.8.2)就位后全链路实测通过——`docker build` → 隔离目录 `docker compose up -d`
+  → `/api/health` 返回 `app_version 2.1.0` + `default_credentials=false`(容器 healthcheck
+  自绿)→ `scripts/probe_live.py` PROBE PASS;
+- 离线整包已产出:`dist/TransportationHarness-deploy-2.1.0.zip`(54.3 MB,内含
+  `docker save` 的镜像 tar),`docker rmi` → `docker load -i <tar>` 回灌后镜像 ID 一致
+  (4f839618cae9),免网络部署路径成立;
+- 打包机若遇 Docker Hub 直连超时:先 `docker pull docker.m.daocloud.io/library/python:3.12-slim`
+  再 `docker tag` 为 `python:3.12-slim`(或给引擎配 registry-mirrors),构建流程无需改动。
