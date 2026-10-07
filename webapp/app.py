@@ -58,6 +58,7 @@ def _load_dotenv(path: Path) -> None:
 _load_dotenv(ROOT / ".env")
 
 try:
+    import uvicorn
     from fastapi import FastAPI, HTTPException, Request, Response
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse, JSONResponse
@@ -805,20 +806,17 @@ def api_compare(a: str, b: str) -> dict:
     }
 
 
-def main() -> None:
-    """启动服务:校验部署参数 → 打印横幅 → uvicorn 拉起。
-
-    源码直跑(python webapp/app.py)与 exe 启动器(packaging/exe_entry.py)共用这一入口,
-    参数校验与 banner 逻辑只此一份。
-    """
-    import uvicorn
-
+def _validate_deploy_params() -> None:
+    """部署参数校验:AUTH_TOKEN 是公网机器凭据的底线,不达标直接拒绝启动。"""
     if AUTH_TOKEN and len(AUTH_TOKEN) < 16:
         sys.exit("AUTH_TOKEN 太短(需 ≥16 字符):机器令牌是公网部署的唯一机器凭据,"
                  "请换用强随机串(如 python -c \"import secrets;print(secrets.token_urlsafe(24))\")")
     if AUTH_MODE == "open" and HOST not in ("127.0.0.1", "::1", "localhost"):
         print("[warn] AUTH_MODE=open 且监听非回环地址:所有接口免登录,仅限可信内网演示")
 
+
+def _print_banner() -> None:
+    """启动横幅与默认口令提醒:源码直跑/无头部署进终端,exe GUI 模式进 exe.log。"""
     banner = f"交通分析自进化 Harness -> http://{HOST}:{PORT}(鉴权模式:{AUTH_MODE})"
     if AUTH_TOKEN:
         banner += ";机器客户端可用 X-API-Token 访问"
@@ -830,6 +828,26 @@ def main() -> None:
     if _AUTH_STORE.get("default_credentials"):
         print("[warn] 初始口令尚未修改:业务接口当前一律 403,仅开放 /api/health 与 /api/auth/*;\n"
               "       请用初始口令登录后改密(看板右上角「改密」),或设 ADMIN_PASSWORD 后重启")
+
+
+def make_server() -> uvicorn.Server:
+    """构建 uvicorn Server 句柄(不阻塞):exe GUI 模式起守护线程,关窗时优雅停机用。
+
+    与 main() 走同一套校验与横幅;区别只在拿到的是可停机的 Server 而非阻塞调用。
+    """
+    _validate_deploy_params()
+    _print_banner()
+    return uvicorn.Server(uvicorn.Config(app, host=HOST, port=PORT))
+
+
+def main() -> None:
+    """启动服务:校验部署参数 → 打印横幅 → uvicorn 拉起(阻塞)。
+
+    源码直跑(python webapp/app.py)与 exe 无头模式(--server)共用这一入口;
+    exe GUI 模式走 make_server() 拿句柄,不经本函数。
+    """
+    _validate_deploy_params()
+    _print_banner()
     uvicorn.run(app, host=HOST, port=PORT)
 
 

@@ -24,6 +24,7 @@ dev = [
     "ruff>=0.5",
 ]
 exe = [
+    "pywebview>=5.0",     # exe GUI 模式的窗口壳(WebView2)
     "pyinstaller>=6.0",   # packaging/harness.spec 单文件封装;平时跑门禁不需要装
 ]
 

@@ -15,7 +15,7 @@ if not exist .venv (
     python -m venv .venv
     if errorlevel 1 exit /b 1
     .venv\Scripts\python -m pip install --upgrade pip
-    .venv\Scripts\python -m pip install "fastapi>=0.110" "uvicorn>=0.29" "pyinstaller>=6.0"
+    .venv\Scripts\python -m pip install "fastapi>=0.110" "uvicorn>=0.29" "pywebview>=5" "pyinstaller>=6.0"
     if errorlevel 1 exit /b 1
 )
 

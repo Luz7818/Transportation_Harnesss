@@ -1,8 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller 打包配置:onefile + windowed(平时无黑窗口,启动失败才弹控制台)。
+"""PyInstaller 打包配置:onefile + windowed(独立桌面窗口,平时无黑窗口)。
 
 构建:packaging/build_exe.bat(或 pyinstaller packaging/harness.spec)
-产物:dist/TransportationHarness.exe —— 单文件,双击即用,数据落在 exe 旁 harness-home/。
+产物:dist/TransportationHarness.exe —— 单文件,双击出 pywebview 窗口(WebView2 渲染看板),
+数据落在 exe 旁 harness-home/;--server 参数切无头服务模式。
 种子资产经 datas 打入 exe;首次运行由 exe_entry.py 播种到数据家目录(缺了才复制)。
 """
 
@@ -36,6 +37,10 @@ a = Analysis(
         "uvicorn.protocols.websockets.wsproto_impl",
         "uvicorn.lifespan.on",
         "uvicorn.lifespan.off",
+        # pywebview 的 Windows 后端:WinForms 宿主 + WebView2 渲染(hooks-contrib 的
+        # hook-webview/clr/clr_loader 负责包数据,平台模块仍需显式点名)
+        "webview.platforms.winforms",
+        "webview.platforms.edgechromium",
     ],
     hookspath=[],
     runtime_hooks=[],
@@ -58,7 +63,8 @@ exe = EXE(
     upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,           # windowed:平时无黑窗口;报错由 exe_entry.py AllocConsole 弹出
+    console=False,           # windowed:平时无黑窗口;GUI 报错走 MessageBox,--server 报错走弹出的控制台
+    icon=os.path.join(SPECPATH, "harness.ico"),   # 由 webapp/static/assets/icon-512.png 一次性转换
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

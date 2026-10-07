@@ -1,6 +1,6 @@
 # tests/ —— 测试与隔离夹具
 
-> 用途：说明 210 个用例分布在哪、夹具如何隔离副作用、加测试该照哪个样子写。
+> 用途：说明 212 个用例分布在哪、夹具如何隔离副作用、加测试该照哪个样子写。
 
 评测系统自己先要可信，所以这里覆盖到三层：
 数据结构与存储的单元断言、判分与管线的算法断言、走真实鉴权流程的接口断言，
@@ -9,7 +9,7 @@
 跑法（`python -m pytest` 与裸 `pytest` 都可用，靠 `pyproject.toml` 的 `pythonpath = ["."]`）：
 
 ```bash
-python -m pytest -q                            # 全部,预期 210 passed
+python -m pytest -q                            # 全部,预期 212 passed
 python -m pytest tests/test_webapp.py -q       # 只跑某个文件
 python -m pytest tests/test_judge.py -q -k metric   # 只跑匹配的用例
 python -m pytest --collect-only -q             # 只看分布
@@ -34,15 +34,16 @@ python -m pytest --collect-only -q             # 只看分布
 | `test_runner.py` | 3 | 崩溃捕获、分标签统计、耗时 |
 | `test_models.py` | 4 | `to_dict`/`from_dict` 往返一致 |
 | `test_packaging_paths.py` | 2 | `HARNESS_HOME` 路径契约：exe 封装模式重定向后各数据目录仍落可写家目录，源码模式仓库根不变 |
+| `test_make_server.py` | 2 | exe GUI 启动器共用的 `make_server()` 工厂：部署参数门禁先于返回、句柄绑定 HOST/PORT |
 
 ## 文件清单
 
 | 文件 | 干什么 | 备注 |
 | --- | --- | --- |
 | `conftest.py` | 全部共享夹具与测试凭据 | 见下节 |
-| `fixtures/cases/<标签>/<case_id>.json` | 冻结的种子资产快照（17 个文件；生产 `cases/` 现为 18 条，快照不含 `结论缺失/rc-0015`） | 测试的唯一用例来源，改动会影响 210 例的断言基线 |
+| `fixtures/cases/<标签>/<case_id>.json` | 冻结的种子资产快照（17 个文件；生产 `cases/` 现为 18 条，快照不含 `结论缺失/rc-0015`） | 测试的唯一用例来源，改动会影响 212 例的断言基线 |
 | `fixtures/evalsets/*.json` | 与快照配套的清单（`evalset_v1` 13 条、`evalset_scenario_rain` 3 条） | 快照多出的 `rc-0014` **不在**清单里，用于断言「沉淀后编号递增且自动入集」 |
-| `test_*.py` | 上表 15 个测试文件 | 命名固定 `test_<模块>.py`，`testpaths = ["tests"]` |
+| `test_*.py` | 上表 16 个测试文件 | 命名固定 `test_<模块>.py`，`testpaths = ["tests"]` |
 
 ## 子目录
 
@@ -62,8 +63,8 @@ python -m pytest --collect-only -q             # 只看分布
 - **下游**：CI 矩阵里 Python 3.11 / 3.12 各跑一次 `pytest`（在 `ruff check .` 之后、`python scripts/verify.py` 之前，
   复核：`cat .github/workflows/ci.yml`）、[AGENTS.md](../AGENTS.md) 的「当前状态」表（测试数与分布以那里为单一口径），
   以及改动者本人的回归判据。
-- **改这里之后要跑**（都在仓库根执行）：`python -m pytest` 末行 `210 passed`。总数复核用
-  `python -m pytest -o addopts="" --collect-only -q` → 末行 `210 tests collected`；`-o addopts=""` 不能省，
+- **改这里之后要跑**（都在仓库根执行）：`python -m pytest` 末行 `212 passed`。总数复核用
+  `python -m pytest -o addopts="" --collect-only -q` → 末行 `212 tests collected`；`-o addopts=""` 不能省，
   否则 `pyproject.toml` 里那条 `-q` 会叠成 `-qq`，只剩每文件计数与一行圆点、看不到统计行。
 
   ```bash

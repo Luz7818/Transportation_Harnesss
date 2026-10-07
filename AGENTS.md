@@ -96,8 +96,8 @@
 
 | 项 | 值 | 复核命令 |
 | --- | --- | --- |
-| 测试 | `210 passed`(本机实测 30–55 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
-| 测试分布 | 15 个文件共 210 例,最大 `test_webapp.py` 39 例、`test_settings_api.py` 37 例、`test_llm.py` 30 例 | `python -m pytest --collect-only -q` |
+| 测试 | `212 passed`(本机实测 60–80 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
+| 测试分布 | 16 个文件共 212 例,最大 `test_webapp.py` 39 例、`test_settings_api.py` 37 例、`test_llm.py` 30 例 | `python -m pytest --collect-only -q` |
 | 静态检查 | `All checks passed!`,退出码 0 | `ruff check .` |
 | 端到端校验 | `VERIFY PASS`,退出码 0;雨天评测集同样 PASS | `python scripts/verify.py` |
 | 发布一致性 | `RELEASE CHECK PASS`:版本四处一致 + `docs/openapi.json` 与 app 当前 schema 逐键一致(29 路径) | `python scripts/check_release.py` |

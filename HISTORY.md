@@ -133,3 +133,17 @@
 - **复活路径**：主机恢复后按 DEPLOY.md 重新部署(记得先改初始口令、确认 2.0.0 版本),
   从 `git log --oneline -- "**/probe.yml"` 取恢复点还原探针工作流,重配
   `LIVE_HEALTH_URL` secret;`scripts/probe_live.py` 保留可本地探测。
+
+## 2026-10-07 · exe 封装改独立桌面窗口(GUI 默认 + `--server` 无头)
+
+- **Added**：双击 exe 默认弹 **pywebview/WebView2 独立应用窗口**(无浏览器地址栏,任务栏应用
+  图标,新增 `packaging/harness.ico`);服务跑守护线程,关窗即优雅停机(健康就绪后才开窗,
+  `should_exit` 最多等 3 秒);**单实例探测**——已在运行时再次双击弹原生提示后退出。
+  部署场景用 `TransportationHarness.exe --server` 切无头:与源码 `python webapp/app.py`
+  行为一致,从终端启动接管父控制台,双击启动输出落 `exe.log`。
+- **Changed**：`webapp/app.py` 的 `main()` 拆出 `_validate_deploy_params()`/`_print_banner()`,
+  新增 `make_server()` 工厂(GUI 拿可停机句柄,与无头共用同一道部署参数门禁,补
+  `tests/test_make_server.py` 钉住);错误报告按模式分路:GUI 走原生 MessageBox、无头走
+  `_error_console` 黑窗;自动开浏览器的旧行为随 GUI 窗口移除。
+- **打包**:`harness.spec` 增 pywebview 平台 hiddenimports(winforms/edgechromium)与图标;
+  `build_exe.bat` 构建依赖增 `pywebview>=5`;`pyproject.toml` 的 `[exe]` 组同步。
