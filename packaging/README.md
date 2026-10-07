@@ -1,6 +1,7 @@
-# packaging/ —— 单文件 exe 封装
+# packaging/ —— 交付物打包(桌面 exe + 私有化部署包)
 
-> 用途：把整个 Web 看板打包成一个双击即用的 `TransportationHarness.exe`，说明构建方法、
+> 用途：产出两类交付物——双击即用的 `TransportationHarness.exe`（独立桌面窗口）
+> 与私有化部署交付包 `TransportationHarness-deploy-<版本>.zip`。说明构建方法、
 > 数据落在哪、报错时去哪看。普通使用不需要读仓库其他文档。
 
 ## 文件清单
@@ -11,6 +12,8 @@
 | `harness.ico` | exe 图标，由 `webapp/static/assets/icon-512.png` 一次性转换（重转才需动） | 不写 |
 | `harness.spec` | PyInstaller 配置：onefile + windowed；种子资产经 `datas` 打入 exe | `dist/`、`build/`（均已 gitignore） |
 | `build_exe.bat` | 一键构建：首次自动在 `packaging/.venv` 建独立环境装 fastapi/uvicorn/pywebview/pyinstaller，再跑 PyInstaller | `packaging/.venv/`（gitignore 的 `.venv/` 规则覆盖） |
+| `build_deploy.py` | 一键组装私有化部署交付包（见下节） | `dist/deploy/` 暂存目录与 `dist/*.zip`（gitignore） |
+| `部署说明.md` | 随部署包分发的一页说明书：部署三步、验收、备份/升级 | 不写 |
 
 ## 构建与使用
 
@@ -43,6 +46,19 @@ packaging\build_exe.bat
 `TransportationHarness.exe --server` 与源码 `python webapp/app.py` 行为一致：阻塞运行、
 不弹窗口，供公网/局域网部署与脚本使用。从终端启动时接管父控制台（banner 与 uvicorn
 日志直接可见）；双击启动（无终端）时输出落 `harness-home/exe.log`，报错弹黑窗口。
+
+## 私有化部署包（build_deploy.py）
+
+```bash
+python packaging/build_deploy.py
+```
+
+产出 `dist/TransportationHarness-deploy-<版本>.zip`：源码树 + Dockerfile/compose +
+`.env.example` + docs/DEPLOY.md + scripts/（probe/backup 零依赖脚本）+《部署说明》。
+本机装有 Docker 时额外 `docker build` + `docker save`，zip 内含镜像 tar（目标机
+`docker load` 免网络）；未装 Docker 自动降级为在线构建包并提示。装包前会扫描并拒绝
+`.env`/`auth.json`/日志混入交付物。目标机的部署/验收/升级步骤见包内《部署说明》与
+[docs/DEPLOY.md](../docs/DEPLOY.md) 的「路线 B+」。
 
 ## 和谁打交道
 
