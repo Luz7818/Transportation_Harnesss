@@ -104,7 +104,7 @@ _CASE_LOCK = threading.Lock()    # 沉淀 case + 更新评测集是复合操作,
 _EVOLVE_LOCK = threading.Lock()  # 自进化循环全库读写,不允许并发执行
 _AUTH_STORE = auth_mod.load_store()
 
-app = FastAPI(title="交通分析自进化 Harness", version="2.0.0")
+app = FastAPI(title="交通分析自进化 Harness", version="2.1.0")
 
 
 # OpenAPI 安全方案:鉴权在中间件里做,FastAPI 感知不到,这里显式声明,

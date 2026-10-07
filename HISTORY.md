@@ -147,3 +147,33 @@
   `_error_console` 黑窗;自动开浏览器的旧行为随 GUI 窗口移除。
 - **打包**:`harness.spec` 增 pywebview 平台 hiddenimports(winforms/edgechromium)与图标;
   `build_exe.bat` 构建依赖增 `pywebview>=5`;`pyproject.toml` 的 `[exe]` 组同步。
+
+## 2026-10-07 · v2.1.0 双轨交付:桌面 exe 收口 + 私有化部署包
+
+### Added(新增)
+
+- **私有化部署交付包**:`packaging/build_deploy.py` 一键组装
+  `dist/TransportationHarness-deploy-<版本>.zip`(源码树 + Dockerfile/compose +
+  .env.example + docs/DEPLOY.md + probe/backup 零依赖脚本 + 《部署说明》);打包机装有
+  Docker 时含 `docker save` 镜像 tar(目标机 `docker load` 免网络),否则自动降级为
+  在线构建包(`docker compose up -d --build`);装包前扫描并清除混入的 `.env`/`auth.json`/日志
+- `packaging/部署说明.md` 随包分发:部署三步、验收命令、数据卷/备份/升级路径
+- docker-compose.yml 定名镜像 `transportation-harness:2.1.0`:compose build 的产物名
+  与离线 `docker load` 对号入座(随版本发布同步升位)
+
+### Fixed(缺陷修复)
+
+- **exe 单实例竞态**:两次快速双击时,后启动者在对方健康就绪前探测不到,端口绑定失败
+  弹裸 traceback;现在 `_wait_healthy` 失败路径再探测一次,命中即转「程序已在运行」
+  友好提示并退出(桌面窗口冒烟已过)
+- 「程序已在运行」提示误用错误图标 → `_messagebox` 增 icon 参数,单实例提示改信息图标
+- `.dockerignore` 反排除 `!README.md`:原 `*.md` 把 pip 安装元数据挡在 build context 外,
+  当前配置下 `COPY README.md` 必失败(静态核验;本机无 Docker,镜像构建未实测)
+- `build_exe.bat` 首建提示文案补 pywebview(实际已装,仅文案)
+
+### Changed(变更)
+
+- 版本四处同步 2.0.0 → 2.1.0(桌面 exe GUI 壳与部署交付包为加能力,按语义化版本升次版本);
+  OpenAPI 重导(`info.version` 随动),SDK wheel 重建入 `sdk/dist/`(2.1.0)
+- 文档:DEPLOY.md 增「路线 B+ 交付包部署」;packaging/README 改双轨口径并补部署轨文件;
+  TODO 任务 2 更新(tag 已打、wheel 已备,Release 页上传待确认);README Roadmap 增 2.5

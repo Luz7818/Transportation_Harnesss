@@ -109,7 +109,7 @@ class TestCoreFlows:
     def test_health(self, api):
         health = api.health()
         assert health["status"] == "ok"
-        assert health["app_version"] == "2.0.0"
+        assert health["app_version"] == "2.1.0"
         assert health["versions"] == ["v0", "v1", "v2", "v3"]
 
     def test_analyze_pipeline_output(self, api):

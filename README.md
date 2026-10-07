@@ -127,7 +127,8 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 - [x] **2.2 交付形态收口**:单实例约束写明(docs/DEPLOY.md),`--baseline` 末端版本明确 400(1.6.0)
 - [x] **2.3 真实模型判分**:qwen3.8-27b 判分归档,Mock 1.0 vs 真实 0.70(见 [docs/LLM.md](docs/LLM.md))
 - [ ] **2.4 线上化**:HTTPS + 备案域名,小程序正式发布(或明确定位为内网演示端)。线上服务已下线(2026-10-06),复活部署走 [DEPLOY.md](docs/DEPLOY.md)
-- [ ] **发布**:tag + GitHub Release 附 SDK wheel;版本一致性断言已进 CI(1.6.0)
+- [x] **2.5 双轨交付**:桌面 exe(pywebview 独立窗口,`--server` 无头)+ 私有化部署交付包([packaging/build_deploy.py](packaging/build_deploy.py))(2.1.0)
+- [ ] **发布**:GitHub Release 附 SDK wheel(tag 已打、wheel 已入 `sdk/dist/`,Release 页上传待确认);版本一致性断言已进 CI(1.6.0)
 
 ## 已知局限
 

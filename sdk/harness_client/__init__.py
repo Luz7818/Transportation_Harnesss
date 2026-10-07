@@ -17,7 +17,7 @@ from .client import TransportationHarnessClient
 from .errors import HarnessAPIError, HarnessAuthError
 from .models import CaseResult, CheckResult, CompareResult, CompareRow, EvalResult
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 __all__ = [
     "TransportationHarnessClient",
