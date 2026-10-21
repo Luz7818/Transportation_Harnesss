@@ -197,3 +197,14 @@
   命令行要转义);交付包内文件与 `build_deploy.py` 复制路径同步更名,说明书内容(中文)不变;
 - 引用同步:packaging/README 文件清单与「构建与使用」、docs/DEPLOY「路线 B+」、TODO 完成记录;
   上方 v2.1.0 条目按「HISTORY 只追加、禁改写」保留旧名,以本条为准。
+
+## 2026-10-21 · 更正:LLM judge 懒加载降级可见化
+
+- `harness/judge.py` 的默认 judge 装配里,`except Exception: pass` 会把 llm 层的**一切**
+  初始化异常静默吞掉——llm 未安装属预期降级,但 llm 模块自身的真故障(导入路径改动、
+  运行时初始化崩溃)也会无声消失,LLM 判分悄悄退化为纯规则分且无任何痕迹。本仓 webapp
+  `_autoload_real_llm` 的同类路径是「降级 + 打印原因」,此处对齐(核查轮后端专项检查发现)。
+- 修法:捕获后打印 `[harness] LLM judge 懒加载失败,只用规则/启发式 judge:<type>: <msg>`
+  (一行),行为不变(仍降级),故障从此可见。
+- 验证:ruff 0、`python -m pytest` 212 全过(进度点 212 + 退出码 0,测试数与基线一致)、
+  `python scripts/verify.py` PASS。

@@ -125,8 +125,8 @@ class CompositeJudge(BaseJudge):
                 from llm.judge import LLMJudge
                 from llm.runtime import get_runtime
                 judges.append(LLMJudge(get_runtime()))
-            except Exception:
-                pass
+            except Exception as exc:  # 降级必须可见:llm 未装是常态,其余异常是真故障,静默吞会让 LLM 判分无声消失
+                print(f"[harness] LLM judge 懒加载失败,只用规则/启发式 judge:{type(exc).__name__}: {exc}")
         self.judges: list[BaseJudge] = judges
         self._route = {}
         for j in self.judges:
