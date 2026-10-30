@@ -102,7 +102,8 @@ a:hover { text-decoration: underline; }
                       text-transform: uppercase; margin: 18px 0 6px; }
 .doc-toc .toc-group:first-child { margin-top: 4px; }
 .doc-toc a { display: block; padding: 4.5px 11px; border-radius: 8px; color: var(--t3);
-             font-size: 12.5px; margin-bottom: 1px; }
+             font-size: 12.5px; margin-bottom: 1px;
+             transition: background .15s, color .15s; }
 .doc-toc a:hover { background: #fff; color: var(--t1); text-decoration: none; }
 .doc-toc a.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
 .doc-main { flex: 1; min-width: 0; }
@@ -167,6 +168,7 @@ td code, th code { font-size: 12px; }
 .ep-path { font: 13.5px Consolas, "Courier New", monospace; font-weight: 700; color: var(--t1); }
 .ep-name { color: var(--t3); font-size: 12.5px; margin-left: auto; text-align: right; }
 .ep-caret { color: var(--t4); flex: none; transition: transform .18s; font-size: 12px; }
+.ep:not(.open) .ep-head:hover .ep-caret { transform: translateX(2px); }
 .ep.open .ep-caret { transform: rotate(90deg); }
 .ep-body { display: none; padding: 4px 20px 18px; border-top: 1px solid var(--line); }
 .ep.open .ep-body { display: block; animation: epIn .18s ease both; }
@@ -243,6 +245,7 @@ html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *
 .back-top { opacity: 0; pointer-events: none; transform: translateY(10px);
             transition: opacity .25s var(--ease-out), transform .25s var(--ease-out), color .15s; }
 .back-top.show { opacity: 1; pointer-events: auto; transform: none; }
+.back-top.show:hover { transform: translateY(-2px); }
 /* 顶栏离开顶部后落影 */
 .doc-top.scrolled { box-shadow: 0 8px 18px -14px rgba(16,24,40,.4); }
 html[data-theme="dark"] .doc-top.scrolled { box-shadow: 0 8px 18px -12px rgba(0,0,0,.55); }

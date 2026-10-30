@@ -1317,6 +1317,8 @@ details.changes[open] summary:hover::before { transform: rotate(90deg) translate
 .modal { width: min(400px, calc(100vw - 32px)); }
 @media (hover: hover) and (pointer: fine) {
   .btn:hover:not(:disabled), .entry-card:hover, .btn-hero.primary:hover { transform: translateY(-1px); }
+  .hstat { transition: transform .2s var(--ease-out), border-color .15s; }
+  .hstat:hover { transform: translateY(-2px); border-color: var(--hv-ghost-line); }
 }
 html[data-theme="dark"] .btn:hover:not(:disabled) { box-shadow: 0 6px 16px -6px rgba(129,140,248,.38); }
 

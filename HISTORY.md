@@ -300,3 +300,8 @@
 - **文档中心表格 hover 补齐**:亮色主题此前只有暗色规则有 tbody hover,补齐一致性
 - 校验:两页 node --check + CSS 配平通过;ruff/pytest/check_release 全过;
   浏览器实测暗色 meta=#0e111c
+
+## 2026-10-31 · v2.2.0 补充:微打磨收束(同版本追加)
+
+- 欢迎页统计卡 hover 浮起(hover 能力门控);文档中心 TOC 链接过渡、接口条目收起态
+  caret hover 微移、回到顶部悬停浮起 —— 均为低成本一致性细节
