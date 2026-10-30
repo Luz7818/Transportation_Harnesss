@@ -267,21 +267,36 @@ html.vt-run #app:not(.hidden), html.vt-run .fullscreen:not(.hidden) { animation:
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
 
 /* ================= 按钮 ================= */
+/* 按钮质感:顶部 1px 内高光模拟受光面,按压时内阴影下沉 —— 键帽式物理反馈。
+   全部走 box-shadow(可过渡),主题切换不跳变 */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px;
        border: 1px solid transparent; cursor: pointer; font: inherit; font-size: 13.5px; font-weight: 600;
        color: #fff; background: var(--primary); padding: 0 18px; height: 38px; border-radius: 8px;
-       transition: background .15s, transform .12s, box-shadow .15s; box-shadow: var(--shadow-xs); }
-.btn:hover:not(:disabled) { background: var(--primary-h); box-shadow: 0 6px 16px -6px rgba(79,70,229,.5); }
-.btn:active:not(:disabled) { transform: translateY(0) scale(.97); }
+       transition: background .15s, transform .12s var(--ease-out), box-shadow .18s var(--ease-out);
+       box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.12), var(--shadow-xs); }
+.btn:hover:not(:disabled) { background: var(--primary-h);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.12),
+              0 6px 16px -6px rgba(79,70,229,.5); }
+.btn:active:not(:disabled) { transform: translateY(0) scale(.97);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,.28), 0 1px 2px rgba(16,24,40,.08); }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .btn.lg { height: 44px; font-size: 14.5px; padding: 0 24px; border-radius: 11px; }
 .btn.sm { height: 31px; font-size: 12.5px; padding: 0 13px; border-radius: 8px; }
-.btn.secondary { background: var(--surface); color: var(--t1); border-color: var(--line-2); }
-.btn.secondary:hover:not(:disabled) { background: var(--surface-2); }
+.btn.secondary { background: var(--surface); color: var(--t1); border-color: var(--line-2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), var(--shadow-xs); }
+.btn.secondary:hover:not(:disabled) { background: var(--surface-2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), var(--shadow-sm); }
+.btn.secondary:active:not(:disabled) { box-shadow: inset 0 2px 4px rgba(16,24,40,.1); }
 .btn.danger { background: var(--bad); }
-.btn.danger:hover:not(:disabled) { background: #912018; }
-html[data-theme="dark"] .btn { color: #0d1117; }
-html[data-theme="dark"] .btn.secondary { color: var(--t1); }
+.btn.danger:hover:not(:disabled) { background: #912018;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(0,0,0,.14),
+              0 6px 16px -6px rgba(180,35,24,.5); }
+html[data-theme="dark"] .btn { color: #0d1117;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.22), var(--shadow-xs); }
+html[data-theme="dark"] .btn.secondary { color: var(--t1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), var(--shadow-xs); }
+html[data-theme="dark"] .btn.secondary:hover:not(:disabled) {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), var(--shadow-sm); }
 html[data-theme="dark"] .btn.danger { color: #fff; }
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
             border: 0; background: transparent; border-radius: 7px; cursor: pointer; color: var(--t4);
@@ -294,9 +309,12 @@ html[data-theme="dark"] .btn.danger { color: #fff; }
 label { display: block; font-size: 12px; color: var(--t2); margin: 12px 0 5px; font-weight: 600; }
 input, select, textarea { width: 100%; height: 38px; padding: 0 12px; border: 1px solid var(--line-2);
                           border-radius: 8px; font: inherit; font-size: 13.5px; background: var(--surface);
-                          color: var(--t1); transition: border .12s, box-shadow .12s; }
+                          color: var(--t1);
+                          transition: border-color .15s, box-shadow .18s var(--ease-out), background .15s;
+                          box-shadow: var(--shadow-xs); }
 textarea { height: auto; padding: 9px 12px; }
-input:focus, select:focus, textarea:focus { outline: none; border-color: #7fcfa8; box-shadow: var(--ring); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring); }
+input:disabled, select:disabled, textarea:disabled { opacity: .55; cursor: not-allowed; }
 select { appearance: none; padding-right: 32px; cursor: pointer;
          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2369758c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
          background-repeat: no-repeat; background-position: right 10px center; }
@@ -428,7 +446,20 @@ details.changes li { margin-bottom: 3px; }
 .bar { height: 7px; border-radius: 999px; background: var(--track); margin-top: 12px; overflow: hidden; }
 .bar > div { height: 100%; border-radius: 999px; background: var(--primary);
              transition: width .7s var(--ease-out); }
-.vcard .act { margin-top: auto; padding-top: 12px; display: flex; justify-content: flex-end; }
+.vcard .act { margin-top: auto; padding-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ---- 版本卡片迷你趋势线(该版本历次评测得分轨迹) ---- */
+.spark { margin-top: 10px; }
+.spark svg { width: 100%; height: 30px; display: block; }
+.spark .sp-line { fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.spark .sp-dot:last-of-type { r: 3; }
+.spark .sp-cap { font-size: 8.5px; fill: var(--t4); }
+
+/* ---- 任务区搜索(报告 / Case 列表通用) ---- */
+.tp-search { padding: 0 2px 8px; }
+.tp-search input { height: 30px; font-size: 12px; border-radius: 8px; padding: 0 10px 0 30px;
+                   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%236a7590' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+                   background-repeat: no-repeat; background-position: 10px center; }
 
 /* ================= 徽章 / 状态 ================= */
 .lv { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 10px 2px 8px;
@@ -554,14 +585,21 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ================= Toast ================= */
 .toast { position: fixed; right: 22px; bottom: 22px; background: #10141f; color: #f2f5fb;
-         padding: 12px 18px; border-radius: 10px; font-size: 13.5px; opacity: 0; transform: translateY(10px);
+         padding: 12px 18px 15px; border-radius: 10px; font-size: 13.5px; opacity: 0; transform: translateY(10px);
          transition: opacity .3s var(--ease-out), transform .3s var(--ease-out);
-         pointer-events: none; z-index: 80; max-width: 440px;
+         pointer-events: none; z-index: 80; max-width: 440px; overflow: hidden;
          box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 9px; }
 .toast .ico-svg { color: #34d399; }
 .toast.show { opacity: .98; transform: none; }
-.toast.err { background: #58187d0d; background: #4a1210; }
+.toast.err { background: #4a1210; }
 .toast.err .ico-svg { color: #fda29b; }
+/* 生命周期条:显示时长可视化,临近消失时走完 */
+.toast::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+                background: rgba(52,211,153,.55); transform-origin: 0 50%;
+                animation: toastLife 3.4s linear forwards; }
+.toast.err::after { background: rgba(253,162,155,.5); }
+@keyframes toastLife { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .toast::after { display: none; } }
 
 /* ================= 对比页 checks 级 diff ================= */
 .diff-toggle { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none;
@@ -1089,6 +1127,59 @@ button[disabled] .ico-svg { animation: hv-spin .9s linear infinite; }
 .cmdk-foot .grp { display: flex; align-items: center; gap: 5px; }
 .cmdk-foot .kbd { font-size: 10px; padding: 0 5px; }
 
+/* ================= 全局 API 加载条(顶缘 2.5px 往复滑块) ================= */
+#api-progress { position: fixed; top: 0; left: 0; right: 0; height: 2.5px; z-index: 90;
+                pointer-events: none; opacity: 0; transition: opacity .25s var(--ease-out); }
+#api-progress.on { opacity: 1; }
+#api-progress::before { content: ""; display: block; height: 100%; width: 38%;
+                        border-radius: 0 3px 3px 0; background: linear-gradient(90deg, var(--primary), #a5b4fc);
+                        animation: apiSlide 1.1s var(--ease-drawer) infinite; }
+@keyframes apiSlide { from { transform: translateX(-110%); } to { transform: translateX(380%); } }
+
+/* ================= 顶栏滚动阴影(离开顶部后落影,增强层次) ================= */
+.topbar.scrolled { box-shadow: 0 8px 18px -14px rgba(16,24,40,.4); }
+html[data-theme="dark"] .topbar.scrolled { box-shadow: 0 8px 18px -12px rgba(0,0,0,.55); }
+
+/* ================= 内容级差入场(时间线 / 版本卡片 / 弹层内容) ================= */
+.tl-item { animation: rise .38s var(--ease-out) both; }
+.tl-item:nth-child(2) { animation-delay: 50ms; }
+.tl-item:nth-child(3) { animation-delay: 100ms; }
+.tl-item:nth-child(4) { animation-delay: 150ms; }
+.tl-item:nth-child(n+5) { animation-delay: 200ms; }
+.vcard { animation: rise .4s var(--ease-out) both; }
+.vcard:nth-child(2) { animation-delay: 60ms; }
+.vcard:nth-child(3) { animation-delay: 120ms; }
+.vcard:nth-child(4) { animation-delay: 180ms; }
+.vcard:nth-child(n+5) { animation-delay: 240ms; }
+#sheet-body > *, #drawer-body > * { animation: rise .28s var(--ease-out) both; }
+#sheet-body > :nth-child(2), #drawer-body > :nth-child(2) { animation-delay: 40ms; }
+#sheet-body > :nth-child(3), #drawer-body > :nth-child(3) { animation-delay: 80ms; }
+#sheet-body > :nth-child(n+4), #drawer-body > :nth-child(n+4) { animation-delay: 120ms; }
+
+/* ================= 图表描线动画(趋势图每次打开重绘即重播) ================= */
+@keyframes chartDraw { to { stroke-dashoffset: 0; } }
+@keyframes dotIn { from { opacity: 0; transform: scale(.4); transform-origin: center; transform-box: fill-box; } }
+.chart-svg .trend-line { stroke-dasharray: 2200; stroke-dashoffset: 2200;
+                         animation: chartDraw 1.2s var(--ease-out) .1s forwards; }
+.chart-svg .cg-dot { animation: dotIn .45s var(--ease-out) both; }
+
+/* ================= 闭环步骤 / 导航微交互 ================= */
+.step .s-ico { transition: transform .2s var(--ease-out), box-shadow .2s var(--ease-out),
+                            border-color .15s, color .15s; }
+.step.click:hover .s-ico { transform: translateY(-2px); border-color: var(--soft-line);
+                           box-shadow: 0 8px 16px -8px rgba(79,70,229,.45); }
+.step .s-arrow { transition: transform .2s var(--ease-out); }
+.step.click:hover + .s-arrow, .s-arrow:has(+ .step.click:hover) { transform: translateX(2px); color: var(--primary); }
+.nav-item .nv-ico { display: flex; transition: color .15s, transform .2s var(--ease-out); }
+.nav-item:hover .nv-ico { transform: translateY(-1px) scale(1.07); }
+
+/* ================= 校验失败反馈(边框标红 + 摇晃) ================= */
+input.invalid, select.invalid, textarea.invalid { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(180,35,24,.12); }
+.shake { animation: shakeX .32s var(--ease-out); }
+@keyframes shakeX { 20% { transform: translateX(-4px); } 45% { transform: translateX(4px); }
+                    70% { transform: translateX(-2px); } 90% { transform: translateX(2px); } }
+
+
 /* ================= 响应式 ================= */
 /* 三栏外壳下顶栏偏窄:搜索按钮只留图标 + 快捷键徽章 */
 @media (max-width: 1680px) {
@@ -1363,6 +1454,20 @@ html[data-theme="dark"] .btn:hover:not(:disabled) { box-shadow: 0 6px 16px -6px 
 </div>
 
 <div id="toast" class="toast"></div>
+<div id="api-progress"></div>
+
+<!-- ===== 通用确认弹窗(替代原生 confirm,样式与动效全局一致) ===== -->
+<div id="confirm-mask" class="modal-mask hidden">
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <h3><span class="h-ico" id="confirm-ico"></span><span id="confirm-title">确认操作</span></h3>
+    <p class="muted" id="confirm-text" style="margin:8px 0 0;line-height:1.65"></p>
+    <div class="modal-actions">
+      <button class="btn secondary" id="confirm-no" onclick="settleConfirm(false)">取消</button>
+      <button class="btn danger" id="confirm-yes" onclick="settleConfirm(true)">确认</button>
+    </div>
+  </div>
+</div>
+
 <div id="cmdk-mask" class="cmdk-mask hidden">
   <div class="cmdk">
     <input id="cmdk-input" placeholder="搜索页面、报告,或输入命令…" autocomplete="off">
@@ -1482,14 +1587,25 @@ const stopTag = reason => /全部通过/.test(reason) ? `<span class="tag ok">${
 const emptyBox = (ico, title, sub, action = "") =>
   `<div class="empty"><div class="e-ico">${icon(ico, 26)}</div><div class="e-t">${title}</div><div class="e-s">${sub}</div>${action}</div>`;
 
-async function api(url, body, method) {
+/* 全局 API 加载条:请求在途时顶缘滑块可见,全部结束(含小延迟防闪烁)后隐藏。
+   quiet=true 的调用(如 30s 健康心跳)不点亮进度条,保持界面安静 */
+let _inflight = 0;
+function apiBusy(delta) {
+  _inflight = Math.max(0, _inflight + delta);
+  clearTimeout(apiBusy._t);
+  if (_inflight > 0) $("#api-progress").classList.add("on");
+  else apiBusy._t = setTimeout(() => $("#api-progress").classList.remove("on"), 260);
+}
+async function api(url, body, method, quiet) {
   const m = method || (body ? "POST" : "GET");
   const opt = body || m !== "GET"
     ? { method: m, headers: { "Content-Type": "application/json" },
         body: body ? JSON.stringify(body) : undefined } : {};
   let res;
+  if (!quiet) apiBusy(1);
   try { res = await fetch(url, opt); }
   catch (e) { throw new Error("无法连接服务器,请确认服务已启动"); }
+  finally { if (!quiet) apiBusy(-1); }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     const e = new Error(err.detail || `请求失败(${res.status})`);
@@ -1503,6 +1619,27 @@ function toast(msg, isErr = false) {
   el.innerHTML = `${icon(isErr ? "alert" : "check", 16)}<span>${esc(msg)}</span>`;
   el.classList.toggle("err", isErr); el.classList.add("show");
   clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("show"), 3400);
+}
+/* 下载 / 复制:导出报告、导出 case、命令面板共用 */
+function downloadJson(name, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch {   // 非安全上下文回退:隐藏 textarea + execCommand
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch {}
+    ta.remove();
+    return ok;
+  }
 }
 /* 弹层退场:先播 .closing 动画,播完再真正隐藏(怎么进来就怎么出去) */
 function animateHide(mask, after) {
@@ -1521,6 +1658,36 @@ async function withBusy(btn, fn) {
   try { return await fn(); }
   catch (e) { toast(e.message, true); }
   finally { btn.disabled = false; btn.innerHTML = old; }
+}
+/* 样式化确认弹窗(替代原生 confirm):返回 Promise,await 后拿布尔 */
+let _confirmResolve = null;
+function askConfirm(title, text, opts = {}) {
+  if (_confirmResolve) settleConfirm(false);   // 前一次未结算:按取消收场,防悬挂
+  $("#confirm-title").textContent = title;
+  $("#confirm-text").textContent = text;
+  $("#confirm-ico").innerHTML = icon(opts.icon || "trash", 16);
+  const yes = $("#confirm-yes");
+  yes.className = "btn" + (opts.danger === false ? "" : " danger");
+  yes.textContent = opts.yes || "确认删除";
+  $("#confirm-no").textContent = opts.no || "取消";
+  $("#confirm-mask").classList.remove("hidden");
+  setTimeout(() => yes.focus(), 80);
+  return new Promise(res => { _confirmResolve = res; });
+}
+function settleConfirm(v) {
+  const res = _confirmResolve; _confirmResolve = null;
+  animateHide($("#confirm-mask"));
+  if (res) res(v);
+}
+/* 等待 async 渲染产物就绪后执行(渲染含多次取数,固定延时必竞态);超时静默放弃 */
+function whenReady(get, cb, timeout = 6000) {
+  const t0 = performance.now();
+  (function tick() {
+    const v = get();
+    if (v) return cb(v);
+    if (performance.now() - t0 > timeout) return;
+    setTimeout(tick, 70);
+  })();
 }
 /* KPI 数字滚动(尊重系统减弱动态偏好) */
 function runCountUps(scope = document) {
@@ -1775,15 +1942,19 @@ async function doChangePassword(btn) {
   } finally { btn.disabled = false; btn.textContent = old; }
 }
 $("#modal-mask").addEventListener("click", e => { if (e.target === $("#modal-mask")) closeModal(); });
+$("#confirm-mask").addEventListener("click", e => { if (e.target === $("#confirm-mask")) settleConfirm(false); });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && !$("#modal-mask").classList.contains("hidden")) closeModal();
+  if (e.key === "Escape" && !$("#confirm-mask").classList.contains("hidden")) settleConfirm(false);
+  else if (e.key === "Escape" && !$("#modal-mask").classList.contains("hidden")) closeModal();
 });
 
 /* ============ 健康检查 ============ */
-async function loadHealth() {
+let _healthFails = 0;
+async function loadHealth(silent = false) {
   try {
     const [h, llm] = await Promise.all([
-      api("/api/health"), api("/api/llm/status").catch(() => null)]);
+      api("/api/health", null, "GET", true), api("/api/llm/status", null, "GET", true).catch(() => null)]);
+    _healthFails = 0;
     $("#side-ver").textContent = "v" + (h.app_version || "1.5.0");
     $("#side-llm").textContent = llm ? (llm.configured ? `LLM:${llm.model}` : "LLM:Mock") : "LLM:—";
     $("#health-dot").classList.remove("off");
@@ -1793,7 +1964,7 @@ async function loadHealth() {
       ? `${icon("unlock", 13)} 演示模式` : `${icon("lock", 13)} 登录模式`;
     $("#login-hint").style.display = h.default_credentials ? "block" : "none";
     const ws = $("#welcome-stats");
-    if (ws) {
+    if (ws && !silent) {   // 心跳静默模式不重绘欢迎页数字,避免计数动画周期性重播
       ws.innerHTML = `
       <div class="hstat"><b>${icon("database", 18)}<span class="num" data-countup="${h.case_count}">0</span></b>replaycase 用例</div>
       <div class="hstat"><b>${icon("filetext", 18)}<span class="num" data-countup="${h.report_count}">0</span></b>评测报告归档</div>
@@ -1801,10 +1972,20 @@ async function loadHealth() {
       runCountUps(ws);   // 首屏数字滚动,与级联入场同步
     }
   } catch {
-    $("#health-dot").classList.add("off");
-    $("#health-text").textContent = "服务离线";
+    _healthFails++;
+    if (_healthFails >= 2) {   // 连续两次失败才判离线:心跳对瞬时抖动容错
+      $("#health-dot").classList.add("off");
+      $("#health-text").textContent = "服务离线";
+    }
   }
 }
+/* 健康心跳:工作台可见期间每 30s 静默刷新;后台页签跳过,回到前台立即补一次 */
+setInterval(() => {
+  if (!document.hidden && views.app && !views.app.classList.contains("hidden")) loadHealth(true);
+}, 30000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && views.app && !views.app.classList.contains("hidden")) loadHealth(true);
+});
 
 /* ============ 评测看板 ============ */
 let evalsetOptions = [];
@@ -1816,6 +1997,24 @@ let dashReportFilter = "全部";
 let reportSeq = 0;               // 详情请求序号:防快速连点导致乱序覆盖
 
 const verBadge = v => `b${parseInt(String(v).replace(/\D/g, ""), 10) % 4 || 0}`;
+
+/* 版本卡片迷你趋势线:该版本历次评测得分轨迹(≥2 次才画,单点无线可言) */
+function sparkline(hist) {
+  if (!hist || hist.length < 2) return "";
+  const W = 200, H = 30, pad = 3.5;
+  const accs = hist.map(r => r.accuracy);
+  const lo = Math.max(0, Math.min(...accs) - 0.06), hi = Math.min(1, Math.max(...accs) + 0.06);
+  const rng = hi - lo || 1;
+  const px = i => pad + i * (W - pad * 2) / (hist.length - 1);
+  const py = a => H - pad - (a - lo) / rng * (H - pad * 2);
+  const pts = hist.map((r, i) => `${px(i).toFixed(1)},${py(r.accuracy).toFixed(1)}`).join(" ");
+  const color = VER_COLOR[hist[0].version] || "#4f46e5";
+  return `<div class="spark" title="该版本最近 ${hist.length} 次评测得分轨迹">
+    <svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <polyline class="sp-line" points="${pts}" stroke="${color}" opacity=".85"/>
+      ${hist.map((r, i) => `<circle class="sp-dot" cx="${px(i).toFixed(1)}" cy="${py(r.accuracy).toFixed(1)}" r="2.2" fill="${color}"/>`).join("")}
+    </svg></div>`;
+}
 
 async function renderDashboard() {
   closeSheet();  // 看板重渲染(如评测完成)时,避免弹层内容与数据脱节
@@ -1838,11 +2037,11 @@ async function renderDashboard() {
   renderDashWorkspace();
 }
 
-/* ---- 任务区:评测报告列表(按版本筛选),点选进工作区详情 ---- */
+/* ---- 任务区:评测报告列表(按版本筛选 + 文本搜索),点选进工作区详情 ---- */
+let dashSearch = "";
 function renderDashTaskPanel(reports) {
   const filters = ["全部", ...new Set(reports.map(r => r.version))];
   if (!filters.includes(dashReportFilter)) dashReportFilter = "全部";
-  const shown = reports.filter(r => dashReportFilter === "全部" || r.version === dashReportFilter);
   $("#tp-head-slot").innerHTML = `
     <div class="tp-head"><b>${icon("layers", 14)} 评测报告</b>
       <span class="chip2 plain num">${reports.length}</span>
@@ -1851,16 +2050,30 @@ function renderDashTaskPanel(reports) {
   $("#tp-list").innerHTML = `
     <div class="tp-tools"><div class="chips">${filters.map(f =>
       `<span class="chip2 ${f === dashReportFilter ? "" : "plain"} click" onclick="setDashFilter('${esc(f)}')">${esc(f)}</span>`).join("")}</div></div>
-    ${shown.length ? shown.map(r => `
+    <div class="tp-search"><input id="dash-search" value="${esc(dashSearch)}" autocomplete="off"
+      placeholder="搜索报告 ID / 版本…" oninput="setDashSearch(this.value)"></div>
+    <div id="tp-items"></div>`;
+  renderDashReportItems(reports);
+  $("#tp-foot").style.display = "";
+  $("#tp-foot").textContent = "报告按版本 × 评测时间归档;点选任意报告,在工作区查看分标签通过率与逐 case 明细。";
+}
+/* 搜索键入只重绘条目区,不重建输入框:焦点与输入法组合态不丢 */
+function renderDashReportItems(reports) {
+  const box = $("#tp-items");
+  if (!box) return;
+  const kw = dashSearch.trim().toLowerCase();
+  const shown = reports.filter(r => (dashReportFilter === "全部" || r.version === dashReportFilter)
+    && (!kw || r.report_id.toLowerCase().includes(kw) || r.version.toLowerCase().includes(kw)));
+  box.innerHTML = shown.length ? shown.map(r => `
       <div class="tp-item ${selectedReportId === r.report_id ? "sel" : ""}" onclick="selectReport('${esc(r.report_id)}')">
         <div class="ti-top"><span class="ver-badge ${verBadge(r.version)}" style="font-size:10.5px;padding:1.5px 7px">${esc(r.version)}</span>
           <span class="ti-title num" title="${esc(r.report_id)}">${esc(r.report_id)}</span></div>
         <div class="ti-meta"><span class="num" style="font-weight:700;color:${r.accuracy === 1 ? "var(--ok)" : "var(--t1)"}">${pct(r.accuracy)}</span>
           <span class="num">${r.passed_count}/${r.total}</span><span style="opacity:.5">·</span><span class="num">${esc(fmtTs(r.timestamp))}</span></div>
-      </div>`).join("") : `<div class="tp-empty">该版本暂无报告<br>在总览页运行评测即可生成</div>`}`;
-  $("#tp-foot").style.display = "";
-  $("#tp-foot").textContent = "报告按版本 × 评测时间归档;点选任意报告,在工作区查看分标签通过率与逐 case 明细。";
+      </div>`).join("")
+    : `<div class="tp-empty">${kw ? `没有匹配「${esc(dashSearch.trim())}」的报告` : "该版本暂无报告<br>在总览页运行评测即可生成"}</div>`;
 }
+function setDashSearch(v) { dashSearch = v; renderDashReportItems((window.__dashData || {}).reports || []); }
 function setDashFilter(f) { dashReportFilter = f; renderDashTaskPanel((window.__dashData || {}).reports || []); }
 async function selectReport(id) {
   dashMode = "report"; selectedReportId = id;
@@ -1994,9 +2207,13 @@ function renderDashOverview(d) {
         <div class="score ${rep ? "" : "dim"}">${rep ? pct(acc) : "未评测"}</div>
       </div>
       <div class="bar"><div style="width:0%" data-w="${acc !== null ? (acc * 100).toFixed(1) : 0}"></div></div>
+      ${sparkline(reports.filter(r => r.version === v.version).slice(0, 8).reverse())}
       ${v.changes.length ? `<details class="changes"><summary>本轮优化内容(${v.changes.length})</summary>
         <ul>${v.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul></details>` : ""}
-      <div class="act"><button class="btn sm secondary" onclick="runEval(this,'${esc(v.version)}')">${icon("play", 13)} 运行评测</button></div>
+      <div class="act">
+        ${rep ? `<button class="btn sm secondary" onclick="quickCompareVersion('${esc(v.version)}')" title="与上一版本逐 case 差分">${icon("scale", 13)} 对比</button>` : ""}
+        <button class="btn sm secondary" onclick="runEval(this,'${esc(v.version)}')">${icon("play", 13)} 运行评测</button>
+      </div>
     </div>`;
   }).join("")}</div>`;
 
@@ -2099,7 +2316,8 @@ function areaChart(reports) {
   const dots = data.map((r, i) => {
     const last = i === data.length - 1;
     return `<circle class="cg-dot" data-i="${i}" cx="${px(i).toFixed(1)}" cy="${py(r.accuracy).toFixed(1)}" r="${last ? 5.5 : 4.5}"
-      fill="${VER_COLOR[r.version] || "#4f46e5"}" stroke="var(--surface)" stroke-width="${last ? 2.5 : 1.5}"/>`;
+      fill="${VER_COLOR[r.version] || "#4f46e5"}" stroke="var(--surface)" stroke-width="${last ? 2.5 : 1.5}"
+      style="animation-delay:${(0.1 + i * 0.09).toFixed(2)}s"/>`;
   }).join("");
   const labels = data.map((r, i) =>
     `<text x="${px(i)}" y="${H - 10}" font-size="10.5" fill="var(--t4)" text-anchor="middle">${esc(r.version)}</text>`).join("");
@@ -2109,8 +2327,8 @@ function areaChart(reports) {
         <stop offset="0" stop-color="#4f46e5" stop-opacity=".2"/><stop offset="1" stop-color="#4f46e5" stop-opacity="0"/>
       </linearGradient></defs>
       ${gridY}
-      <path d="${area}" fill="url(#area-g)"/>
-      <polyline points="${line}" fill="none" stroke="var(--primary)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="${area}" fill="url(#area-g)" style="animation:fadeIn .8s ease .2s both"/>
+      <polyline class="trend-line" points="${line}" fill="none" stroke="var(--primary)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
       <line class="cg-guide" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--t4)" stroke-dasharray="3 3" style="opacity:0"/>
       ${dots}${labels}</svg>
     <div class="chart-tip" aria-hidden="true"></div>
@@ -2181,6 +2399,10 @@ async function runEvolve(btn) {
       <div class="hint ok">${icon("check", 15)}<span>循环结束:基线 ${esc(b.version)} ${b.passed_count}/${b.total}(${pct(b.accuracy)})
         → 最佳 <b>${esc(s.best.version)}</b> ${pct(s.best.accuracy)}
         (迭代 ${s.iterations_used} 轮,${esc(s.stop_reason)});报告已归档 <b>${esc(s.md_report)}</b></span></div>
+      <p style="display:flex;gap:8px;margin:10px 0 0">
+        <button class="btn sm" onclick="replayEvolution('${esc(s.evolution_id)}')">${icon("play", 13)} 回放本次进化</button>
+        <button class="btn sm secondary" onclick="quickCompareVersion('${esc(s.best.version)}')">${icon("scale", 13)} 与上一版本对比</button>
+      </p>
       ${pending}${rounds}`;
     toast(`自进化完成:最佳 ${s.best.version} ${pct(s.best.accuracy)}`);
     loadHealth();
@@ -2193,6 +2415,7 @@ const caseSel = new Set();   // 批量操作选中的 case_id
 /* ---- Case 页:任务区(case 列表,左)+ 工作区(详情 / 沉淀表单,中) ---- */
 let caseWsMode = "form";      // form = 沉淀表单,detail = 选中 case 的详情
 let selectedCaseId = null;
+let caseSearch = "";
 
 async function renderCases() {
   const [cases, datasets] = await Promise.all([api("/api/cases"), api("/api/datasets")]);
@@ -2204,7 +2427,6 @@ async function renderCases() {
 function renderCaseTaskPanel(cases) {
   const labels = ["全部", ...new Set(cases.map(c => c.label))];
   if (!labels.includes(caseFilter)) caseFilter = "全部";
-  const shown = cases.filter(c => caseFilter === "全部" || c.label === caseFilter);
   $("#tp-head-slot").innerHTML = `
     <div class="tp-head"><b>${icon("database", 14)} Case 库</b>
       <span class="chip2 plain num">${cases.length}</span>
@@ -2213,21 +2435,35 @@ function renderCaseTaskPanel(cases) {
   $("#tp-list").innerHTML = `
     <div class="tp-tools"><div class="chips">${labels.map(l =>
       `<span class="chip2 ${l === caseFilter ? "" : "plain"} click" onclick="setFilter('${esc(l)}')">${esc(l)}</span>`).join("")}</div></div>
-    ${shown.length ? shown.map(c => {
-      const lv = (c.checks || []).find(k => k.type === "classify");
-      return `<div class="tp-item ${selectedCaseId === c.case_id ? "sel" : ""}" onclick="selectCase('${esc(c.case_id)}')">
-        <div class="ti-top"><span class="ti-id">${esc(c.case_id)}</span>
-          <span class="ti-title" title="${esc(c.title)}">${esc(c.title)}</span></div>
-        <div class="ti-meta">${lv && lv.expected ? lvPill(lv.expected) : ""}<span>${esc(c.label)}</span>
-          <span style="opacity:.5">·</span>
-          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.dataset_name)}</span>
-          <input type="checkbox" class="row-sel" title="加入批量选择" ${caseSel.has(c.case_id) ? "checked" : ""}
-            onclick="event.stopPropagation()" onchange="toggleSel('${esc(c.case_id)}', this.checked)"></div>
-      </div>`; }).join("")
-      : `<div class="tp-empty">该标签下暂无 case<br>切换标签,或点上方「沉淀」新建</div>`}`;
+    <div class="tp-search"><input id="case-search" value="${esc(caseSearch)}" autocomplete="off"
+      placeholder="搜索 case / 标题 / 标签…" oninput="setCaseSearch(this.value)"></div>
+    <div id="tp-items"></div>`;
+  renderCaseItems(cases);
   $("#tp-foot").style.display = "";
   $("#tp-foot").textContent = "cases/ 按失败标签分目录,一个 case 一个 JSON 文件,可直接纳入 git 管理。";
 }
+/* 搜索键入只重绘条目区,不重建输入框:焦点与输入法组合态不丢 */
+function renderCaseItems(cases) {
+  const box = $("#tp-items");
+  if (!box) return;
+  const kw = caseSearch.trim().toLowerCase();
+  const shown = cases.filter(c => (caseFilter === "全部" || c.label === caseFilter)
+    && (!kw || c.case_id.toLowerCase().includes(kw) || c.title.toLowerCase().includes(kw)
+      || c.label.toLowerCase().includes(kw) || (c.dataset_name || "").toLowerCase().includes(kw)));
+  box.innerHTML = shown.length ? shown.map(c => {
+    const lv = (c.checks || []).find(k => k.type === "classify");
+    return `<div class="tp-item ${selectedCaseId === c.case_id ? "sel" : ""}" onclick="selectCase('${esc(c.case_id)}')">
+      <div class="ti-top"><span class="ti-id">${esc(c.case_id)}</span>
+        <span class="ti-title" title="${esc(c.title)}">${esc(c.title)}</span></div>
+      <div class="ti-meta">${lv && lv.expected ? lvPill(lv.expected) : ""}<span>${esc(c.label)}</span>
+        <span style="opacity:.5">·</span>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.dataset_name)}</span>
+        <input type="checkbox" class="row-sel" title="加入批量选择" ${caseSel.has(c.case_id) ? "checked" : ""}
+          onclick="event.stopPropagation()" onchange="toggleSel('${esc(c.case_id)}', this.checked)"></div>
+    </div>`; }).join("")
+    : `<div class="tp-empty">${kw ? `没有匹配「${esc(caseSearch.trim())}」的 case` : "该标签下暂无 case<br>切换标签,或点上方「沉淀」新建"}</div>`;
+}
+function setCaseSearch(v) { caseSearch = v; renderCaseItems(window.__casesCache || []); }
 function selectCase(id) {
   caseWsMode = "detail"; selectedCaseId = id;
   renderCaseTaskPanel(window.__casesCache || []);
@@ -2275,6 +2511,7 @@ function renderCaseForm() {
       <label>备注(反馈原文 / 复现步骤)</label>
       <input id="c-notes" maxlength="200" placeholder="例:用户点踩,该路段 V/C 已超 0.9…">
       <div id="c-ref"></div>
+      <div id="c-err"></div>
       <p style="margin:16px 0 0"><button class="btn" onclick="createCase(this)">${icon("database", 15)} 沉淀为 replaycase 并加入评测集</button></p>
     </div>`;
   renderBatchBar();
@@ -2307,12 +2544,19 @@ function renderCaseDetail(c) {
       <div class="table-wrap"><table>
         <thead><tr><th>类型</th><th>目标</th><th>期望</th><th>说明</th></tr></thead>
         <tbody>${rows || `<tr><td colspan="4" class="muted">无</td></tr>`}</tbody></table></div>
-      <p style="display:flex;gap:10px;margin:16px 0 0">
+      <p style="display:flex;gap:10px;margin:16px 0 0;flex-wrap:wrap">
         <button class="btn secondary" onclick="caseWsNew()">${icon("plus", 14)} 再沉淀一条</button>
+        <button class="btn secondary" onclick="copyCaseJson()" title="把该 case 的完整 JSON 复制到剪贴板">${icon("filetext", 14)} 复制 JSON</button>
         <button class="btn danger" onclick="deleteCase('${esc(c.case_id)}')">${icon("trash", 14)} 删除该 case</button>
       </p>
     </div>`;
   renderBatchBar();
+}
+async function copyCaseJson() {
+  const c = (window.__casesCache || []).find(x => x.case_id === selectedCaseId);
+  if (!c) return;
+  const ok = await copyText(JSON.stringify(c, null, 2));
+  toast(ok ? `已复制 ${c.case_id} 的完整 JSON` : "复制失败:浏览器限制了剪贴板访问", !ok);
 }
 
 
@@ -2335,7 +2579,8 @@ function renderBatchBar() {
 async function batchDelete() {
   const ids = [...caseSel];
   if (!ids.length) return;
-  if (!confirm(`确认删除所选 ${ids.length} 条 case?将同时从所有评测集清单移除,已归档报告不受影响。`)) return;
+  if (!await askConfirm(`删除所选 ${ids.length} 条 case?`,
+    "将同时从所有评测集清单移除,已归档报告不受影响。")) return;
   try {
     const out = await api("/api/cases/batch-delete", { ids });
     toast(`已删除 ${out.deleted.length} 条${out.missing.length ? `,${out.missing.length} 条不存在` : ""}`);
@@ -2346,12 +2591,7 @@ async function batchDelete() {
 function exportSelected() {
   const picked = (window.__casesCache || []).filter(c => caseSel.has(c.case_id));
   if (!picked.length) return;
-  const blob = new Blob([JSON.stringify(picked, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `replaycases_${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  downloadJson(`replaycases_${new Date().toISOString().slice(0, 10)}.json`, picked);
   toast(`已导出 ${picked.length} 条 case`);
 }
 
@@ -2374,13 +2614,29 @@ async function onFormSegmentChange() {
       ,饱和度 <b class="num">${sat}</b>(期望值可直接沿用该判定,也可按人工结论修改)</span></div>`;
   } catch { $("#c-ref").innerHTML = ""; }
 }
+/* 校验失败标记:边框标红 + 摇晃;任意输入即摘除标记 */
+function flagInvalid(el) {
+  if (!el) return;
+  el.classList.add("invalid");
+  el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+}
+document.addEventListener("input", e => { if (e.target.classList) e.target.classList.remove("invalid"); });
+
 async function createCase(btn) {
+  const title = $("#c-title").value.trim(), seg = $("#c-segment").value;
+  const missing = [];
+  if (!title) { flagInvalid($("#c-title")); missing.push("标题"); }
+  if (!seg) { flagInvalid($("#c-segment")); missing.push("路段"); }
+  if (missing.length) {
+    $("#c-err").innerHTML = `<div class="hint warn">${icon("alert", 15)}<span>请先补全:${missing.join("、")} —— 用例没有输入就无法重放。</span></div>`;
+    return;
+  }
+  $("#c-err").innerHTML = "";
   await withBusy(btn, async () => {
     const body = {
-      title: $("#c-title").value,
-      label: $("#c-label").value || "未分类",
+      title, label: $("#c-label").value || "未分类",
       dataset_name: $("#c-dataset").value,
-      segment: $("#c-segment").value,
+      segment: seg,
       expected_level: $("#c-level").value,
       expected_saturation: $("#c-sat").value === "" ? null : parseFloat($("#c-sat").value),
       notes: $("#c-notes").value,
@@ -2391,7 +2647,8 @@ async function createCase(btn) {
   });
 }
 async function deleteCase(caseId) {
-  if (!confirm(`确认删除 ${caseId}?该 case 会同时从所有评测集清单中移除,已归档的报告不受影响。`)) return;
+  if (!await askConfirm(`删除 ${caseId}?`,
+    "该 case 会同时从所有评测集清单中移除,已归档的报告不受影响。")) return;
   try {
     await api("/api/cases/" + encodeURIComponent(caseId), null, "DELETE");
     toast(`已删除 ${caseId}`);
@@ -2414,11 +2671,12 @@ async function renderCompare() {
             <div><label>报告 B(对比)</label><select id="cmp-b">${options}</select></div>
           </div>
           <p style="display:flex;gap:10px;margin:16px 0 0">
-            <button class="btn" onclick="doCompare(this)">${icon("scale", 15)} 对比</button>
+            <button class="btn" id="cmp-go" onclick="doCompare(this)">${icon("scale", 15)} 对比</button>
             <button class="btn secondary" onclick="const a=$('#cmp-a'),b=$('#cmp-b');[a.value,b.value]=[b.value,a.value]">${icon("swap", 15)} 交换</button>
           </p>
           <div id="cmp-out"></div>`}
     </div>`;
+  await doCompareFromPreset();   // 快捷对比入口先把 preset 写入 sessionStorage,这里渲染完即消费(无竞态)
 }
 const DIFF_BADGE = { fixed: "修复", regressed: "回归", changed: "数值变化",
                      both_failed: "仍失败", added: "新增检查", removed: "移除检查" };
@@ -2736,6 +2994,8 @@ function setAiOpen(open) {
   panel.classList.toggle("open", willOpen);
   $("#ai-rail").classList.toggle("on", willOpen);
   $("#app").classList.toggle("ai-open", willOpen);   // 控制 AI 拖拽柄显隐
+  const bt = $("#back-top");   // 面板展开时主区让位,浮动钮会压在面板上:一并隐藏
+  if (bt) bt.style.display = willOpen ? "none" : "";
   const nav = $("#nav-assistant");
   if (nav) nav.classList.toggle("active", willOpen);
   try { localStorage.setItem("harness_ai_open", willOpen ? "1" : "0"); } catch {}
@@ -2897,7 +3157,7 @@ async function llmConfirmDraft(btn) {
   });
 }
 async function llmDiscardDraft(id) {
-  if (!confirm(`确认删除草稿 ${id}?`)) return;
+  if (!await askConfirm(`删除草稿 ${id}?`, "草稿删除后不可恢复;已确认入库的 case 不受影响。")) return;
   try { await api("/api/llm/drafts/" + encodeURIComponent(id), null, "DELETE"); }
   catch (e) { toast(e.message, true); return; }
   if (asstDraft && asstDraft.draft_id === id) { asstDraft = null; $("#asst-editor").innerHTML = ""; }
@@ -3028,7 +3288,25 @@ async function cmdkActions() {
     run: () => { if (views.app.classList.contains("hidden")) enterApp().then(() => setAiOpen(true)); else setAiOpen(true); } });
   const cmds = [
     { ico: "cycle", label: "运行完整自进化循环", cat: "命令",
-      run: () => { switchTab("dashboard"); setTimeout(() => { const b = $("#evolve-out") && [...document.querySelectorAll("button")].find(x => x.textContent.includes("运行完整自进化循环")); if (b) runEvolve(b); }, 300); } },
+      run: () => { switchTab("dashboard");
+        whenReady(() => [...$$("#tab-dashboard button")].find(x => x.textContent.includes("运行完整自进化循环")),
+          b => runEvolve(b)); } },
+    { ico: "play", label: "回放最近一次自进化", cat: "命令",
+      run: async () => {
+        if (views.app.classList.contains("hidden")) await enterApp();
+        const evos = await api("/api/evolutions").catch(() => []);
+        if (!evos.length) { toast("还没有进化记录 —— 先运行一次完整自进化", true); return; }
+        replayEvolution(evos[0].evolution_id);
+      } },
+    { ico: "database", label: "导出全部 case JSON", cat: "命令",
+      run: async () => {
+        const all = await api("/api/cases").catch(() => []);
+        if (!all.length) { toast("case 库为空,无可导出", true); return; }
+        downloadJson(`replaycases_${new Date().toISOString().slice(0, 10)}.json`, all);
+        toast(`已导出 ${all.length} 条 case`);
+      } },
+    { ico: "panelLeft", label: "展开 / 收起任务区", cat: "命令", run: () => setTaskCollapsed() },
+    { ico: "chevR", label: "展开 / 收起侧栏", cat: "命令", run: () => setSideCollapsed() },
     { ico: "sun", label: "切换明暗主题", cat: "命令",
       run: () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark") },
     { ico: "book", label: "打开文档中心", cat: "命令", run: () => window.open("/help", "_blank") },
@@ -3090,6 +3368,7 @@ $("#cmdk-input").addEventListener("keydown", e => {
 
 /* ============ 报告详情:看板工作区 / 抽屉共用渲染 ============ */
 function reportDetailHtml(rep) {
+  window.__lastReport = rep;   // 导出按钮取用(onclick 属性传不了对象)
   const labels = Object.entries(rep.label_stats).map(([label, st]) => `
     <tr><td>${esc(label)}</td><td class="num">${st.passed}/${st.total}</td><td class="num">${pct(st.passed / st.total)}</td></tr>`).join("");
   const perCase = rep.results.map(r => `
@@ -3112,7 +3391,15 @@ function reportDetailHtml(rep) {
     <div class="table-wrap"><table>
       <thead><tr><th>Case</th><th>标签</th><th>结果</th><th class="num">得分</th></tr></thead>
       <tbody>${perCase}</tbody></table></div>
-    <p style="margin:14px 0 0"><button class="btn sm secondary" onclick="quickCompare('${esc(rep.report_id)}')">${icon("scale", 13)} 与最新版本对比</button></p>`;
+    <p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn sm secondary" onclick="quickCompare('${esc(rep.report_id)}')">${icon("scale", 13)} 与最新版本对比</button>
+      <button class="btn sm secondary" onclick="exportReportJson()">${icon("filetext", 13)} 导出 JSON</button></p>`;
+}
+function exportReportJson() {
+  const rep = window.__lastReport;
+  if (!rep) return;
+  downloadJson(`${rep.report_id}.json`, rep);
+  toast(`已导出 ${rep.report_id}.json`);
 }
 async function showReport(reportId) {
   // 看板页:直接进工作区详情(不打断三栏布局);其他页面沿用抽屉
@@ -3147,8 +3434,7 @@ async function quickCompare(reportId) {
   closeDrawer();
   if (!latest || latest.report_id === reportId) { toast("没有更新的同版本报告可对比(先重跑一次评测)"); return; }
   sessionStorage.setItem("harness_cmp", JSON.stringify({ a: latest.report_id, b: reportId }));
-  switchTab("compare");
-  setTimeout(doCompareFromPreset, 500);
+  switchTab("compare");   // renderCompare 渲染完成后自会消费 preset,无需定时器猜时机
 }
 async function quickCompareVersion(version) {
   const reports = cmdkReports.length ? cmdkReports : await api("/api/reports").catch(() => []);
@@ -3161,17 +3447,16 @@ async function quickCompareVersion(version) {
   if (!prev) { toast(`没有 ${prevV || "上一版本"} 的报告可对比`, true); return; }
   sessionStorage.setItem("harness_cmp", JSON.stringify({ a: prev.report_id, b: cur.report_id }));
   switchTab("compare");
-  setTimeout(doCompareFromPreset, 500);
 }
 async function doCompareFromPreset() {
   const preset = sessionStorage.getItem("harness_cmp");
   if (!preset) return;
   sessionStorage.removeItem("harness_cmp");
   const { a, b } = JSON.parse(preset);
-  const sa = $("#cmp-a"), sb = $("#cmp-b");
-  if (!sa || !sb) return;
+  const sa = $("#cmp-a"), sb = $("#cmp-b"), go = $("#cmp-go");
+  if (!sa || !sb || !go) return;
   sa.value = a; sb.value = b;
-  await doCompare($$("#tab-compare .btn")[0]);
+  await doCompare(go);
 }
 
 /* ============ 全局快捷键 ============ */
@@ -3183,6 +3468,7 @@ document.addEventListener("keydown", e => {
     if (!$("#cmdk-mask").classList.contains("hidden")) closeCmdk();
     if (!$("#sheet-mask").classList.contains("hidden")) closeSheet();
     if (!$("#drawer").classList.contains("hidden")) closeDrawer();
+    if (!$("#replay-mask").classList.contains("hidden")) closeReplay();
   }
 });
 
@@ -3286,11 +3572,12 @@ $("#view-login").addEventListener("keydown", e => {
     const btn = $("#view-login .btn"); if (btn && !btn.disabled) doLogin(btn);
   }
 });
-// 长页面回到顶部
+// 长页面回到顶部;顶栏离开顶部后落影,增强滚动层次
 const scrollArea = $("#scroll-area");
 $("#back-top").addEventListener("click", () => scrollArea.scrollTo({ top: 0, behavior: "smooth" }));
 scrollArea.addEventListener("scroll", () => {
   $("#back-top").classList.toggle("show", scrollArea.scrollTop > 420);
+  $(".topbar").classList.toggle("scrolled", scrollArea.scrollTop > 8);
 }, { passive: true });
 /* 控制台小彩蛋:给看控制台的工程师一句话 */
 try { console.log(
