@@ -26,6 +26,7 @@ catch (e) { document.documentElement.dataset.theme = "light"; }
   --shadow-sm: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.04);
   --topbar-bg: rgba(255,255,255,.85); --thead-bg: #f8f9fd; --row-line: #edf0f8;
   --chip-bg: #eff1f9; --surface-2: #f4f6fb; --row-hover: #f4f7fd;
+  --ease-out: cubic-bezier(.23, 1, .32, 1);
 }
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -206,6 +207,52 @@ td code, th code { font-size: 12px; }
             background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-sm); cursor: pointer;
             color: var(--t3); font-size: 16px; display: flex; align-items: center; justify-content: center; }
 .back-top:hover { color: var(--primary); }
+
+/* ===== 质感与动效(与看板同一套语言) ===== */
+/* 按钮:顶部内高光 + 按压下沉,键帽式物理反馈 */
+.btn-top { transition: background .15s, transform .12s var(--ease-out), box-shadow .18s var(--ease-out);
+           box-shadow: inset 0 1px 0 rgba(255,255,255,.5), var(--shadow-xs); }
+.btn-top:hover { transform: translateY(-1px); }
+.btn-top:active { transform: translateY(0) scale(.97);
+  box-shadow: inset 0 2px 4px rgba(16,24,40,.12); }
+.btn-top.primary { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 4px 14px -4px rgba(79,70,229,.5); }
+.btn-top.primary:active { box-shadow: inset 0 2px 5px rgba(0,0,0,.28); }
+html[data-theme="dark"] .btn-top { box-shadow: inset 0 1px 0 rgba(255,255,255,.07), var(--shadow-xs); }
+html[data-theme="dark"] .btn-top.primary {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 14px -4px rgba(99,102,241,.5); }
+/* 卡片族悬停:边框加深 + 阴影浮起;展开中的接口条目描边带主色 */
+.ep, .card-block, .faq-item, .concept { transition: border-color .15s, box-shadow .18s var(--ease-out); }
+.ep:hover, .card-block:hover, .faq-item:hover { border-color: var(--line-2); box-shadow: var(--shadow-sm); }
+.ep.open { border-color: color-mix(in srgb, var(--primary) 32%, var(--line)); }
+.concept { transition: border-color .15s, transform .18s var(--ease-out), box-shadow .18s var(--ease-out); }
+.concept:hover { transform: translateY(-2px); border-color: var(--line-2); box-shadow: var(--shadow-sm); }
+.copy-btn { transition: background .15s, transform .1s; }
+.copy-btn:active { transform: scale(.94); }
+/* 暗色卡片顶部倒角:1px 亮 hairline,与看板一致 */
+html[data-theme="dark"] :is(.card-block, .ep, .concept, .faq-item, .code-block) {
+  border-top-color: rgba(255,255,255,.08); }
+/* 接口条目展开体:缓出曲线与看板统一 */
+.ep.open .ep-body { animation: epIn .2s var(--ease-out) both; }
+/* 主题切换过渡:切换瞬间全要素颜色过渡(JS 挂 html.theme-anim,340ms 后摘除) */
+html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+  transition: background-color .3s ease, border-color .3s ease, color .3s ease,
+              fill .3s ease, box-shadow .3s ease !important; }
+/* 回到顶部:离顶 480px 才浮现(与看板一致) */
+.back-top { opacity: 0; pointer-events: none; transform: translateY(10px);
+            transition: opacity .25s var(--ease-out), transform .25s var(--ease-out), color .15s; }
+.back-top.show { opacity: 1; pointer-events: auto; transform: none; }
+/* 顶栏离开顶部后落影 */
+.doc-top.scrolled { box-shadow: 0 8px 18px -14px rgba(16,24,40,.4); }
+html[data-theme="dark"] .doc-top.scrolled { box-shadow: 0 8px 18px -12px rgba(0,0,0,.55); }
+/* 章节滚动浮现:JS 标 body.doc-anim 才生效(无 JS 不藏内容);章节进入视口时挂 doc-r,
+   子元素级差上浮 */
+@media (prefers-reduced-motion: no-preference) {
+  body.doc-anim .doc-sec.doc-r > * { animation: docRise .45s var(--ease-out) both; }
+  body.doc-anim .doc-sec.doc-r > :nth-child(2) { animation-delay: 55ms; }
+  body.doc-anim .doc-sec.doc-r > :nth-child(3) { animation-delay: 110ms; }
+  body.doc-anim .doc-sec.doc-r > :nth-child(n+4) { animation-delay: 165ms; }
+}
+@keyframes docRise { from { opacity: 0; transform: translateY(10px); } }
 
 @media (max-width: 900px) {
   .doc-toc { display: none; }
@@ -920,16 +967,43 @@ const spy = () => {
 document.addEventListener("scroll", spy, { passive: true });
 spy();
 
-// 主题切换(与工作台共享偏好)
+// 主题切换(与工作台共享偏好;切换瞬间挂 theme-anim 做全要素颜色过渡)
 const themeBtn = document.getElementById("theme-toggle");
 const syncThemeBtn = () => { themeBtn.textContent = document.documentElement.dataset.theme === "dark" ? "☀" : "☾"; };
 themeBtn.addEventListener("click", () => {
   const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
+  document.documentElement.classList.add("theme-anim");
+  clearTimeout(themeBtn._t);
+  themeBtn._t = setTimeout(() => document.documentElement.classList.remove("theme-anim"), 340);
   try { localStorage.setItem("harness_theme", next); } catch {}
   syncThemeBtn();
 });
 syncThemeBtn();
+
+// 回到顶部:离顶 480px 浮现;顶栏离顶落影
+const backTop = document.querySelector(".back-top");
+const docTop = document.querySelector(".doc-top");
+const onScroll = () => {
+  backTop.classList.toggle("show", window.scrollY > 480);
+  docTop.classList.toggle("scrolled", window.scrollY > 8);
+};
+document.addEventListener("scroll", onScroll, { passive: true });
+onScroll();
+
+// 章节滚动浮现:无 JS / 减弱动态时不生效,内容永不隐藏
+const reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (!reduced && "IntersectionObserver" in window) {
+  document.body.classList.add("doc-anim");
+  const io = new IntersectionObserver(entries => {
+    for (const en of entries) {
+      if (!en.isIntersecting) continue;
+      en.target.classList.add("doc-r");
+      io.unobserve(en.target);
+    }
+  }, { threshold: 0.05, rootMargin: "0px 0px -4% 0px" });
+  document.querySelectorAll(".doc-sec").forEach(sec => io.observe(sec));
+}
 if ("serviceWorker" in navigator && window.isSecureContext) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {});

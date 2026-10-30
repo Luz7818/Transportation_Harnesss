@@ -1179,6 +1179,14 @@ input.invalid, select.invalid, textarea.invalid { border-color: var(--bad); box-
 @keyframes shakeX { 20% { transform: translateX(-4px); } 45% { transform: translateX(4px); }
                     70% { transform: translateX(-2px); } 90% { transform: translateX(2px); } }
 
+/* ================= 数值内联微条(分析结果饱和度等 0~1+ 指标) ================= */
+.mini-bar { display: inline-block; vertical-align: middle; width: 52px; height: 5px;
+            border-radius: 999px; background: var(--track); margin-left: 8px; overflow: hidden; }
+.mini-bar > i { display: block; height: 100%; border-radius: 999px; background: var(--primary);
+                transition: width .5s var(--ease-out); }
+.mini-bar.hot > i { background: var(--bad); }
+.mini-bar.warm > i { background: #f79009; }
+
 
 /* ================= 响应式 ================= */
 /* 三栏外壳下顶栏偏窄:搜索按钮只留图标 + 快捷键徽章 */
@@ -1708,7 +1716,7 @@ function runCountUps(scope = document) {
    令 .bar > div 上的宽度过渡真正播放(尊重减弱动态:该偏好下全局禁用过渡,直接赋值即可) */
 function animateBars(scope = document) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    scope.querySelectorAll(".bar > div[data-w]").forEach(el => { el.style.width = el.dataset.w + "%"; });
+    scope.querySelectorAll(".bar > div[data-w], .mini-bar > i[data-w]").forEach(el => { el.style.width = el.dataset.w + "%"; });
   }));
 }
 
@@ -2751,6 +2759,13 @@ function onAnalyzeDatasetChange() {
   $("#an-scenario").innerHTML = ds && ds.scenario
     ? `<div class="hint">${icon("bulb", 15)}<span><b>${esc(ds.scenario.tag)}</b> — ${esc(ds.scenario.insight)}</span></div>` : "";
 }
+/* 饱和度内联微条:>0.8 拥堵区红、>0.6 缓行区橙,一眼读出拥挤程度 */
+const satBar = s => {
+  if (s === null || s === undefined) return "";
+  const v = Math.min(Number(s), 1.2) / 1.2 * 100;
+  const tone = s >= 0.8 ? "hot" : s >= 0.6 ? "warm" : "";
+  return `<span class="mini-bar ${tone}"><i style="width:0%" data-w="${v.toFixed(1)}"></i></span>`;
+};
 async function doAnalyze(btn) {
   await withBusy(btn, async () => {
     const out = await api("/api/analyze", {
@@ -2759,7 +2774,8 @@ async function doAnalyze(btn) {
     const rows = out.segments.map(s => `<tr>
       <td class="num">${esc(s.segment_id)}</td><td>${esc(s.name)}</td>
       <td>${lvPill(s.classification)}</td>
-      <td class="num">${s.saturation ?? "—"}</td><td class="num">${s.delay_index ?? "—"}</td>
+      <td class="num" style="white-space:nowrap">${s.saturation ?? "—"}${satBar(s.saturation)}</td>
+      <td class="num">${s.delay_index ?? "—"}</td>
       <td class="num">${s.speed_ratio ?? "—"}</td><td>${esc(s.status)}</td></tr>`).join("");
     const recs = (out.recommendations || []).map(r =>
       `<li style="display:flex;gap:8px;margin-bottom:6px"><span style="color:var(--warn);margin-top:2px">${icon("tool", 14)}</span><span>${esc(r.text)}</span></li>`).join("");
@@ -2770,6 +2786,7 @@ async function doAnalyze(btn) {
         <tbody>${rows}</tbody></table></div>`
         : emptyBox("inbox", "该数据集没有路段", "优雅降级为空结果,管线不崩溃")}
       ${recs ? `<p style="margin:14px 0 6px;font-weight:700;font-size:13px">处置建议</p><ul style="margin:0;padding-left:4px;list-style:none;font-size:13px">${recs}</ul>` : ""}`;
+    animateBars($("#an-out"));   // 饱和度微条从 0 滑向目标值
   });
 }
 
