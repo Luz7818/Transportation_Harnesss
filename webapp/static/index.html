@@ -1498,6 +1498,7 @@ html[data-theme="dark"] .btn:hover:not(:disabled) { box-shadow: 0 6px 16px -6px 
     <div class="rp-chips" id="rp-chips"></div>
     <div class="rp-step" id="rp-step"></div>
     <div class="rp-actions">
+      <button class="btn sm secondary" id="rp-pause" onclick="replayTogglePause()">⏸ 暂停</button>
       <button class="btn sm secondary" onclick="replayStart(true)">↺ 重新播放</button>
       <button class="btn sm" onclick="closeReplay()">关闭</button>
     </div>
@@ -1535,6 +1536,7 @@ const ICONS = {
   rocket: '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/><circle cx="14.5" cy="9.5" r="1.4"/>',
   filetext: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
   play: '<polygon points="6 3 20 12 6 21 6 3"/>',
+  pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
   cycle: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/>',
   plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
   trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
@@ -2713,6 +2715,7 @@ async function doCompare(btn) {
     }).join("");
     const nFixed = out.rows.reduce((s, r) => s + (r.check_diffs || []).filter(d => d.status === "fixed").length, 0);
     const nReg = out.rows.reduce((s, r) => s + (r.check_diffs || []).filter(d => d.status === "regressed").length, 0);
+    const nDiffRows = out.rows.filter(r => r.check_diffs && r.check_diffs.length).length;
     $("#cmp-out").innerHTML = `
       <div class="chips">
         <span class="chip2 plain">A:${esc(out.a.version)} ${pct(out.a.accuracy)}</span>
@@ -2721,11 +2724,20 @@ async function doCompare(btn) {
         <span class="chip2 ${out.regressed.length ? "warn" : "good"}">回归 ${out.regressed.length} 条</span>
         ${nFixed ? `<span class="chip2 good">判分修复 ${nFixed} 项</span>` : ""}
         ${nReg ? `<span class="chip2 warn">判分回归 ${nReg} 项</span>` : ""}
+        ${nDiffRows ? `<button class="btn sm secondary" style="margin-left:auto" id="cmp-expand" onclick="toggleAllDiffs(this)">${icon("activity", 13)} 展开全部 ${nDiffRows} 行差分</button>` : ""}
       </div>
       <div class="table-wrap scroll-tbl"><table>
         <thead><tr><th>Case</th><th>标签</th><th>标题</th><th>A</th><th>B</th><th class="num">得分变化</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
   });
+}
+/* 一键展开/收起全部差分行(逐行点太碎;按当前是否有展开行决定方向) */
+function toggleAllDiffs(btn) {
+  const rows = $$("#cmp-out tr.diff-row");
+  if (!rows.length) return;
+  const anyOpen = rows.some(r => r.classList.contains("open"));
+  rows.forEach(r => r.classList.toggle("open", !anyOpen));
+  btn.innerHTML = `${icon("activity", 13)} ${anyOpen ? "展开" : "收起"}全部 ${rows.length} 行差分`;
 }
 function toggleDiffRow(caseId) {
   const row = document.querySelector(`tr.diff-row[data-for="${CSS.escape(caseId)}"]`);
@@ -3202,7 +3214,7 @@ async function llmDiagnose(btn) {
 }
 
 /* ============ 进化回放动画 ============ */
-let replayTimers = [], replaySteps = [], replayIdx = 0, replayEvo = null;
+let replayTimers = [], replaySteps = [], replayIdx = 0, replayEvo = null, replayPaused = false;
 const REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 async function replayEvolution(evoId) {
@@ -3224,25 +3236,53 @@ async function replayEvolution(evoId) {
   $("#replay-mask").classList.remove("hidden");
   replayStart();
 }
-function replayStart(replay = false) {
-  replayTimers.forEach(clearTimeout);
-  replayTimers = [];
-  replayIdx = 0;
-  $("#rp-chips").innerHTML = "";
-  $("#rp-step").innerHTML = "";
-  $("#rp-bar").style.width = "0%";
-  if (REDUCED) {  // 减弱动态:直接呈现最终状态
-    for (let i = 0; i < replaySteps.length; i++) replayShowStep(i, true);
-    return;
-  }
-  for (let i = 0; i < replaySteps.length; i++) {
-    replayTimers.push(setTimeout(() => replayShowStep(i), replay ? 500 : 600 + i * 1500));
+/* 从第 startIdx 步起排片:firstDelay 后播首步,此后每步隔 stepDelay;末尾补结束旁白 */
+function replayScheduleFrom(startIdx, firstDelay, stepDelay) {
+  for (let i = startIdx; i < replaySteps.length; i++) {
+    replayTimers.push(setTimeout(() => replayShowStep(i), firstDelay + (i - startIdx) * stepDelay));
   }
   replayTimers.push(setTimeout(() => {
     $("#rp-step").innerHTML = `<b>回放结束</b>最佳版本 ${esc(replayEvo.best.version)} ${pct(replayEvo.best.accuracy)}(总提升 ${pct(replayEvo.best.accuracy - replayEvo.baseline.accuracy)})`;
-  }, (replay ? 500 : 600 + replaySteps.length * 1500) + 300));
+  }, firstDelay + replaySteps.length * stepDelay + 300));
+}
+function replayStart(replay = false) {
+  replayTimers.forEach(clearTimeout);
+  replayTimers = [];
+  replayIdx = 0; replayPaused = false;
+  syncPauseBtn();
+  $("#rp-chips").innerHTML = "";
+  $("#rp-step").innerHTML = "";
+  $("#rp-bar").style.width = "0%";
+  if (REDUCED) {  // 减弱动态:直接呈现最终状态(暂停无意义,藏起按钮)
+    $("#rp-pause").style.display = "none";
+    for (let i = 0; i < replaySteps.length; i++) replayShowStep(i, true);
+    return;
+  }
+  $("#rp-pause").style.display = "";
+  replayScheduleFrom(0, replay ? 500 : 600, replay ? 500 : 1500);
+}
+function syncPauseBtn() {
+  const btn = $("#rp-pause");
+  if (btn) btn.innerHTML = replayPaused ? `${icon("play", 13)} 继续` : `${icon("pause", 13)} 暂停`;
+}
+/* 暂停:清掉未播的定时器;继续:从下一步起以更紧凑的节奏续播 */
+function replayTogglePause() {
+  if (!replaySteps.length || REDUCED) return;
+  if (!replayPaused) {
+    replayTimers.forEach(clearTimeout);
+    replayTimers = [];
+    replayPaused = true;
+    syncPauseBtn();
+    $("#rp-step").innerHTML = `<b>已暂停</b>点「继续」从下一步接着看,或「重新播放」从头来。`;
+    $("#rp-step").classList.remove("swap"); void $("#rp-step").offsetWidth; $("#rp-step").classList.add("swap");
+    return;
+  }
+  replayPaused = false;
+  syncPauseBtn();
+  replayScheduleFrom(replayIdx + 1, 150, 1100);
 }
 function replayShowStep(i, instant = false) {
+  replayIdx = i;   // 暂停/继续以此为进度游标
   const s = replaySteps[i];
   const prev = i === 0 ? 0 : replaySteps[i - 1].accuracy;
   // 芯片
@@ -3282,6 +3322,7 @@ function replayCountTo(target, instant) {
 function closeReplay() {
   replayTimers.forEach(clearTimeout);
   replayTimers = [];
+  replayPaused = false;
   $("#rp-score").dataset.v = "0";
   animateHide($("#replay-mask"));
 }
