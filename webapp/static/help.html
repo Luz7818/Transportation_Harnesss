@@ -913,6 +913,8 @@ curl -s <span class="s">"$BASE/api/compare?a=report_v1_20260915T021603&b=report_
   <h2>常见问题</h2>
   <div class="faq-item"><div class="q">LLM 用在哪里?没配 API Key 会怎样?</div>
     <div class="a">LLM 只做规则判不了的三件事:坏例沉淀助手(草稿需人工确认)、结论文本质量评分(LLM-as-Judge)、失败诊断(分析者+评审者双智能体)。未配置 <code class="inline">LLM_API_KEY</code> 时自动降级为离线确定性 Mock —— 全功能可演示、零成本、可复现。配置三个环境变量即可接入任意 OpenAI 兼容端点,详见 <code class="inline">docs/LLM.md</code> 与右侧常驻的「智能助手」面板。</div></div>
+  <div class="faq-item"><div class="q">看板有哪些效率功能?</div>
+    <div class="a"><code class="inline">Ctrl/⌘+K</code> 命令面板可直达页面、报告与命令(运行自进化、回放、导出、切换明暗);左栏任务区列表支持文本搜索(报告按 ID/版本,case 按 ID/标题/标签/数据集);报告详情可「导出 JSON」、case 详情可「复制 JSON」;进化回放支持暂停/继续;版本对比支持一键展开全部差分与 A/B 得分对比条;沉淀 case 时可一键「沿用 v2 参考判定」;删除类操作均为样式化确认弹窗,Esc 可取消。</div></div>
   <div class="faq-item"><div class="q">默认账号是什么?如何重置?</div>
     <div class="a">账号名固定 <b>admin</b>(可用 <code class="inline">ADMIN_USER</code> 改);口令在首次启动时确定:设了 <code class="inline">ADMIN_PASSWORD</code> 就用它,否则随机生成并<b>只在控制台打印一次</b>,仓库与文档里不存在任何默认口令。忘记口令:停止服务,删除 <code class="inline">webapp/auth.json</code> 后重启,按控制台提示的新口令登录。</div></div>
   <div class="faq-item"><div class="q">如何新增管线版本 v3?</div>

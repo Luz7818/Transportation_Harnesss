@@ -1187,6 +1187,16 @@ input.invalid, select.invalid, textarea.invalid { border-color: var(--bad); box-
 .mini-bar.hot > i { background: var(--bad); }
 .mini-bar.warm > i { background: #f79009; }
 
+/* ================= 对比页 A/B 得分对比条 ================= */
+.cmp-bars { display: flex; flex-direction: column; gap: 7px; margin: 2px 0 12px; }
+.cmp-bar-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.cmp-bar-row .cb-tag { flex: none; min-width: 0; width: 108px; color: var(--t3); font-weight: 600;
+                       overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-bar-row .cb-track { flex: 1; height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.cmp-bar-row .cb-track > i { display: block; height: 100%; border-radius: 999px; width: 0;
+                             transition: width .7s var(--ease-out); }
+.cmp-bar-row .cb-val { flex: none; width: 54px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+
 
 /* ================= 响应式 ================= */
 /* 三栏外壳下顶栏偏窄:搜索按钮只留图标 + 快捷键徽章 */
@@ -1699,10 +1709,13 @@ function whenReady(get, cb, timeout = 6000) {
     setTimeout(tick, 70);
   })();
 }
-/* KPI 数字滚动(尊重系统减弱动态偏好) */
+/* KPI 数字滚动(尊重系统减弱动态;后台页签 rAF 暂停,直接落终值,不允许停在 0) */
 function runCountUps(scope = document) {
-  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  scope.querySelectorAll("[data-countup]").forEach(el => {
+  const els = [...scope.querySelectorAll("[data-countup]")];
+  const finish = () => els.forEach(el => { el.textContent = Math.round(parseFloat(el.dataset.countup) || 0); });
+  const reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced || document.hidden) { finish(); return; }
+  els.forEach(el => {
     const target = parseFloat(el.dataset.countup);
     if (isNaN(target)) return;
     const t0 = performance.now(), dur = 650;
@@ -1715,11 +1728,12 @@ function runCountUps(scope = document) {
   });
 }
 /* 进度条从 0 滑向目标值:渲染时先置 0 宽 + data-w,双 rAF 确保初始态提交后再赋终值,
-   令 .bar > div 上的宽度过渡真正播放(尊重减弱动态:该偏好下全局禁用过渡,直接赋值即可) */
+   令宽度过渡真正播放;后台页签 rAF 不走针 → 立即落地,另挂兜底定时(幂等)防渲染帧被抑制 */
 function animateBars(scope = document) {
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    scope.querySelectorAll(".bar > div[data-w], .mini-bar > i[data-w]").forEach(el => { el.style.width = el.dataset.w + "%"; });
-  }));
+  const apply = () => scope.querySelectorAll("[data-w]").forEach(el => { el.style.width = el.dataset.w + "%"; });
+  if (document.hidden) { apply(); return; }
+  requestAnimationFrame(() => requestAnimationFrame(apply));
+  setTimeout(apply, 450);
 }
 
 const TASK_RENDERERS = { dashboard: renderDashboard, cases: renderCases };  // 需要「任务区(左) + 工作区(中)」协作的页面
@@ -2621,8 +2635,20 @@ async function onFormSegmentChange() {
     if (!row) { $("#c-ref").innerHTML = ""; return; }
     const sat = row.saturation === null || row.saturation === undefined ? "—" : row.saturation;
     $("#c-ref").innerHTML = `<div class="hint">${icon("bulb", 15)}<span>参考:当前 v2 对 ${esc(seg)} 的判定为 ${lvPill(row.classification)}
-      ,饱和度 <b class="num">${sat}</b>(期望值可直接沿用该判定,也可按人工结论修改)</span></div>`;
+      ,饱和度 <b class="num">${sat}</b>
+      <button class="btn sm secondary" style="height:24px;padding:0 10px;font-size:11.5px" onclick="adoptRef('${esc(row.classification)}', ${row.saturation ?? "null"})">沿用该判定</button>
+      (也可按人工结论修改)</span></div>`;
   } catch { $("#c-ref").innerHTML = ""; }
+}
+/* 一键把参考判定填进期望等级/期望饱和度,减少重复键入 */
+function adoptRef(level, sat) {
+  const lv = $("#c-level");
+  if (lv && [...lv.options].some(o => o.value === level)) lv.value = level;
+  if (sat !== null && sat !== undefined) {
+    const satEl = $("#c-sat");
+    if (satEl) satEl.value = sat;
+  }
+  toast(`已沿用参考判定:${level}${sat !== null && sat !== undefined ? ` · 饱和度 ${sat}` : ""}`);
 }
 /* 校验失败标记:边框标红 + 摇晃;任意输入即摘除标记 */
 function flagInvalid(el) {
@@ -2716,7 +2742,12 @@ async function doCompare(btn) {
     const nFixed = out.rows.reduce((s, r) => s + (r.check_diffs || []).filter(d => d.status === "fixed").length, 0);
     const nReg = out.rows.reduce((s, r) => s + (r.check_diffs || []).filter(d => d.status === "regressed").length, 0);
     const nDiffRows = out.rows.filter(r => r.check_diffs && r.check_diffs.length).length;
+    const barRow = (tag, rep) => `<div class="cmp-bar-row">
+      <span class="cb-tag" title="${esc(rep.report_id)}">${tag} · ${esc(rep.version)}</span>
+      <span class="cb-track"><i style="background:${VER_COLOR[rep.version] || "var(--primary)"}" data-w="${(rep.accuracy * 100).toFixed(1)}"></i></span>
+      <span class="cb-val">${pct(rep.accuracy)}</span></div>`;
     $("#cmp-out").innerHTML = `
+      <div class="cmp-bars">${barRow("A 基线", out.a)}${barRow("B 对比", out.b)}</div>
       <div class="chips">
         <span class="chip2 plain">A:${esc(out.a.version)} ${pct(out.a.accuracy)}</span>
         <span class="chip2 plain">B:${esc(out.b.version)} ${pct(out.b.accuracy)}</span>
@@ -2729,6 +2760,7 @@ async function doCompare(btn) {
       <div class="table-wrap scroll-tbl"><table>
         <thead><tr><th>Case</th><th>标签</th><th>标题</th><th>A</th><th>B</th><th class="num">得分变化</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`;
+    animateBars($("#cmp-out"));   // A/B 得分条从 0 滑向目标值
   });
 }
 /* 一键展开/收起全部差分行(逐行点太碎;按当前是否有展开行决定方向) */
