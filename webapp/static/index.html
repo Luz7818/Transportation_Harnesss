@@ -384,7 +384,10 @@ details.changes li { margin-bottom: 3px; }
 .kpi .k-value { font-size: 27px; font-weight: 800; margin-top: 8px; font-variant-numeric: tabular-nums;
                 letter-spacing: -.5px; }
 .kpi .k-value small { font-size: 13px; color: var(--t3); font-weight: 600; margin-left: 7px; }
-.kpi .k-value.grad { color: var(--primary); }
+.kpi .k-value.grad {
+  /* 主数字单色系渐变(indigo→同族浅紫):品牌英雄数字的一点仪式感,不跨色相 */
+  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 52%, #a855f7));
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
 .kpi .k-foot { color: var(--t3); font-size: 11.5px; margin-top: 3px; }
 /* 窄工作区(AI 面板展开等):KPI 收起图标,标签保持单行。置于组件规则之后以正确覆盖 */
 @container (max-width: 640px) {
@@ -569,7 +572,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
             background-size: 240% 100%; animation: shimmer 1.2s infinite linear; margin-bottom: 16px; }
 @keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 .empty { text-align: center; padding: 42px 12px; color: var(--t3); }
-.empty .e-ico { width: 58px; height: 58px; margin: 0 auto 12px; border-radius: 50%; background: var(--chip-bg);
+.empty .e-ico { width: 58px; height: 58px; margin: 0 auto 12px; border-radius: 50%;
+                background: linear-gradient(180deg, var(--chip-bg), var(--surface));
+                box-shadow: inset 0 1px 0 rgba(255,255,255,.55), var(--shadow-xs);
                 display: flex; align-items: center; justify-content: center; color: var(--t4); }
 .empty .e-t { font-weight: 700; color: var(--t2); font-size: 13.5px; }
 .empty .e-s { font-size: 12.5px; margin-top: 3px; }
@@ -1297,6 +1302,10 @@ details.changes[open] summary:hover::before { transform: rotate(90deg) translate
 /* 轨迹芯片 hover:仅边框加深一档(高频面,近不可察级) */
 .traj-chip { transition: border-color .15s, background .15s; }
 .traj-chip:hover { border-color: var(--line-2); }
+
+/* 亮色弹层受光面:与卡片同一套顶光语言 */
+html[data-theme="light"] :is(.modal, .cmdk, .sheet, .replay, .drawer) {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85), var(--shadow-md); }
 
 /* 小圆钮按压反馈(theme-btn 侧栏/面板各处复用) */
 .theme-btn, .side-toggle, .topbar-panetoggle { transition: background .15s, color .15s, transform .1s var(--ease-out); }

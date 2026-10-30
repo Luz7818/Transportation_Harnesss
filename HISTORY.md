@@ -322,3 +322,8 @@
 - 滚动条 hover 染品牌色
 - 校验:CSS 配平 + node --check 通过;亮/暗双主题浏览器实测(工作台 KPI 浮条/侧栏辉光/
   欢迎页极光玻璃)正常;ruff/pytest/verify/check_release 全过
+
+## 2026-10-31 · v2.2.0 补充:主数字渐变与弹层受光面(同版本追加)
+
+- KPI 英雄数字(当前最佳版本)单色系渐变文字(indigo→同族浅紫,background-clip,不跨色相)
+- 空态图标渐变底 + 内高光;亮色弹层(modal/cmdk/sheet/replay/drawer)统一顶部受光 hairline
