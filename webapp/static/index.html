@@ -1198,6 +1198,75 @@ input.invalid, select.invalid, textarea.invalid { border-color: var(--bad); box-
 .cmp-bar-row .cb-val { flex: none; width: 54px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
 
 
+/* ================= 环境光与细节微交互(设计二轮:底图纵深 + 首访 delight) ================= */
+/* 工作台环境光:顶部一抹品牌色晕染 + 底部冷灰收边,给平面底图纵深。
+   纯静态、零动效(恒常可见的背景不做动画);负 z 挂在 body 上,位于纹理之上、内容之下 */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(1200px 520px at 16% -8%, rgba(79,70,229,.055), transparent 62%),
+    radial-gradient(900px 420px at 86% -10%, rgba(23,92,211,.04), transparent 58%),
+    radial-gradient(1400px 620px at 50% 118%, rgba(2,6,23,.04), transparent 62%); }
+html[data-theme="dark"] body::before {
+  background:
+    radial-gradient(1200px 520px at 16% -8%, rgba(99,102,241,.085), transparent 62%),
+    radial-gradient(900px 420px at 86% -10%, rgba(56,130,246,.05), transparent 58%),
+    radial-gradient(1400px 620px at 50% 118%, rgba(0,0,0,.42), transparent 66%); }
+
+/* 欢迎页/登录页极光:两团品牌色光斑缓慢漂移(首访页的 delight 预算;
+   只动 transform;径向渐变边缘天然柔和,不过滤镜 blur —— 大面积 blur 的合成代价会拖垮光栅);
+   减弱动态下由全局 reduce 规则停用;hero-light 减淡 */
+.hero, .login-wrap { position: relative; overflow: hidden; }
+.hero::before, .login-wrap::before,
+.hero::after, .login-wrap::after { content: ""; position: absolute; pointer-events: none; z-index: 0;
+  border-radius: 50%; }
+.hero::before, .login-wrap::before { inset: -12% -6% auto; height: 72%;
+  background:
+    radial-gradient(46% 52% at 32% 40%, rgba(99,102,241,.26), transparent 68%),
+    radial-gradient(40% 46% at 68% 62%, rgba(56,189,248,.11), transparent 68%);
+  animation: auroraDrift 26s var(--ease-out) infinite alternate; }
+.hero::after, .login-wrap::after { inset: auto -8% -18%; height: 64%;
+  background: radial-gradient(44% 56% at 60% 46%, rgba(129,140,248,.17), transparent 70%);
+  animation: auroraDrift 34s var(--ease-out) infinite alternate-reverse; }
+#view-welcome.hero-light .hero::before, #view-login.hero-light .login-wrap::before {
+  background:
+    radial-gradient(46% 52% at 32% 40%, rgba(79,70,229,.12), transparent 68%),
+    radial-gradient(40% 46% at 68% 62%, rgba(23,92,211,.07), transparent 68%); }
+#view-welcome.hero-light .hero::after, #view-login.hero-light .login-wrap::after {
+  background: radial-gradient(44% 56% at 60% 46%, rgba(129,140,248,.10), transparent 70%); }
+@keyframes auroraDrift { to { transform: translate3d(3.5%, -3%, 0) scale(1.09); } }
+.hero .hero-inner, .login-wrap .login-card { position: relative; z-index: 1; }
+
+/* hero 主按钮高光扫过(营销面 hover 允许;触屏设备不播) */
+.btn-hero.primary { position: relative; overflow: hidden; }
+.btn-hero.primary::after { content: ""; position: absolute; top: 0; bottom: 0; left: -70%; width: 44%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,.32), transparent);
+  transform: skewX(-18deg); transition: transform .65s var(--ease-out); pointer-events: none; }
+@media (hover: hover) and (pointer: fine) {
+  .btn-hero.primary:hover::after { transform: skewX(-18deg) translateX(430%); }
+  .feat .f-ico { transition: transform .2s var(--ease-out); }
+  .feat:hover .f-ico { transform: translateY(-2px); }
+}
+
+/* 折叠摘要 hover:染色 + 箭头微移(开/闭两态各自衔接,不打破 rotate(90deg)) */
+details.changes summary { transition: color .15s; }
+details.changes summary:hover { color: var(--primary-h); }
+details.changes:not([open]) summary:hover::before { transform: translateX(2px); }
+details.changes[open] summary:hover::before { transform: rotate(90deg) translateX(1px); }
+
+/* 空态图标轻浮(罕见视图的 delight;幅度 3px) */
+@media (prefers-reduced-motion: no-preference) {
+  .empty .e-ico { animation: eFloat 4.2s ease-in-out infinite; }
+}
+@keyframes eFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* 轨迹芯片 hover:仅边框加深一档(高频面,近不可察级) */
+.traj-chip { transition: border-color .15s, background .15s; }
+.traj-chip:hover { border-color: var(--line-2); }
+
+/* 小圆钮按压反馈(theme-btn 侧栏/面板各处复用) */
+.theme-btn, .side-toggle, .topbar-panetoggle { transition: background .15s, color .15s, transform .1s var(--ease-out); }
+.theme-btn:active, .side-toggle:active, .topbar-panetoggle:active { transform: scale(.9); }
+
 /* ================= 响应式 ================= */
 /* 三栏外壳下顶栏偏窄:搜索按钮只留图标 + 快捷键徽章 */
 @media (max-width: 1680px) {
