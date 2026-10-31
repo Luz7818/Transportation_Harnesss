@@ -1307,19 +1307,27 @@ details.changes[open] summary:hover::before { transform: rotate(90deg) translate
 html[data-theme="light"] :is(.modal, .cmdk, .sheet, .replay, .drawer) {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.85), var(--shadow-md); }
 
-/* ================= 点击空白涟漪(界面如水面,落点生涟) ================= */
-/* 只在空白处触发(交互件/数据表/图表全部排除);两层:内柔光扩散 + 外环扩散 */
-.click-ripple { position: fixed; z-index: 58; pointer-events: none; width: 16px; height: 16px;
-  margin: -8px 0 0 -8px; border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 20%, transparent), transparent 66%);
-  animation: rippleGlow .55s var(--ease-out) forwards; }
-.click-ripple::after { content: ""; position: absolute; inset: 0; border-radius: 50%;
-  border: 1.5px solid color-mix(in srgb, var(--primary) 42%, transparent);
-  animation: rippleRing .62s var(--ease-out) forwards; }
-@keyframes rippleGlow { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(5); } }
-@keyframes rippleRing { from { opacity: .75; transform: scale(1); } to { opacity: 0; transform: scale(4.4); } }
-html[data-theme="dark"] .click-ripple {
-  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 26%, transparent), transparent 66%); }
+/* ================= 点击空白:轨道环节点(呼应产品轨道母题,界面如路网,点击点亮节点) ================= */
+/* 中心品牌色节点弹现 + 两道椭圆轨道环(-16°/12° 倾角)错峰 70ms 扩散淡出;
+   只动 transform+opacity;`--rot` 变量让同一条 keyframes 驱动两个倾角 */
+.click-node { position: fixed; z-index: 58; pointer-events: none; width: 0; height: 0; }
+.click-node .cn-dot { position: absolute; left: -3.5px; top: -3.5px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--primary);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 60%, transparent);
+  animation: cnDot .5s var(--ease-out) forwards; }
+.click-node .cn-ring { --rot: -16deg; position: absolute; left: -34px; top: -13px;
+  width: 68px; height: 26px; border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--primary) 52%, transparent);
+  transform: rotate(var(--rot)) scale(.3); opacity: 0;
+  animation: cnRing .65s var(--ease-out) forwards; }
+.click-node .cn-ring.r2 { --rot: 12deg; animation-delay: .07s; }
+html[data-theme="dark"] .click-node .cn-ring {
+  border-color: color-mix(in srgb, var(--primary) 60%, transparent); }
+@keyframes cnDot { 0% { transform: scale(0); opacity: 0; } 32% { transform: scale(1); opacity: 1; }
+                   100% { transform: scale(1); opacity: 0; } }
+@keyframes cnRing { 0% { opacity: 0; transform: rotate(var(--rot)) scale(.35); }
+                    28% { opacity: .9; }
+                    100% { opacity: 0; transform: rotate(var(--rot)) scale(1.5); } }
 
 /* 小圆钮按压反馈(theme-btn 侧栏/面板各处复用) */
 .theme-btn, .side-toggle, .topbar-panetoggle { transition: background .15s, color .15s, transform .1s var(--ease-out); }
@@ -3693,29 +3701,30 @@ document.addEventListener("keydown", e => {
   }
 });
 
-/* ============ 点击空白涟漪 ============ */
-/* 空白处落点生涟:命中任何交互件、表格、图表、可选中文本时静默(那些区域有自己的
-   反馈或不该动);上限 6 个防连点刷屏;减弱动态不注入,动画结束即自毁 */
+/* ============ 点击空白:轨道环节点 ============ */
+/* 空白处点击点亮一颗「路网节点」:中心弹现 + 双椭圆轨道环错峰扩散。
+   排除边界/同屏上限/三重生命周期保障与涟漪版一致,仅换皮 */
 document.addEventListener("pointerdown", e => {
   if (REDUCED || e.button !== 0) return;
-  if (document.querySelectorAll(".click-ripple").length >= 6) return;
+  if (document.querySelectorAll(".click-node").length >= 6) return;
   const t = e.target;
   if (!(t instanceof Element)) return;
   if (t.closest("button, a, input, select, textarea, label, summary, [onclick], [role='button'],"
     + ".nav-item, .tp-item, .entry-card, .chip2, .step, .cmdk-item, .row-sel, .diff-toggle,"
     + "table, tr, .chart-wrap, .toast, .modal, .drawer, .sheet, .cmdk")) return;
   // 兜底清扫:后台页签定时器被节流时,animationend/超时都可能迟到 —— 新点击时按时间戳清扫残影
-  document.querySelectorAll(".click-ripple").forEach(el => {
-    if (performance.now() - (el._t0 || 0) > 700) el.remove();
+  document.querySelectorAll(".click-node").forEach(el => {
+    if (performance.now() - (el._t0 || 0) > 780) el.remove();
   });
   const r = document.createElement("span");
-  r.className = "click-ripple";
+  r.className = "click-node";
   r._t0 = performance.now();
   r.style.left = e.clientX + "px";
   r.style.top = e.clientY + "px";
+  r.innerHTML = '<span class="cn-dot"></span><span class="cn-ring"></span><span class="cn-ring r2"></span>';
   document.body.appendChild(r);
   r.addEventListener("animationend", () => r.remove(), { once: true });
-  setTimeout(() => r.remove(), 800);   // 兜底:动画被全局规则停用等极端情况下也不残留
+  setTimeout(() => r.remove(), 820);   // 兜底:动画被全局规则停用等极端情况下也不残留
 }, { passive: true });
 
 /* ============ 导航 ============ */
