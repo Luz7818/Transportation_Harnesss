@@ -43,3 +43,6 @@ miniprogram/project.private.config.json
 
 # setuptools 构建中间产物
 build/
+
+# 本机 AI 工作备忘(不入库)
+.workbuddy/
