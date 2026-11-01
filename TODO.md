@@ -5,15 +5,15 @@
 
 ## 当前进度
 
-- 正在做：无——「看板质感/动效/流程收口(v2.2.0,纯前端)」已完成（2026-10-31，见 HISTORY）
-- 下一个：GitHub Release 页创建 Release 并附 `sdk/dist/` wheel（任务 2 收尾，外向操作待确认）或任务 3
+- 正在做：无——「v2.2.0 Release 收尾（SDK wheel 重出 + GitHub Release 发布）」已完成（2026-11-01，见 HISTORY）
+- 下一个：任务 3（2.0 真实数据接入）或任务 4（建议文案可执行性）
 
 ## 任务计划
 
 | # | 任务 | 验收标准（可验证） | 状态 |
 |---|---|---|---|
 | 1 | **线上服务处置（P0，需人决策）**：线上 TCP 8765 自 10-02 起不可达（连败 5 天+）。二选一：① 主动停服——明确「下线」并在 README/Roadmap 注明，撤 `probe.yml` 免得 CI 天天红；② 修复重启——借机改口令并确认 2.0.0 已部署，探针转绿 | ① `probe.yml` 删除 + README 注明；或 ② 探针 workflow 连续 3 天绿 | **完成（走①）**：失联 6 天且无主机访问渠道，2026-10-06 执行下线——probe.yml 已撤、README/Roadmap/AGENTS/GIT/DEPLOY 已注明，复活路径见 HISTORY 当日条目 |
-| 2 | 发布：tag `v2.1.0` + GitHub Release 附 SDK wheel（Roadmap 项，版本一致性断言已进 CI） | `git tag` 出现 `v2.1.0`（已完成）；Release 页可见并附 `sdk/dist/` wheel | **待确认**：tag 已打、wheel 已构建入 `sdk/dist/`（2.1.0），Release 页上传是外向操作，待确认后执行 |
+| 2 | 发布：tag + GitHub Release 附 SDK wheel（Roadmap 项，版本一致性断言已进 CI） | `git tag` 出现对应版本 tag；Release 页可见并附 `sdk/dist/` wheel | **完成（2026-11-01）**：v2.2.0 tag + Release 页已发布，附 2.2.0 重出的 wheel/sdist 双附件（2.1.0 旧构建已替换入库）；发布经 GitHub API（本机 git 凭据）完成 |
 | 3 | 2.0 真实数据接入：换掉合成快照（公开轨迹集或外业采集），数据集记录 `source`/`captured_at` | 至少一个数据集来自真实源并标注，`verify.py` 全绿 | 待开始 |
 | 4 | 建议文案可执行性短板：rc-0015 真实模型判 0.70 恰在阈值（建议模板化、缺具体分流路径） | 改进建议模板后在真实 LLM judge 下 `conclusion_quality` > 0.70，对比记录进 `docs/LLM.md` | 待开始 |
 | 5 | 2.4 线上化：HTTPS + 备案域名，小程序正式发布（或明确定位为内网演示端） | 域名备案与 HTTPS 就绪，或 README/Roadmap 写明内网演示定位 | 待开始 |

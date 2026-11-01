@@ -350,3 +350,13 @@
 - 实现流程步骤说明已归档至用户桌面《点击效果实现流程.md》
 - 校验:node --check + CSS 配平 + ripple 残留清零断言;浏览器实测生命周期
   (created=1 → rings=2 → alive=0)与冻结抓拍形态正常;ruff/pytest/check_release 全过
+
+## 2026-11-01 · v2.2.0 Release 收尾:SDK wheel 重出 + GitHub Release 发布(任务 2 闭环)
+
+- **wheel 重出**:`sdk/dist/` 入库的产物还停在 2.1.0 构建(10-07),与 2.2.0 脱节——直接
+  附到 Release 会把旧产物挂在 2.2.0 上。`cd sdk && python -m build` 重出
+  `transportation_harness_sdk-2.2.0` wheel + sdist 并替换入库;
+  `scripts/check_release.py` PASS(版本四处一致 + OpenAPI 29 路径无漂移)
+- **GitHub Release 发布**:本机无 gh CLI,经 GitHub API(本机 git 凭据)打 tag `v2.2.0`
+  并创建 Release,上传 wheel/sdist 双附件;发布说明自 HISTORY v2.2.0 各条归纳
+- TODO 任务 2 关闭,下一个转任务 3/4;目录名三 s 笔误(TH-03)仍单独立项不改
