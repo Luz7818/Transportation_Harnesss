@@ -409,3 +409,16 @@
   等 12+ 处);本批补齐最后三处漏网:`.tl-head b`(进化时间线时间戳)、
   `.vcard .ver .vn span`(版本卡「13/15 条通过」)、`.kpi .k-foot`(KPI 脚注计数)
 - 校验:浏览器 getComputedStyle 三处断言均为 tabular-nums;ruff/pytest 全过
+
+## 2026-11-02 · v2.2.1 发布:看板韧性收口(版本同步)
+
+### Changed(变更)
+
+- 版本号 2.2.0 → 2.2.1(四处同步:根 pyproject / sdk pyproject / sdk `__init__` /
+  FastAPI version 参数),`docs/openapi.json` 重导(info.version 随动,29 路径无漂移),
+  test_sdk 版本钉子同步;SDK wheel/sdist 重出入库(`sdk/dist/`)
+- 本版本为**补丁级**(修缺陷,无新增能力、无契约变化),内容见当日三条前批条目:
+  auth 行为缺陷修复(周报 TH-05/TH-07)→ 三栏外壳挤压韧性(顶栏竖排折行/品牌截断/
+  AI 面板挤压)→ 数字区 tabular-nums 清尾(周报研究一点名项)
+- 体检卡遗留:TH-05(P2)/TH-07(P3)/TH-10(P3,build/dist 过期产物清理)随本版闭环;
+  TH-03(仓库改名)维持单独立项;TH-04(单文件拆分)登记为任务 3 前置(见 TODO)
