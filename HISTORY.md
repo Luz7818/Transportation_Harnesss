@@ -401,3 +401,11 @@
 - 校验:1440/1024 双视口 × 明暗主题 × AI 开关 × 任务区开合全组合浏览器实测
   (标题完整、胶囊双向恢复、抽屉覆盖化、品牌不截断、DOM 度量零截断);
   node --check / ruff / pytest(test_pwa+test_webapp)全过
+
+## 2026-11-02 · v2.3.0 前批:数字区 tabular-nums 清尾(周报研究一点名项收口)
+
+- 研究一指出的「数字区补 tabular-nums」经全量清查,主体已在既往批次落地(KPI 大数字、
+  表格数字列、报告列表分数/时间戳、轨迹芯片、差分值、对比条、欢迎页统计、AI 面板耗时
+  等 12+ 处);本批补齐最后三处漏网:`.tl-head b`(进化时间线时间戳)、
+  `.vcard .ver .vn span`(版本卡「13/15 条通过」)、`.kpi .k-foot`(KPI 脚注计数)
+- 校验:浏览器 getComputedStyle 三处断言均为 tabular-nums;ruff/pytest 全过

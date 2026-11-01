@@ -391,7 +391,7 @@ details.changes li { margin-bottom: 3px; }
   /* 主数字单色系渐变(indigo→同族浅紫):品牌英雄数字的一点仪式感,不跨色相 */
   background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 52%, #a855f7));
   -webkit-background-clip: text; background-clip: text; color: transparent; }
-.kpi .k-foot { color: var(--t3); font-size: 11.5px; margin-top: 3px; }
+.kpi .k-foot { color: var(--t3); font-size: 11.5px; margin-top: 3px; font-variant-numeric: tabular-nums; }
 /* 窄工作区(AI 面板展开等):KPI 收起图标,标签保持单行。置于组件规则之后以正确覆盖 */
 @container (max-width: 640px) {
   .kpi .k-ico { display: none; }
@@ -438,7 +438,7 @@ details.changes li { margin-bottom: 3px; }
                    border-radius: 50%; background: var(--surface); border: 3px solid var(--primary);
                    box-shadow: 0 0 0 3px var(--surface); }
 .tl-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.tl-head b { font-size: 13.5px; }
+.tl-head b { font-size: 13.5px; font-variant-numeric: tabular-nums; }
 .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 2.5px 10px;
        border-radius: 999px; font-weight: 600; background: var(--chip-bg); color: var(--t3); }
 .tag.ok { color: var(--ok); background: var(--ok-soft); }
@@ -469,7 +469,7 @@ details.changes li { margin-bottom: 3px; }
 .ver-badge.b3 { background: var(--warn-soft); color: var(--warn); }
 .vcard .ver .vn { flex: 1; min-width: 0; }
 .vcard .ver .vn b { font-size: 13.5px; display: block; line-height: 1.4; }
-.vcard .ver .vn span { font-size: 11.5px; color: var(--t3); }
+.vcard .ver .vn span { font-size: 11.5px; color: var(--t3); font-variant-numeric: tabular-nums; }
 .vcard .score { font-size: 23px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.4px; }
 .vcard .score.dim { color: var(--t4); font-size: 15px; align-self: center; }
 .bar { height: 7px; border-radius: 999px; background: var(--track); margin-top: 12px; overflow: hidden; }
