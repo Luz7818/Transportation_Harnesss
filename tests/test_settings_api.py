@@ -248,7 +248,7 @@ class TestValidation:
 
     def test_rejects_weak_token_and_short_password(self, settings_on, loopback_client, seeded_env):
         self._reject(loopback_client, {"AUTH_TOKEN": "short"}, "AUTH_TOKEN")
-        self._reject(loopback_client, {"ADMIN_PASSWORD": "123"}, "6~64")
+        self._reject(loopback_client, {"ADMIN_PASSWORD": "1234567"}, "8~64")
 
     def test_strips_surrounding_whitespace(self, settings_on, loopback_client, seeded_env):
         assert loopback_client.put("/api/settings",

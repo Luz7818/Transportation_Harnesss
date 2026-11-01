@@ -210,8 +210,8 @@ def _validate_value(spec: SettingSpec, value: str) -> None:
             raise ValueError(f"LLM_EXTRA_BODY 不是合法 JSON:{exc}") from exc
         if not isinstance(parsed, dict):
             raise ValueError("LLM_EXTRA_BODY 必须是 JSON 对象")
-    if key == "ADMIN_PASSWORD" and not (6 <= len(value) <= 64):
-        raise ValueError("ADMIN_PASSWORD 长度需在 6~64 位之间")
+    if key == "ADMIN_PASSWORD" and not (8 <= len(value) <= 64):
+        raise ValueError("ADMIN_PASSWORD 长度需在 8~64 位之间")
     if key == "AUTH_TOKEN" and len(value) < 16:
         raise ValueError("AUTH_TOKEN 太短,起不到保护的作用(建议 ≥ 32 字符随机串)")
 

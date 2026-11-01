@@ -7,7 +7,7 @@
 
 | 层 | 管什么 | 数量级 |
 |---|---|---|
-| 单元层 | models 序列化/storage 路径安全/judge 全规则语义/runner 崩溃捕获/report 差分/管线算法行为(含负断言) | 14 文件 208 例 |
+| 单元层 | models 序列化/storage 路径安全/judge 全规则语义/runner 崩溃捕获/report 差分/管线算法行为(含负断言) | 16 文件 214 例(含接口/集成层文件) |
 | 集成层 | evolve 完整闭环在临时目录跑真数据,断言逐轮提升、无回归、归档齐全 | `test_evolve.py` |
 | 接口层 | TestClient 走真实鉴权流程(登录 Cookie/API Token/401/限流锁定/删除同步清单/穿越拦截) | `test_webapp.py` 等 |
 | 端到端 | `scripts/verify.py` 用**不变量**(种子行为冻结 + 通过集单调不减 + 数值抽查)而非硬编码得分 | VERIFY PASS |
@@ -18,7 +18,7 @@
 
 ```bash
 ruff check .
-python -m pytest                       # 208 passed(30–55 s 浮动,含真起 uvicorn 的 SDK 用例)
+python -m pytest                       # 214 passed(30–80 s 浮动,含真起 uvicorn 的 SDK 用例)
 python scripts/verify.py               # VERIFY PASS;雨天评测集同样 PASS
 python scripts/check_release.py        # RELEASE CHECK PASS
 ```

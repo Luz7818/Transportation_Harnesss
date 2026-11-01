@@ -92,6 +92,15 @@ def test_change_password_rejects_short(store, admin_credentials):
         auth_mod.change_password(store, "admin", admin_credentials[1], "12345")
 
 
+def test_change_password_minimum_is_eight(store, admin_credentials):
+    """改密下限与部署口令 ADMIN_PASSWORD 一致为 8 位:7 位拒绝、8 位通过。"""
+    old = admin_credentials[1]
+    with pytest.raises(ValueError, match="8~64"):
+        auth_mod.change_password(store, "admin", old, "1234567")
+    assert auth_mod.change_password(store, "admin", old, "12345678")
+    assert auth_mod.verify_password(store, "admin", "12345678")
+
+
 def test_initial_store_random_password_counts_as_default(tmp_path, monkeypatch, capsys):
     """auth.json 不存在且未给 ADMIN_PASSWORD → 随机强口令只打印一次,
     且 default_credentials=true(初始口令未改:业务接口门禁保持关闭)。"""
@@ -141,6 +150,22 @@ def test_admin_password_rotates_existing_default_store(tmp_path, monkeypatch):
     again = auth_mod.load_store()
     assert auth_mod.verify_password(again, "admin", "ui-pass-123")
     assert not auth_mod.verify_password(again, "admin", "another-strong-pw")
+
+
+def test_username_with_dot_rejected_at_creation(tmp_path, monkeypatch):
+    """用户名进入会话令牌载荷(「用户名.过期时间」),创建期白名单拒绝含点号的 ADMIN_USER,
+    拒绝发生在 auth.json 落盘之前;合规用户名照常创建。"""
+    monkeypatch.setattr(auth_mod, "AUTH_FILE", tmp_path / "auth.json")
+
+    monkeypatch.setattr(auth_mod, "DEFAULT_USER", "a.b")
+    with pytest.raises(SystemExit):
+        auth_mod.load_store()
+    assert not (tmp_path / "auth.json").exists()
+
+    monkeypatch.setattr(auth_mod, "DEFAULT_USER", "ops-2")
+    store = auth_mod.load_store()
+    assert store["users"][0]["username"] == "ops-2"
+    assert auth_mod.parse_token(store, auth_mod.make_token(store, "ops-2")) == "ops-2"
 
 
 def test_admin_password_too_short_rejected(tmp_path, monkeypatch):

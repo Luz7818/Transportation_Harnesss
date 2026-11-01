@@ -360,3 +360,21 @@
 - **GitHub Release 发布**:本机无 gh CLI,经 GitHub API(本机 git 凭据)打 tag `v2.2.0`
   并创建 Release,上传 wheel/sdist 双附件;发布说明自 HISTORY v2.2.0 各条归纳
 - TODO 任务 2 关闭,下一个转任务 3/4;目录名三 s 笔误(TH-03)仍单独立项不改
+
+## 2026-11-02 · v2.3.0 前批:auth 行为缺陷修复(周报 TH-05/TH-07)
+
+### Fixed(缺陷修复)
+
+- **改密下限与部署口令统一为 8 位**(TH-05):经界面改密原本可用 6 位口令绕开
+  ADMIN_PASSWORD 的 8 位强度要求。三处同步:`webapp/auth.py` `change_password`
+  6~64 → 8~64、`webapp/settings.py` 的 ADMIN_PASSWORD 校验 6~64 → 8~64
+  (钉住值测试同步)、看板改密弹窗标签「新密码(6~64 位)」→「(8~64 位)」
+- **用户名字符白名单**(TH-07,防御性):用户名进入会话令牌载荷(「用户名.过期时间」
+  以「.」分隔),创建期以 `^[A-Za-z0-9_-]{1,32}$` 白名单校验 ADMIN_USER,含点号等
+  字符在 auth.json 落盘前即 SystemExit 拒绝,载荷格式从源头无歧义
+
+### Tests(测试)
+
+- +2 例:`test_change_password_minimum_is_eight`(7 拒 8 过边界)、
+  `test_username_with_dot_rejected_at_creation`(点号拒绝且不落盘 + 合名照常创建),
+  212 → 214;ruff/pytest/verify.py/check_release 四门禁全过

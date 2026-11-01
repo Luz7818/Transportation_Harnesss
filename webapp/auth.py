@@ -26,6 +26,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import threading
 import time
@@ -36,6 +37,10 @@ from harness.paths import PROJECT_ROOT
 AUTH_FILE = PROJECT_ROOT / "webapp" / "auth.json"
 SESSION_TTL = 7 * 24 * 3600
 DEFAULT_USER = os.getenv("ADMIN_USER", "admin")
+
+# 用户名会进入会话令牌载荷(「用户名.过期时间」再整体 base64),以「.」分隔过期时间;
+# 白名单从源头保证载荷格式无歧义,含点号等字符的 ADMIN_USER 在创建账号时即拒绝
+_USERNAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
 
 # 初始口令字符集去掉易混字符(0/O、1/l/I),长度 20 → 约 116 bit 熵
 _INITIAL_PASSWORD_ALPHABET = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -94,6 +99,8 @@ def load_store() -> dict:
         generated = not password            # 没给初始口令 → 随机生成,绝不落回任何公开默认值
         if generated:
             password = generate_initial_password()
+        if not _USERNAME_RE.match(DEFAULT_USER):
+            raise SystemExit("ADMIN_USER 仅允许字母/数字/下划线/连字符(1~32 位,不含点号)")
         salt = secrets.token_hex(16)
         store = {
             "secret": secrets.token_hex(32),
@@ -181,8 +188,8 @@ def verify_password(store: dict, username: str, password: str) -> bool:
 def change_password(store: dict, username: str, old: str, new: str) -> bool:
     if not verify_password(store, username, old):
         return False
-    if not (6 <= len(new) <= 64):
-        raise ValueError("新密码长度需在 6~64 位之间")
+    if not (8 <= len(new) <= 64):  # 与 ADMIN_PASSWORD 的部署下限一致,界面改密不开弱口令口子
+        raise ValueError("新密码长度需在 8~64 位之间")
     for user in store["users"]:
         if user["username"] == username:
             user["salt"] = secrets.token_hex(16)
