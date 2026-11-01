@@ -114,12 +114,12 @@ button { font: inherit; }
                        linear-gradient(180deg, var(--side-1), var(--side-2));
            color: #cdd5e6;
            transition: width .28s var(--ease-drawer); }
-.brand { display: flex; align-items: center; gap: 11px; padding: 20px 18px 18px;
+.brand { display: flex; align-items: center; gap: 9px; padding: 20px 14px 18px;
          border-bottom: 1px solid rgba(255,255,255,.07); min-width: 0; }
-.brand img { width: 38px; height: 38px; border-radius: 10px; border: 1px solid rgba(255,255,255,.16);
+.brand img { width: 34px; height: 34px; border-radius: 10px; border: 1px solid rgba(255,255,255,.16);
              box-shadow: 0 8px 20px rgba(79,70,229,.42), inset 0 1px 0 rgba(255,255,255,.18); }
 .brand .bt { line-height: 1.35; min-width: 0; flex: 1; }
-.brand .bt b { display: block; font-size: 13.5px; font-weight: 700; color: #f2f5fb; letter-spacing: .2px;
+.brand .bt b { display: block; font-size: 12.5px; font-weight: 700; color: #f2f5fb; letter-spacing: .1px;
                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .brand .bt span { font-size: 10.5px; color: #7e8ab0; letter-spacing: .4px;
                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -175,14 +175,17 @@ button { font: inherit; }
 /* ================= 主区 ================= */
 .main { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; }
 .topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center;
+          container-type: inline-size;   /* 降级阶梯按顶栏真实宽度触发(三栏外壳下远小于视口) */
           justify-content: space-between; gap: 16px;
           /* 与 main 的 max-width 居中算式同源:面板宽度变化时标题与内容恒对齐 */
           padding: 14px max(32px, calc((100% - 1096px) / 2));
           background: var(--topbar-bg); backdrop-filter: blur(20px) saturate(1.5);
           border-bottom: 1px solid var(--line); }
 .topbar > div:nth-of-type(1) { flex: 1; min-width: 0; }
-.topbar h2 { margin: 0; font-size: 17.5px; letter-spacing: .2px; font-weight: 700; }
+.topbar h2 { margin: 0; font-size: 17.5px; letter-spacing: .2px; font-weight: 700;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .topbar .sub { color: var(--t3); font-size: 12px; margin-top: 2px;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chipbar { display: flex; gap: 8px; align-items: center; font-size: 12px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--surface);
@@ -1339,6 +1342,28 @@ html[data-theme="dark"] .click-node .cn-ring {
   .topbar-cmdk { font-size: 0; gap: 6px; }
   .topbar-cmdk .kbd { font-size: 11px; }
 }
+/* ============ 顶栏宽度自适应(容器查询:任务区/AI 面板挤压下的降级阶梯) ============
+   视口媒体查询看不见三栏外壳里顶栏的真实宽度(开 AI 面板 + 任务区时中栏可窄到 ~440px,
+   页面标题曾被挤成一字一行)。按顶栏自身宽度降级:先藏信息胶囊(同信息侧栏脚部仍在),
+   再藏副标题与快捷键徽章;标题最终以省略号兜底,永不逐字折行 */
+@container (max-width: 700px) {
+  .topbar .chipbar .chip { display: none; }
+}
+@container (max-width: 460px) {
+  .topbar .sub { display: none; }
+  .topbar-cmdk .kbd { display: none; }
+}
+/* ============ AI 面板覆盖化(≤1200px:三栏挤不出第四栏) ============
+   侧栏 248 + 任务区 264 + AI 面板 396 全是固定宽,1024~1200 视口下工作区可被挤到
+   ~54px(实测)。该区间 AI 面板转为覆盖式抽屉(右缘导轨仍可唤回),工作区保住可读宽度 */
+@media (max-width: 1200px) {
+  #ai-rail { position: fixed; right: 0; top: 42%; z-index: 46; height: auto; padding: 13px 0;
+             border: 1px solid var(--line); border-right: 0; border-radius: 10px 0 0 10px;
+             box-shadow: var(--shadow-sm); }
+  .aipanel, .aipanel.open { position: fixed; top: 0; right: 0; bottom: 0; z-index: 47; width: 0; }
+  .aipanel.open { width: min(396px, 94vw); }
+  .ai-inner { width: min(396px, 94vw); }
+}
 @media (max-width: 960px) {
   body { overflow: auto; flex-direction: column; }
   .app-shell { flex-direction: column; height: auto; }
@@ -1360,18 +1385,12 @@ html[data-theme="dark"] .click-node .cn-ring {
   .step { min-width: 108px; }
   .hero-nav { padding: 14px 20px; }
   .hero h1 { font-size: 32px; }
-  /* 三栏在小屏的降级:任务区变为顶部横条,AI 面板改为覆盖式抽屉,侧轨悬停右缘 */
+  /* 三栏在小屏的降级:任务区变为顶部横条(AI 面板的覆盖式抽屉已上提到 1200px 块) */
   .pane-resizer { display: none; }
   .taskpanel { width: 100%; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
   .tp-list { max-height: 30vh; padding-bottom: 8px; }
   .tp-foot { display: none; }
   .side-toggle { display: none; }
-  #ai-rail { position: fixed; right: 0; top: 42%; z-index: 46; height: auto; padding: 13px 0;
-             border: 1px solid var(--line); border-right: 0; border-radius: 10px 0 0 10px;
-             box-shadow: var(--shadow-sm); }
-  .aipanel, .aipanel.open { position: fixed; top: 0; right: 0; bottom: 0; z-index: 47; width: 0; }
-  .aipanel.open { width: min(396px, 94vw); }
-  .ai-inner { width: min(396px, 94vw); }
 }
 @media (max-width: 640px) {
   .topbar { padding-top: 11px; padding-bottom: 11px; }

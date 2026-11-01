@@ -378,3 +378,26 @@
 - +2 例:`test_change_password_minimum_is_eight`(7 拒 8 过边界)、
   `test_username_with_dot_rejected_at_creation`(点号拒绝且不落盘 + 合名照常创建),
   212 → 214;ruff/pytest/verify.py/check_release 四门禁全过
+
+## 2026-11-02 · v2.3.0 前批:三栏外壳挤压韧性(周报 TH-04 前端评估衍生缺陷修复)
+
+### Fixed(缺陷修复,浏览器实测驱动)
+
+- **顶栏标题竖排折行**:任务区 + AI 面板同开时(1440px 视口中栏仅 ~445px),页面标题
+  「评测看板」「Case 管理」被挤成一字一行。视口媒体查询看不见三栏外壳里顶栏的真实宽度,
+  改用容器查询(侧栏同款思路):`.topbar` 声明 `container-type: inline-size`,
+  ≤700px 先藏信息胶囊(同信息侧栏脚部仍在)、≤460px 再藏副标题与快捷键徽章;
+  标题/副标题加 nowrap + ellipsis 兜底,永不逐字折行
+- **侧栏品牌截断**:默认宽度下「Transportation Harness」显示为「Transportation Ha…」。
+  内边距 18→14、logo 38→34、间距 11→9、字号 13.5→12.5px,实测 scrollWidth 144px =
+  clientWidth 144px 完整显示(省略号兜底保留)
+- **AI 面板挤压工作区**:1024~1200px 视口开 AI 面板时,工作区可被挤到 ~54px(实测)。
+  AI 面板覆盖式抽屉的触发阈值从 960px 上提至 1200px(规则自 960 块迁出),该区间
+  工作区保住可读宽度(实测 1024px 主栏 491px),右缘导轨唤回行为不变
+
+### Changed(变更)
+
+- SW shell 缓存 v8 → v9(按约定触发预缓存重建与刷新提示)
+- 校验:1440/1024 双视口 × 明暗主题 × AI 开关 × 任务区开合全组合浏览器实测
+  (标题完整、胶囊双向恢复、抽屉覆盖化、品牌不截断、DOM 度量零截断);
+  node --check / ruff / pytest(test_pwa+test_webapp)全过

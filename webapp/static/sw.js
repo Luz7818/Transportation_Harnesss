@@ -13,7 +13,7 @@
 
 "use strict";
 
-const SHELL_CACHE = "harness-shell-v8";
+const SHELL_CACHE = "harness-shell-v9";
 const API_CACHE = "harness-api-v1";
 
 const SHELL_ASSETS = [
