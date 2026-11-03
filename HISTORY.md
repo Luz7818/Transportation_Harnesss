@@ -449,3 +449,15 @@
 - 校验:node --check 三文件;浏览器回归 = 五页签渲染/cmdk/AI 面板/报告工作区
   (22 行明细)/主题切换/轨道环节点/导航委托/健康心跳逐项过,加载期注册行为
   全存活;ruff/pytest 全过
+
+## 2026-11-02 · TH-04 无构建拆分 · 第三批:文档同步 + test_pwa 适配
+
+- **test_pwa SW 注册断言随拆分调整**(拆分首版浏览器回归抓到 renderers TDZ 时连带发现):
+  `/help` 仍内联注册;`/` 改为断言「index.html 加载 app-core.js 且该文件含
+  `serviceWorker.register("/sw.js")`」——意图不变,两页最终都注册同一 SW
+- **文档同步**:webapp/README.md(文件清单新增 5 个静态资源与加载顺序、`api()`/PWA 注册/
+  渲染入口的文件归属改指新文件、规模核对 `5 11`→`10 11`、sw 缓存版本行改「vN 当前 v11」);
+  ARCHITECTURE.md(仓库地图 webapp 行 / §7 前端策略 / 常见任务表);GET-START.md(看板词条)
+- **拆分终态**:静态前端 1 文件 3915 行 → 9 文件(index 壳 270 + tokens.css 56 +
+  app.css 1375 + app-core 759 + app-board 782 + app-manage 677 + help 1025 + sw 117 +
+  manifest 35),零构建零依赖不变;近 12 提交 9 个在动的单文件问题(TH-04)关闭

@@ -405,7 +405,7 @@ docker logs -f transportation-harness
 | 管线版本 v0~v3 | 被测的交通分析实现:v0 是带已知缺陷的基线,v1 修公式与分级,v2 精修边界与聚合,v3 扩展排队回溢升级带;登记在 `pipeline/versions.py` 的 `PIPELINES` 里,新版本加一行即可被评测与自进化认得 |
 | 全局拥堵指数 | 一个数据集层面的拥堵数字：v1 按有效路段简单平均，v2 改为按流量加权并对单点 V/C 以 1.2 封顶 |
 | 边界升级 | v2 的规则：V/C ∈ [0.75, 0.8) 且速度比 < 0.35 时把等级抬到「拥堵」，让"实际体验"和"数字"对齐 |
-| 看板（PWA） | `webapp/static/index.html` 那个单文件前端；装了 manifest + Service Worker，所以能被浏览器当应用安装、断网时回退到缓存数据 |
+| 看板（PWA） | `webapp/static/` 的无构建前端（应用壳 + 样式两表 + 脚本三件，见 `webapp/README.md`）；装了 manifest + Service Worker，所以能被浏览器当应用安装、断网时回退到缓存数据 |
 | AI 草稿（draft） | LLM 从反馈原文起草的用例（状态 `pending`），**人工确认后才进 `cases/`**；未配密钥时由离线 Mock 起草，链路完全一样 |
 | 离线确定性 Mock | 没有模型密钥时 LLM 层的替身实现：输出只由输入决定、不联网、零成本。它保证的是「工作流编排可离线演示与测试」，不保证与真实模型同等语义质量 |
 

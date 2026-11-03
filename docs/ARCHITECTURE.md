@@ -63,7 +63,7 @@ Python SDK、CLI 四个客户端，默认全程离线确定性（LLM 走 Mock）
 | `harness/` | 评测框架（领域无关） | `paths.py`（项目根定位,exe 模式读 `HARNESS_HOME`）/ `models.py` / `storage.py` / `runner.py` / `judge.py` / `report.py` / `evolve.py` / `activity.py` |
 | `pipeline/` | 被测对象 | `versions.py` 一处登记 `PIPELINES`/`CHANGELOG`；`data/*.json` 6 个情景数据集（数据即场景，代码不含工况） |
 | `llm/` | LLM 层（可选装配） | `runtime.py`、`judge.py`（`conclusion_quality`）、`workflows.py`、`store.py`、`mocks.py` |
-| `webapp/` | HTTP 服务 + 前端 | `app.py` 全部端点与鉴权中间件、`auth.py`、`settings.py`、`static/index.html` 单文件看板（3354 行）、`static/help.html`、`sw.js` PWA |
+| `webapp/` | HTTP 服务 + 前端 | `app.py` 全部端点与鉴权中间件、`auth.py`、`settings.py`；`static/` 无构建前端:应用壳 `index.html`(270 行纯 HTML)+ `tokens.css`/`app.css` 样式两表 + `app-core/board/manage.js` 脚本三件(按此顺序加载)+ `help.html` + `sw.js` PWA |
 | `cases/` | replaycase 库 | 按失败标签分目录，一 case 一 JSON |
 | `evalsets/` | 评测集清单 | `case_ids` 顺序即重放顺序 |
 | `reports/` | 归档产物 | `report_<v>_<时间>.json`、`evolution_*.json`、`report_evolution_*.md` |
@@ -162,7 +162,10 @@ CompositeJudge                       按 spec.type 路由,无主 judge 支持时
 
 ### 7. 前端与客户端策略
 
-- **Web 端单文件无构建**:index.html 零外部依赖,克隆即用;状态管理用「每 Tab 独立渲染函数」
+- **Web 端无构建**:零外部依赖零打包链,克隆即用;TH-04 拆分后 index.html 是纯 HTML 应用壳,
+  样式分 tokens.css(设计令牌事实源)/app.css 两层,脚本按「基础设施/评测主线/资产与辅助」
+  分三个经典脚本(共享全局作用域,加载顺序 core → board → manage,两张页签接线表固定在
+  末文件);状态管理用「每 Tab 独立渲染函数」
   约定隔离;
 - **PWA 是纯前端增强**:只在安全上下文注册,http IP 访问时优雅降级;
 - **小程序共用同一套 API**:一条中间件按序裁决三种凭据;
@@ -209,7 +212,7 @@ Runtime 统一负责配置/JSON 输出/重试/缓存/审计;未配置 Key 自动
 | 加数据集 / 改工况参数 | `pipeline/data/*.json` | 容量、流量、车速都是数据,管线零改动 |
 | 加判分检查类型 | `harness/judge.py` + `harness/models.py` | 两文件同步 + 补 `tests/test_judge.py` |
 | 加 API 端点 | `webapp/app.py` | 之后 `export_openapi.py` 重导,同步 `docs/API.md` 与 `static/help.html` |
-| 改看板页面 | `webapp/static/index.html` | 3199 行单文件应用,无构建步骤 |
+| 改看板页面 | `webapp/static/`(壳改 `index.html`,样式改 `tokens/app.css`,脚本按职责改 `app-core/board/manage.js`) | 无构建;页签接线表在 app-manage.js 尾部,新页签记得登记 |
 | 换 Logo / PWA 图标 | `webapp/static/assets/icon.svg` → `generate_pwa_icons.py` | 全套图标从 SVG 母版栅格化 |
 | 加 LLM 能力 | `llm/workflows.py` | 强制 JSON Schema + 必须有降级路径 |
 | 接别的 LLM 供应商 | 只改环境变量 | 任意 OpenAI 兼容端点 |
