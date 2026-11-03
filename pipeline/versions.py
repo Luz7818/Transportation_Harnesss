@@ -42,6 +42,9 @@ ESCALATION_SPEED_RATIO = 0.35
 V3_ESCALATION_BAND = (0.70, 0.8)
 V3_ESCALATION_SPEED_RATIO = 0.50
 
+# 建议文案中的诱导分流比例量级(工程预案常用口径,写入模板作为决策默认值,输出确定)
+DIVERT_SHARE = 15
+
 
 def _classify_by_saturation(sat: float) -> str:
     if sat < 0.4:
@@ -55,10 +58,31 @@ def _classify_by_saturation(sat: float) -> str:
     return "严重拥堵"
 
 
-def _advice(level: str, name: str) -> str:
-    if level == "严重拥堵":
-        return f"{name}:建议立即启动分流预案并优化信号配时,安排现场疏导。"
-    return f"{name}:建议优化信号配时,视情况引导车流绕行。"
+def _advice(row: dict, valid_rows: list[dict]) -> str:
+    """按严重程度与升级带差异化的处置建议(数据据点化,修复真实模型判分指出的
+    「建议模板化、缺乏具体分流路径」短板 —— 对照记录见 docs/LLM.md):
+
+    - 严重拥堵:给超饱和幅度、具体分流比例与落点(同数据集当前最畅路段);
+    - 升级带拥堵(饱和度未及 0.8 而速度比显著下降):点明排队回溢证据,按预警处置分级给动作;
+    - 常规拥堵:给 V/C 实测值与信控/分流组合动作。
+    分流落点取 (饱和度, 路段号) 最小的 ok 路段,确定性输出;单路段数据集退回「平行道路」泛指。
+    """
+    name, sat = row["name"], row["saturation"]
+    peers = sorted((r for r in valid_rows if r["segment_id"] != row["segment_id"]),
+                   key=lambda r: (r["saturation"], r["segment_id"]))
+    alt = f"{peers[0]['name']}({peers[0]['segment_id']},V/C {peers[0]['saturation']})" if peers else "平行道路"
+    if row["classification"] == "严重拥堵":
+        over_pct = round((sat - 1) * 100)
+        divert = round(row["volume"] * DIVERT_SHARE / 100)
+        return (f"{name}(V/C {sat},超出通行能力 {over_pct}%):建议立即启动分流预案——诱导约 "
+                f"{DIVERT_SHARE}% 车流(≈{divert} veh/h)经 {alt} 绕行,上游路口压缩进入相位,"
+                f"安排现场疏导并滚动发布预警。")
+    if sat < 0.8:  # 升级带:排队回溢型拥堵(饱和度未及阈值,车速已显著下降)
+        return (f"{name}(V/C {sat} 未及 0.8,速度比 {row['speed_ratio']},排队已形成):"
+                f"建议按拥堵预警处置——上游路口绿波协调提升通过率,排队长度连续两个周期增长,"
+                f"即诱导车流分流至 {alt}。")
+    return (f"{name}(V/C {sat},接近饱和):建议重设信控配时(压缩周期损失、增设待行区),"
+            f"并诱导约 {DIVERT_SHARE}% 车流分流至 {alt},防止排队外溢至上游路口。")
 
 
 def _summary_counts(valid_rows: list[dict]) -> Counter:
@@ -138,7 +162,7 @@ def analyze_v1(segments: list[dict]) -> dict:
     congested = [r["segment_id"] for r in rows if r["classification"] in CONGESTED_LEVELS]
     global_index = round(sum(r["saturation"] for r in valid) / len(valid), 4) if valid else None
     recommendations = [
-        {"segment_id": r["segment_id"], "text": _advice(r["classification"], r["name"])}
+        {"segment_id": r["segment_id"], "text": _advice(r, valid)}
         for r in rows if r["classification"] in CONGESTED_LEVELS
     ]
     cnt = _summary_counts(valid)
@@ -191,7 +215,7 @@ def _analyze(segments: list[dict], *, version: str, band: tuple[float, float],
                               for r in valid) / total_volume, 4)
                     if valid else None)
     recommendations = [
-        {"segment_id": r["segment_id"], "text": _advice(r["classification"], r["name"])}
+        {"segment_id": r["segment_id"], "text": _advice(r, valid)}
         for r in rows if r["classification"] in CONGESTED_LEVELS
     ]
     cnt = _summary_counts(valid)

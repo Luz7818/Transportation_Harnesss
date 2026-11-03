@@ -118,3 +118,40 @@ class TestV3:
 
     def test_version_field(self):
         assert analyze_v3([_seg()])["version"] == "v3"
+
+
+class TestAdvice:
+    """建议文案可执行性(TODO 任务 4,真实判分短板修复):按严重程度/升级带差异化,
+    引用实测 V/C 与速度比,分流落点来自同数据集最畅路段;禁绝「视情况」式含糊表述。"""
+
+    def test_severe_cites_over_capacity_and_divert_target(self):
+        out = analyze_v3([_seg(segment_id="A", name="甲路", volume=3960),   # V/C 1.1 → 严重拥堵
+                          _seg(segment_id="B", name="乙路", volume=900)])   # V/C 0.25 → 畅通
+        text = out["recommendations"][0]["text"]
+        assert "超出通行能力 10%" in text and "≈594 veh/h" in text          # 实测超饱和幅度与分流规模
+        assert "乙路(B,V/C 0.25)" in text                                  # 落点是最畅的同伴路段
+
+    def test_escalated_cites_queue_evidence(self):
+        out = analyze_v3([_seg(segment_id="A", name="甲路", volume=2808, speed=15),  # V/C 0.78,速度比 0.25
+                          _seg(segment_id="B", name="乙路", volume=900)])
+        text = out["recommendations"][0]["text"]
+        assert "未及 0.8" in text and "速度比 0.25" in text and "排队已形成" in text
+        assert "分流至 乙路(B,V/C 0.25)" in text                            # 排队回溢型给分级动作 + 落点
+
+    def test_normal_congested_cites_vc_and_diversion(self):
+        out = analyze_v3([_seg(segment_id="A", name="甲路", volume=3060),   # V/C 0.85 → 常规拥堵
+                          _seg(segment_id="B", name="乙路", volume=900)])
+        text = out["recommendations"][0]["text"]
+        assert "V/C 0.85,接近饱和" in text and "分流至 乙路(B,V/C 0.25)" in text
+        assert "排队已形成" not in text                                     # 常规拥堵不冒用升级带证据
+
+    def test_no_hedging_phrases(self):
+        out = analyze_v3([_seg(segment_id="A", name="甲路", volume=3960),
+                          _seg(segment_id="B", name="乙路", volume=2880),
+                          _seg(segment_id="C", name="丙路", volume=2808, speed=15)])
+        for rec in out["recommendations"]:
+            assert "视情况" not in rec["text"] and "建议" in rec["text"]     # 禁含糊,保留建议句式(Mock 判分依据)
+
+    def test_single_segment_falls_back_to_generic_target(self):
+        out = analyze_v3([_seg(segment_id="A", name="甲路", volume=3960)])  # 无同伴路段
+        assert "平行道路" in out["recommendations"][0]["text"]

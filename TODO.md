@@ -15,7 +15,7 @@
 | 1 | **线上服务处置（P0，需人决策）**：线上 TCP 8765 自 10-02 起不可达（连败 5 天+）。二选一：① 主动停服——明确「下线」并在 README/Roadmap 注明，撤 `probe.yml` 免得 CI 天天红；② 修复重启——借机改口令并确认 2.0.0 已部署，探针转绿 | ① `probe.yml` 删除 + README 注明；或 ② 探针 workflow 连续 3 天绿 | **完成（走①）**：失联 6 天且无主机访问渠道，2026-10-06 执行下线——probe.yml 已撤、README/Roadmap/AGENTS/GIT/DEPLOY 已注明，复活路径见 HISTORY 当日条目 |
 | 2 | 发布：tag + GitHub Release 附 SDK wheel（Roadmap 项，版本一致性断言已进 CI） | `git tag` 出现对应版本 tag；Release 页可见并附 `sdk/dist/` wheel | **完成（2026-11-01）**：v2.2.0 tag + Release 页已发布，附 2.2.0 重出的 wheel/sdist 双附件（2.1.0 旧构建已替换入库）；发布经 GitHub API（本机 git 凭据）完成 |
 | 3 | 2.0 真实数据接入：换掉合成快照（公开轨迹集或外业采集），数据集记录 `source`/`captured_at` | 至少一个数据集来自真实源并标注，`verify.py` 全绿 | 待开始 |
-| 4 | 建议文案可执行性短板：rc-0015 真实模型判 0.70 恰在阈值（建议模板化、缺具体分流路径） | 改进建议模板后在真实 LLM judge 下 `conclusion_quality` > 0.70，对比记录进 `docs/LLM.md` | 待开始 |
+| 4 | 建议文案可执行性短板：rc-0015 真实模型判 0.70 恰在阈值（建议模板化、缺具体分流路径） | 改进建议模板后在真实 LLM judge 下 `conclusion_quality` > 0.70，对比记录进 `docs/LLM.md` | **待确认**：文案已数据据点化（升级带/严重度差异化 + 实测值 + 具名分流落点，离线四门禁全绿）；真实复验被端点配额耗尽阻塞（403「token 使用完毕」，2026-11-04 实测），复验命令与判据已留档 `docs/LLM.md` |
 | 5 | 2.4 线上化：HTTPS + 备案域名，小程序正式发布（或明确定位为内网演示端） | 域名备案与 HTTPS 就绪，或 README/Roadmap 写明内网演示定位 | 待开始 |
 
 状态取值：待开始 / 进行中 / 待确认 / 完成。
