@@ -18,9 +18,13 @@ class TestServiceWorker:
         assert re.search(r'harness-shell-v\d+', resp.text), "缺少版本化缓存标识 harness-shell-vN"
 
     def test_sw_registered_by_pages(self, client):
-        for path in ("/", "/help"):
-            html = client.get(path).text
-            assert 'serviceWorker.register("/sw.js")' in html, path
+        """/ 的注册调用在 app-core.js(TH-04 拆分后 PWA 分节随基础设施入该文件,由 index.html
+        三个 script 之一加载);/help 保持内联注册。两页最终都必须注册同一 SW。"""
+        assert 'serviceWorker.register("/sw.js")' in client.get("/help").text, "/help"
+        index_html = client.get("/").text
+        assert 'src="/static/app-core.js' in index_html, "/ 必须加载 app-core.js"
+        core_js = client.get("/static/app-core.js").text
+        assert 'serviceWorker.register("/sw.js")' in core_js, "app-core.js 缺少 SW 注册"
 
 
 class TestManifest:
