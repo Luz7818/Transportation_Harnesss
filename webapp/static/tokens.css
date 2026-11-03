@@ -1,0 +1,56 @@
+/* Transportation Harness · 设计令牌(唯一事实源:色板/灰阶/圆角/动效曲线/阴影/焦点环)
+   由 index.html <style> 拆出(2026-11-02,TH-04 无构建拆分第一批);改主题先改这里。
+   暗色覆盖与亮色逐键对仗;组件级语义令牌(令牌名见注释分组)同样只在此定义。 */
+/* ================= 设计令牌 ================= */
+:root {
+  --bg: #f4f5f8;
+  --surface: #ffffff;
+  --line: #e3e7f0;
+  --line-2: #d2d8e8;
+  --t1: #131722; --t2: #3f4a63; --t3: #6a7590; --t4: #95a0b8;
+  --primary: #4f46e5; --primary-h: #4338ca; --primary-soft: #eef1ff;
+  --accent: #4f46e5;
+  --ok: #079455; --ok-soft: #e7f6ef;
+  --warn: #b54708; --warn-soft: #fef4e6;
+  --bad: #b42318; --bad-soft: #feecea;
+  --side-1: #10131f; --side-2: #181c2b;
+  --r-lg: 14px; --r-md: 10px; --r-sm: 8px;
+  /* 动效令牌:强 ease-out 为 UI 默认;drawer 曲线用于面板推拉 */
+  --ease-out: cubic-bezier(.23, 1, .32, 1);
+  --ease-drawer: cubic-bezier(.32, .72, 0, 1);
+  /* 组件级语义令牌(明/暗主题各自取值) */
+  --topbar-bg: rgba(255,255,255,.72);
+  --thead-bg: #f8f9fd; --row-hover: #f4f7fd; --row-line: #edf0f8;
+  --chip-bg: #eff1f9; --track: #e9edf6; --round-bg: #f8fafd;
+  --sk1: #eaeef8; --sk2: #f5f7fc;
+  --loop-line: #ccd4e4; --soft-line: #e2e6ff; --hint-border: #dfe3ff;
+  --sb-thumb: #c5cde0; --surface-2: #f4f6fb; --chart-grid: #e9edf6;
+  --info: #175cd3; --info-soft: #eaf1fd;
+  /* 带色阴影:色相随品牌,比纯灰更「贵」;md 加大扩散半径形成悬浮感 */
+  --shadow-xs: 0 1px 2px rgba(23,26,44,.06);
+  --shadow-sm: 0 1px 2px rgba(23,26,44,.05), 0 4px 12px -4px rgba(64,70,140,.10);
+  --shadow-md: 0 2px 6px -2px rgba(23,26,44,.08), 0 18px 44px -12px rgba(64,70,140,.24);
+  --ring: 0 0 0 3px rgba(79,70,229,.16), 0 0 0 1px rgba(79,70,229,.10);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e111c; --surface: #151928; --surface-2: #1a1f30;
+  --line: #262c44; --line-2: #323c58;
+  --t1: #e7ebf6; --t2: #c3cbe2; --t3: #919cb9; --t4: #606c8a;
+  --primary: #818cf8; --primary-h: #a5b4fc; --primary-soft: rgba(129,140,248,.15);
+  --ok: #34d399; --ok-soft: rgba(52,211,153,.13);
+  --warn: #fbbf24; --warn-soft: rgba(251,191,36,.13);
+  --bad: #f87171; --bad-soft: rgba(248,113,113,.13);
+  --topbar-bg: rgba(11,16,30,.66);
+  --thead-bg: #182032; --row-hover: #19223a; --row-line: #1f2942;
+  --chip-bg: #1a1f30; --track: #262c44; --round-bg: #131826;
+  --sk1: #161d30; --sk2: #1d2740;
+  --loop-line: #313e5c; --soft-line: rgba(129,140,248,.3); --hint-border: rgba(129,140,248,.35);
+  --sb-thumb: #2c3654; --chart-grid: #262c44;
+  --info: #6ea8fe; --info-soft: rgba(110,168,254,.13);
+  --accent: #818cf8;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.45), 0 4px 14px -4px rgba(0,0,0,.42);
+  --shadow-md: 0 2px 6px -2px rgba(0,0,0,.5), 0 18px 44px -12px rgba(0,0,0,.6);
+  --ring: 0 0 0 3px rgba(129,140,248,.26), 0 0 0 1px rgba(129,140,248,.12);
+}
