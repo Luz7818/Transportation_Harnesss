@@ -489,3 +489,33 @@
 - **任务 4 状态 = 待确认**:复验判据(conclusion_quality > 0.70)与命令已留档
   `docs/LLM.md`,配额恢复后一次运行即可收口;本轮不以离线证据代替真实判分结论
 - 校验:verify.py 15/15(含新文案的 Mock 判分)/ruff/pytest 219/check_release 全过
+
+## 2026-11-05 · 研究二轮 taste 批:--dur 阶梯入库 + 散值归仓 + KPI 主数字去紫
+
+### Added(新增)
+
+- `tokens.css` :root 补动效令牌(照 zhishuxing 2.9.0 体系,研究二轮口径):
+  `--ease-in-out: cubic-bezier(.77, 0, .175, 1)` 与四档时长阶梯
+  `--dur-1 .12s / --dur-2 .18s / --dur-3 .24s / --dur-4 .3s`;
+  `help.html`(自包含页,不引 tokens.css)内联 :root 同步补同一阶梯
+
+### Changed(变更)
+
+- **散值时长归仓(57 处)**:app.css 44 处 + help.html 13 处,梯内值逐一映射——
+  `.12s→var(--dur-1)`、`.18s/.22s→var(--dur-2)`、`.24s→var(--dur-3)`、
+  `.28s/.3s/.34s→var(--dur-4)`(.22→.18、.28→.3、.34→.3 为贴梯取整,
+  幅度 ≤40ms,节奏目检不回退);档间值(.15s×52/.2s×14/.25s/.26s 等)与
+  动画延迟错峰(30ms 系)按参照仓 zhishuxing 同口径保留原值
+- 侧栏 width 过渡(app.css 侧栏折叠)补 Emil 黑名单豁免注释
+  (布局折叠需重排,transform 不适用)
+- **KPI 主数字去紫**:`.k-value.grad` 渐变末端
+  `color-mix(… 52%, #a855f7)` → `color-mix(… 78%, white)`;
+  原 #a855f7 为 Tailwind violet-500,注释「不跨色相」名不副实(研究二轮点名),
+  现两端均从 --primary 派生,同族明度提亮
+- SW shell 缓存 `harness-shell-v11` → `v12`(css 变更穿透)
+
+### 验证
+
+- 门禁:pytest 219 passed;`python scripts/verify.py` VERIFY PASS(15/15);
+  ruff 全过;括号配平(app.css 844/844、help.html 245/245);
+  `grep a855f7 webapp/` 仅剩 HISTORY 注释中的历史记录,样式 0 命中

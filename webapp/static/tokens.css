@@ -15,9 +15,14 @@
   --bad: #b42318; --bad-soft: #feecea;
   --side-1: #10131f; --side-2: #181c2b;
   --r-lg: 14px; --r-md: 10px; --r-sm: 8px;
-  /* 动效令牌:强 ease-out 为 UI 默认;drawer 曲线用于面板推拉 */
+  /* 动效令牌:强 ease-out 为 UI 默认;屏内移动/变形用 in-out;drawer 曲线用于面板推拉 */
   --ease-out: cubic-bezier(.23, 1, .32, 1);
+  --ease-in-out: cubic-bezier(.77, 0, .175, 1);
   --ease-drawer: cubic-bezier(.32, .72, 0, 1);
+  /* 时长阶梯(照 zhishuxing 2.9.0 体系,2026-11-05 研究二轮口径):
+     按压 --dur-1 < 悬停/焦点 --dur-2 < 入场/弹层 --dur-3 < 抽屉/大面板 --dur-4
+     高频交互一律从阶梯取值;动画延迟错峰(30ms 系)与营销档(>300ms)不入阶梯 */
+  --dur-1: .12s; --dur-2: .18s; --dur-3: .24s; --dur-4: .3s;
   /* 组件级语义令牌(明/暗主题各自取值) */
   --topbar-bg: rgba(255,255,255,.72);
   --thead-bg: #f8f9fd; --row-hover: #f4f7fd; --row-line: #edf0f8;

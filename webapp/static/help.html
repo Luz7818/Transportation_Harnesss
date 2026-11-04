@@ -27,6 +27,8 @@ catch (e) { document.documentElement.dataset.theme = "light"; }
   --topbar-bg: rgba(255,255,255,.75); --thead-bg: #f8f9fd; --row-line: #edf0f8;
   --chip-bg: #eff1f9; --surface-2: #f4f6fb; --row-hover: #f4f7fd;
   --ease-out: cubic-bezier(.23, 1, .32, 1);
+  /* 时长阶梯(照 tokens.css 口径,2026-11-05 研究二轮;本页自包含,不引 tokens.css) */
+  --dur-1: .12s; --dur-2: .18s; --dur-3: .24s; --dur-4: .3s;
 }
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -133,7 +135,7 @@ th { text-align: left; padding: 9px 13px; color: var(--t3); font-weight: 600; fo
      letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid var(--line-2);
      background: var(--thead-bg); }
 td { padding: 9px 13px; border-bottom: 1px solid var(--row-line); vertical-align: top; color: var(--t2); }
-tbody tr { transition: background .12s; }
+tbody tr { transition: background var(--dur-1); }
 tbody tr:hover { background: var(--row-hover); }
 tr:last-child td { border-bottom: 0; }
 td code, th code { font-size: 12px; }
@@ -167,11 +169,11 @@ td code, th code { font-size: 12px; }
 .method.del { background: var(--bad-soft); color: var(--bad); }
 .ep-path { font: 13.5px Consolas, "Courier New", monospace; font-weight: 700; color: var(--t1); }
 .ep-name { color: var(--t3); font-size: 12.5px; margin-left: auto; text-align: right; }
-.ep-caret { color: var(--t4); flex: none; transition: transform .18s; font-size: 12px; }
+.ep-caret { color: var(--t4); flex: none; transition: transform var(--dur-2); font-size: 12px; }
 .ep:not(.open) .ep-head:hover .ep-caret { transform: translateX(2px); }
 .ep.open .ep-caret { transform: rotate(90deg); }
 .ep-body { display: none; padding: 4px 20px 18px; border-top: 1px solid var(--line); }
-.ep.open .ep-body { display: block; animation: epIn .18s ease both; }
+.ep.open .ep-body { display: block; animation: epIn var(--dur-2) ease both; }
 @keyframes epIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .ep-body h4 { font-size: 12px; font-weight: 700; color: var(--t3); letter-spacing: .05em;
               margin: 16px 0 6px; text-transform: uppercase; }
@@ -214,7 +216,7 @@ td code, th code { font-size: 12px; }
 
 /* ===== 质感与动效(与看板同一套语言) ===== */
 /* 按钮:顶部内高光 + 按压下沉,键帽式物理反馈 */
-.btn-top { transition: background .15s, transform .12s var(--ease-out), box-shadow .18s var(--ease-out);
+.btn-top { transition: background .15s, transform var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
            box-shadow: inset 0 1px 0 rgba(255,255,255,.5), var(--shadow-xs); }
 .btn-top:hover { transform: translateY(-1px); }
 .btn-top:active { transform: translateY(0) scale(.97);
@@ -225,10 +227,10 @@ html[data-theme="dark"] .btn-top { box-shadow: inset 0 1px 0 rgba(255,255,255,.0
 html[data-theme="dark"] .btn-top.primary {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 4px 14px -4px rgba(99,102,241,.5); }
 /* 卡片族悬停:边框加深 + 阴影浮起;展开中的接口条目描边带主色 */
-.ep, .card-block, .faq-item, .concept { transition: border-color .15s, box-shadow .18s var(--ease-out); }
+.ep, .card-block, .faq-item, .concept { transition: border-color .15s, box-shadow var(--dur-2) var(--ease-out); }
 .ep:hover, .card-block:hover, .faq-item:hover { border-color: var(--line-2); box-shadow: var(--shadow-sm); }
 .ep.open { border-color: color-mix(in srgb, var(--primary) 32%, var(--line)); }
-.concept { transition: border-color .15s, transform .18s var(--ease-out), box-shadow .18s var(--ease-out); }
+.concept { transition: border-color .15s, transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out); }
 .concept:hover { transform: translateY(-2px); border-color: var(--line-2); box-shadow: var(--shadow-sm); }
 .copy-btn { transition: background .15s, transform .1s; }
 .copy-btn:active { transform: scale(.94); }
@@ -239,8 +241,8 @@ html[data-theme="dark"] :is(.card-block, .ep, .concept, .faq-item, .code-block) 
 .ep.open .ep-body { animation: epIn .2s var(--ease-out) both; }
 /* 主题切换过渡:切换瞬间全要素颜色过渡(JS 挂 html.theme-anim,340ms 后摘除) */
 html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
-  transition: background-color .3s ease, border-color .3s ease, color .3s ease,
-              fill .3s ease, box-shadow .3s ease !important; }
+  transition: background-color var(--dur-4) ease, border-color var(--dur-4) ease, color var(--dur-4) ease,
+              fill var(--dur-4) ease, box-shadow var(--dur-4) ease !important; }
 /* 回到顶部:离顶 480px 才浮现(与看板一致) */
 .back-top { opacity: 0; pointer-events: none; transform: translateY(10px);
             transition: opacity .25s var(--ease-out), transform .25s var(--ease-out), color .15s; }
