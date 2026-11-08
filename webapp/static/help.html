@@ -506,7 +506,8 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
 <pre>[{
   <span class="k">"name"</span>: <span class="s">"rain_peak"</span>,
   <span class="k">"description"</span>: <span class="s">"雨天早高峰…"</span>,
-  <span class="k">"scenario"</span>: { <span class="k">"tag"</span>: <span class="s">"雨天早高峰"</span>, <span class="k">"insight"</span>: <span class="s">"通行能力 ×0.85、车速普降…"</span> }
+  <span class="k">"scenario"</span>: { <span class="k">"tag"</span>: <span class="s">"雨天早高峰"</span>, <span class="k">"insight"</span>: <span class="s">"通行能力 ×0.85、车速普降…"</span> },
+  <span class="k">"captured_at"</span>: <span class="s">"2026-09-05 08:00"</span>, <span class="k">"source"</span>: <span class="s">"合成快照"</span>
 }]</pre></div>
       <p>内置:<code class="inline">base</code> 常规早高峰 · <code class="inline">rain_peak</code> 雨天 · <code class="inline">incident</code> 事故占道 ·
         <code class="inline">evening_peak</code> 晚高峰 · <code class="inline">missing_volume</code> 缺失数据 · <code class="inline">empty</code> 空数据。</p>
@@ -729,7 +730,7 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
   <div class="ep">
     <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/compare?a=&b=</span><span class="ep-name">两份报告逐 case 差分</span><span class="ep-caret">▶</span></div>
     <div class="ep-body">
-      <p><span class="auth-pill yes">需登录/令牌</span> 回归验证的核心接口:新通过/回归一目了然;rows 每条 case 附 <code class="inline">check_diffs</code>(checks 级明细差分,status:fixed/regressed/changed/both_failed/added/removed),看板行内高亮展示。</p>
+      <p><span class="auth-pill yes">需登录/令牌</span> 回归验证的核心接口:新通过/回归一目了然;rows 每条 case 附 <code class="inline">check_diffs</code>(checks 级明细差分,status:fixed/regressed/changed/both_failed/added/removed),看板行内高亮展示。两份报告须出自同一评测集(<code class="inline">evalset_id</code> 不一致或缺失回 400;看板下拉已按 A 侧评测集过滤 B 的选项)。</p>
       <h4>响应 200</h4>
       <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
 <pre>{

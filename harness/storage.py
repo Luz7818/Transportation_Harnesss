@@ -152,11 +152,14 @@ def load_dataset(name: str) -> list[dict]:
 
 
 def list_datasets() -> list[dict]:
+    """列出全部数据集(含溯源字段 captured_at/source),供看板/客户端选择。"""
     out = []
     for p in sorted(DATA_DIR.glob("*.json")):
         payload = _read_json(p)
         out.append({"name": p.stem, "description": payload.get("description", ""),
-                    "scenario": payload.get("scenario")})
+                    "scenario": payload.get("scenario"),
+                    "captured_at": payload.get("captured_at", ""),
+                    "source": payload.get("source", "")})
     return out
 
 

@@ -207,6 +207,35 @@ class TestAnalyzeAndCompare:
         assert len(body["newly_passed"]) >= 12
         assert body["regressed"] == []
 
+    def test_compare_same_evalset_ok(self, authed_client, hermetic_storage):
+        """守卫不误伤:同评测集两份报告正常对比。"""
+        authed_client.post("/api/eval/run", json={"version": "v0",
+                                                  "evalset": "evalset_scenario_rain"})
+        authed_client.post("/api/eval/run", json={"version": "v2",
+                                                  "evalset": "evalset_scenario_rain"})
+        reports = authed_client.get("/api/reports").json()
+        by_version = {r["version"]: r["report_id"] for r in reports}
+        resp = authed_client.get(
+            f"/api/compare?a={by_version['v0']}&b={by_version['v2']}")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert {row["case_id"] for row in body["rows"]} == {"rsc-001", "rsc-002", "rsc-003"}
+
+    def test_compare_cross_evalset_rejected(self, authed_client, hermetic_storage):
+        """跨评测集对比一律 400:单侧 case 混入并集会让 newly_passed/regressed 失真。"""
+        # 两跑用不同版本:save_report 文件名只含版本+秒级时间戳,同版本同秒会互相覆盖
+        authed_client.post("/api/eval/run", json={"version": "v2"})
+        authed_client.post("/api/eval/run",
+                           json={"version": "v0", "evalset": "evalset_scenario_rain"})
+        reports = authed_client.get("/api/reports").json()
+        by_evalset = {r["evalset_id"]: r["report_id"] for r in reports}
+        assert {"evalset_v1", "evalset_scenario_rain"} <= set(by_evalset)
+        resp = authed_client.get(
+            f"/api/compare?a={by_evalset['evalset_v1']}"
+            f"&b={by_evalset['evalset_scenario_rain']}")
+        assert resp.status_code == 400
+        assert "evalset" in resp.json()["detail"]
+
     def test_report_id_traversal_rejected(self, authed_client):
         resp = authed_client.get("/api/reports/..%2F..%2Fwebapp%2Fauth")
         assert resp.status_code in (400, 404)

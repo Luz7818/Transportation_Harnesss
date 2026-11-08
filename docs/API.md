@@ -218,7 +218,8 @@ Bearer 与 Cookie 两种会话凭据都能在这里换出用户名。
 
 ```jsonc
 [{"name": "rain_peak", "description": "雨天早高峰…",
-  "scenario": {"tag": "雨天早高峰", "insight": "通行能力 ×0.85、车速普降…"}}]
+  "scenario": {"tag": "雨天早高峰", "insight": "通行能力 ×0.85、车速普降…"},
+  "captured_at": "2026-09-05 08:00", "source": "合成快照"}]
 ```
 
 内置:`base` 常规早高峰 / `rain_peak` 雨天 / `incident` 事故占道 / `evening_peak` 晚高峰 /
@@ -471,7 +472,10 @@ Markdown + JSON 报告。请求体可省略(兼容旧客户端,默认 baseline=v
 `check_diffs` 为 checks 级明细差分(按条目配对,只含变化项),status 取值
 fixed / regressed / changed / both_failed / added / removed,供前端行内高亮。
 
-评测集扩充后对比旧报告时,仅两轮共有的 case 参与回归判定。
+评测集扩充后对比旧报告时,仅两轮共有的 case 参与回归判定。两份报告必须出自
+同一评测集(归档报告均带 `evalset_id`,见 `harness/runner.py`):跨评测集或任一
+报告缺该字段回 400——按 case_id 并集配对会把单侧 case 混入差分,令
+`newly_passed`/`regressed` 失真;看板对比下拉已按 A 侧的评测集过滤 B 的选项。
 
 ---
 

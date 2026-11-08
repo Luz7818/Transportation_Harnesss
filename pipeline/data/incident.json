@@ -6,6 +6,7 @@
     "insight": "S-03 发生事故占用一条车道(lane_count 已折算为 5),通行能力骤降且上游车流部分转移;检验管线对突发事件影响的定位是否准确、处置建议是否可执行。"
   },
   "captured_at": "2026-09-08 08:15",
+  "source": "合成快照",
   "segments": [
     {"segment_id": "S-01", "name": "城东大道", "length_km": 3.2, "lane_count": 4, "capacity_per_lane": 1800, "volume": 3000, "speed": 45, "free_flow_speed": 60},
     {"segment_id": "S-02", "name": "学府路", "length_km": 1.8, "lane_count": 2, "capacity_per_lane": 1700, "volume": 3100, "speed": 18, "free_flow_speed": 50},

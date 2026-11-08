@@ -107,9 +107,13 @@ class TestAuthChannels:
 
 class TestCoreFlows:
     def test_health(self, api):
+        from harness_client import __version__ as sdk_version
+
         health = api.health()
         assert health["status"] == "ok"
-        assert health["app_version"] == "2.2.1"
+        # 服务端版本 == SDK 包版本:版本四处同步的运行时断言,不钉死具体值
+        # (钉死值会让每次发版都多一处手工同步点,check_release 已机器断言四处一致)
+        assert health["app_version"] == sdk_version
         assert health["versions"] == ["v0", "v1", "v2", "v3"]
 
     def test_analyze_pipeline_output(self, api):
@@ -174,3 +178,47 @@ class TestCli:
     def test_error_exit_code(self, server_url, hermetic_storage, capsys):
         assert sdk_cli.main(["versions", "--base-url", server_url]) == 1  # 无令牌 → 1
         assert "错误" in capsys.readouterr().err
+
+    def test_compare_help(self, capsys):
+        with pytest.raises(SystemExit) as ei:
+            sdk_cli.main(["compare", "--help"])
+        assert ei.value.code == 0
+        out = capsys.readouterr().out
+        assert "--a" in out and "--b" in out and "报告 A(基线)" in out
+
+    def test_compare_smoke(self, server_url, hermetic_storage, api_token, capsys):
+        """同评测集两份报告:退出码 0,打印双方 accuracy 与 newly_passed/regressed。"""
+        # 两跑用不同版本:报告文件名只含版本+秒级时间戳,同版本同秒会互相覆盖
+        assert sdk_cli.main(["eval", "--version", "v0",
+                             "--base-url", server_url, "--token", api_token]) == 0
+        assert sdk_cli.main(["eval", "--version", "v2",
+                             "--base-url", server_url, "--token", api_token]) == 0
+        with TransportationHarnessClient(base_url=server_url, token=api_token) as client:
+            by_version = {r["version"]: r["report_id"] for r in client.reports()}
+        capsys.readouterr()  # 丢弃 eval 输出,只断言 compare 的
+        code = sdk_cli.main(["compare", "--a", by_version["v0"], "--b", by_version["v2"],
+                             "--base-url", server_url, "--token", api_token])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "vs" in out and "新通过 12 条" in out and "回归 0 条" in out
+
+    def test_compare_regression_exit_code(self, server_url, hermetic_storage, api_token, capsys):
+        """B 相对 A 存在回归 → 退出码 1(CI 守回归语义)。
+
+        种子报告的版本轨迹单调,eval 跑不出回归;直接向隔离的 reports/ 播种
+        同评测集两份报告(A 通过 rc-0001,B 失败)构造回归对,走真实 HTTP 链路。
+        """
+        from harness import storage
+
+        def _payload(version: str, ts: str, passed: bool) -> dict:
+            return {"version": version, "evalset_id": "evalset_v1", "timestamp": ts,
+                    "accuracy": 1.0 if passed else 0.0,
+                    "results": [{"case_id": "rc-0001", "title": "t", "label": "阈值错误",
+                                 "passed": passed, "score": 1.0 if passed else 0.0}]}
+
+        pa = storage.save_report("v8", _payload("v8", "2026-11-09T00:00:00", True))
+        pb = storage.save_report("v9", _payload("v9", "2026-11-09T00:01:00", False))
+        code = sdk_cli.main(["compare", "--a", pa.stem, "--b", pb.stem,
+                             "--base-url", server_url, "--token", api_token])
+        assert code == 1
+        assert "回归 1 条: rc-0001" in capsys.readouterr().out

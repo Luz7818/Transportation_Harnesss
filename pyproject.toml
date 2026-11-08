@@ -64,4 +64,6 @@ addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning"]
 # 裸 `pytest`(CI 与 README 的调用法)不会把根目录放进 sys.path,`python -m pytest` 才会;
 # 少了这一行,tests/ 全部模块在收集期 ModuleNotFoundError,退出码 2。
-pythonpath = ["."]
+# `sdk` 使 tests/test_sdk.py 解析到仓库内 SDK 源码而非环境里可能过期的
+# site-packages 旧拷贝 —— CI 靠 `pip install ./sdk` 达到同样效果。
+pythonpath = [".", "sdk"]

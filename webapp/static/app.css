@@ -191,8 +191,39 @@ html[data-vt="out"]::view-transition-new(root) { animation-name: viewPullIn; }
 @keyframes viewPushIn { from { opacity: 0; transform: scale(.97); } }
 @keyframes viewPullOut { to { opacity: 0; transform: scale(.96); filter: blur(3px); } }
 @keyframes viewPullIn { from { opacity: 0; transform: scale(1.05); } }
+
+/* 主题切换 · 圆形揭示(data-vt="theme",Chrome 111+/Safari 18+/FF 133+):
+   与上方推拉块同特异性(html[data-vt]),按属性存在匹配 —— 必须置于其后靠源顺序显式覆盖
+   animation-name/duration。旧快照定格垫底,新快照自点击点圆形展开(--tx/--ty/--r 由 toggleTheme 写入)。
+   --r 取 Math.hypot(到最远角的距离),揭示到边即满屏;时长/缓动从 --dur-4/--ease-out 阶梯取值 */
+html[data-vt="theme"]::view-transition-old(root),
+html[data-vt="theme"]::view-transition-new(root) {
+  animation-duration: var(--dur-4); animation-timing-function: var(--ease-out); animation-fill-mode: both;
+  mix-blend-mode: normal; }   /* 盖掉 UA 的 plus-lighter 交叉淡化混合:揭示是上盖下,不是双像加色 */
+html[data-vt="theme"]::view-transition-old(root) { animation-name: none; }   /* 旧主题定格垫底 */
+html[data-vt="theme"]::view-transition-new(root) { animation-name: vtThemeReveal; }
+@keyframes vtThemeReveal {
+  from { clip-path: circle(0 at var(--tx, 50%) var(--ty, 50%)); }
+  to { clip-path: circle(var(--r, 200vmax) at var(--tx, 50%) var(--ty, 50%)); }
+}
+/* 揭示期间压掉全部颜色过渡(theme-anim 已跳过,但 app.css:15-17 的常驻 dur-2 颜色过渡仍在):
+   换肤瞬间的样式重算必须直落终色,否则新快照定格中间色、揭示完成后二次微变;
+   摘除随 data-vt="theme" 在 vt.finished.finally 同槽清理,不新增定时器 */
+html[data-vt="theme"], html[data-vt="theme"] *,
+html[data-vt="theme"] *::before, html[data-vt="theme"] *::after { transition: none !important; }
 /* VT 接管视图退入场时,抑制 .hidden 摘除自带的入场动画(快照捕获的已是终态) */
 html.vt-run #app:not(.hidden), html.vt-run .fullscreen:not(.hidden) { animation: none; }
+
+/* Case 列表筛选「行位形变」(setFilter 筛选 VT,Chrome 125+ / FF 133+):
+   行由 app-manage.js 设 view-transition-name: case-<id> 逐一配对 —— 保留项滑到新位、移除项淡出;
+   view-transition-class 统一把行对时长/缓动收进阶梯(不支持的引擎规则丢弃走 UA 默认)。
+   html[data-vt](主题揭示/视图推拉)期间行退出捕获:!important 压过行内样式,root 快照保持完整,
+   圆形揭示与推拉不受行对破坏 —— 借既有属性一条规则收口,不加新状态 */
+.tp-item { view-transition-class: case-row; }
+html[data-vt] .tp-item { view-transition-name: none !important; }
+::view-transition-group(.case-row),
+::view-transition-old(.case-row),
+::view-transition-new(.case-row) { animation-duration: var(--dur-3); animation-timing-function: var(--ease-out); }
 
 /* ================= 卡片 ================= */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
@@ -204,6 +235,20 @@ html[data-theme="light"] :is(.card, .vcard, .ai-sec, .st-item) {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.8), var(--shadow-xs); }
 html[data-theme="light"] :is(.card, .vcard, .ai-sec, .st-item):hover {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.8), var(--shadow-sm); }
+/* ================= 卡片「探照灯」跟随悬停 =================
+   ::before 挂 320px 光斑,坐标由 app-core.js 单一 pointermove 委托写入 --mx/--my(卡片局部系)。
+   .card/.vcard 补 position:relative 作定位上下文 —— 卡内绝对定位子孙(.loopback/.tl/.tl-item/
+   .chart-wrap)均自带更近的 positioned 祖先,不会被重新锚定。触屏整组不渲染(hover:none 无此层);
+   无 JS 仅损失光斑:底色 hover 与带色阴影是上方纯 CSS 规则,不受影响 */
+.card, .vcard { position: relative; }
+@media (hover: hover) {
+  .card::before, .vcard::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%),
+                color-mix(in srgb, var(--primary) 8%, transparent), transparent 70%);
+    opacity: 0; transition: opacity var(--dur-2) var(--ease-out); }
+  .card:hover::before, .vcard:hover::before { opacity: 1; }
+}
 .card > h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; letter-spacing: .1px;
              display: flex; align-items: center; gap: 10px; }
 .card > h3 .h-ico { width: 30px; height: 30px; border-radius: 9px; flex: none;
@@ -220,7 +265,7 @@ html[data-theme="light"] :is(.card, .vcard, .ai-sec, .st-item):hover {
        border: 1px solid transparent; cursor: pointer; font: inherit; font-size: 13.5px; font-weight: 600;
        color: #fff; background: var(--primary); padding: 0 18px; height: 38px; border-radius: 8px;
        position: relative;
-       transition: background .15s, transform var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+       transition: background .15s, transform var(--dur-1) var(--ease-spring), box-shadow var(--dur-2) var(--ease-out);
        box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.12), var(--shadow-xs); }
 /* 玻璃光泽层:基色保持可过渡,光泽叠加给按钮「果冻感」;按压时光泽塌陷、内阴影接管 */
 .btn::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
@@ -230,7 +275,10 @@ html[data-theme="light"] :is(.card, .vcard, .ai-sec, .st-item):hover {
 .btn:hover:not(:disabled) { background: var(--primary-h);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1px 0 rgba(0,0,0,.12),
               0 6px 16px -6px rgba(79,70,229,.5); }
-.btn:active:not(:disabled) { transform: translateY(0) scale(.97);
+/* 按压相过冲压制:transition 生效态取「目标态」的计时函数 —— 松开回基态走 --ease-spring
+   有一记回弹;按下进 :active 必须覆盖回 --ease-out 单向收敛,否则 scale(.97) 会按过头 */
+.btn:active:not(:disabled) { transition-timing-function: var(--ease-out);
+  transform: translateY(0) scale(.97);
   box-shadow: inset 0 2px 5px rgba(0,0,0,.28), 0 1px 2px rgba(16,24,40,.08); }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .btn.lg { height: 44px; font-size: 14.5px; padding: 0 24px; border-radius: 11px; }
@@ -361,6 +409,40 @@ details.changes li { margin-bottom: 3px; }
 .loopback .lb-head { position: absolute; left: -6px; top: -7px; width: 11px; height: 11px;
                      border-left: 1.5px dashed var(--loop-line); border-top: 1.5px dashed var(--loop-line);
                      transform: rotate(45deg); }
+/* ================= 闭环「车流虚线 + 光点巡航」 =================
+   基线是上方静态虚线 U;runEval/runEvolve 贴 withBusy 生命周期挂/摘 .running(app-board.js),
+   成功失败都刹停,不加轮询。车流层 = 三段贴边 repeating-linear-gradient 位移
+   (background-position 一周期循环,纯 CSS 全引擎可用):左段↓、底段→、右段↑ 连成回路。
+   光点 .lb-dot 为铺满层,可见珠心居中 —— offset-path 参照框两种口径下路径一致(参照框=自身
+   border-box 或包含块,均得同一 U 形周界);周界含无边框开放顶边,读作「回路完整一周」 */
+.loopback::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 60%, transparent) 0 6px, transparent 6px 14px)
+      left top / 1.5px 14px repeat-y,
+    linear-gradient(90deg, color-mix(in srgb, var(--primary) 60%, transparent) 0 6px, transparent 6px 14px)
+      left bottom / 14px 1.5px repeat-x,
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 60%, transparent) 0 6px, transparent 6px 14px)
+      right top / 1.5px 14px repeat-y;
+  opacity: 0; transition: opacity var(--dur-2) var(--ease-out); }
+.loopback.running::before { opacity: 1; animation: loopFlow .8s linear infinite; }
+.loopback .lb-dot { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+                    transition: opacity var(--dur-2) var(--ease-out); }
+.loopback .lb-dot::after { content: ""; position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--primary);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 65%, transparent); }
+@supports (offset-path: inset(0px)) {
+  .loopback.running .lb-dot { opacity: 1; offset-path: inset(0 round 0 0 14px 14px);
+    offset-rotate: 0deg; animation: lbCruise 7s linear infinite; }
+}
+@keyframes loopFlow {
+  to { background-position: 0 14px, 14px 100%, 100% -14px; }   /* 左↓ 一周期 / 底→ / 右↑ */
+}
+@keyframes lbCruise { to { offset-distance: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  /* 全局 kill switch 之外定向收口:动画停了也不留静止车流层与滞留光点,只剩虚线基线 */
+  .loopback::before, .loopback .lb-dot { display: none; }
+}
 
 /* ================= 时间线 ================= */
 .tl { position: relative; padding-left: 24px; }
@@ -446,8 +528,9 @@ details.changes li { margin-bottom: 3px; }
 .chip2.good { background: var(--ok-soft); color: var(--ok); }
 .chip2.warn { background: var(--bad-soft); color: var(--bad); }
 .chip2.plain { background: var(--chip-bg); color: var(--t2); }
-.chip2.click { cursor: pointer; transition: filter var(--dur-1), transform .1s; }
-.chip2.click:active { transform: scale(.96); }
+/* 可点击 chip 同 .btn 的弹簧方案:松开回弹、按压收敛(见 .btn:active 注释) */
+.chip2.click { cursor: pointer; transition: filter var(--dur-1), transform var(--dur-1) var(--ease-spring); }
+.chip2.click:active { transition-timing-function: var(--ease-out); transform: scale(.96); }
 .chip2.click:hover { filter: brightness(.96); }
 
 /* ================= 表格 ================= */
@@ -1127,6 +1210,27 @@ html[data-theme="dark"] .topbar.scrolled { box-shadow: 0 8px 18px -12px rgba(0,0
 .vcard:nth-child(3) { animation-delay: 120ms; }
 .vcard:nth-child(4) { animation-delay: 180ms; }
 .vcard:nth-child(n+5) { animation-delay: 240ms; }
+/* 滚动驱动「贴手」入场(Chrome 115+):双门控照搬 scroll() 进度线先例 —— @supports 内再套
+   no-preference,不支持的引擎与 reduce 均走上方时间型 rise(现状不变)。view() 把浮现节奏交给
+   滚动位置:清除时间型级差 delay(实测 .tl-item 50/100/150/200ms、.vcard 60/120/180/240ms),
+   逐个浮现改由滚动位置天然错峰;tbody tr 补同款轻 rise,消除全站唯一零动效内容区 */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .tl-item, .vcard, tbody tr {
+      animation-name: rise;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;   /* 元素探入视口 55% 前完成浮现,贴手 */
+      animation-duration: auto;              /* 时长由滚动区间接管(不支持 auto 则回落 .38s/.4s,映射等价) */
+      animation-delay: 0s;
+    }
+    /* 级差清零需与 nth-child 级差规则同特异性且居后源序:逐条对位覆盖 */
+    .tl-item:nth-child(2), .vcard:nth-child(2) { animation-delay: 0s; }
+    .tl-item:nth-child(3), .vcard:nth-child(3) { animation-delay: 0s; }
+    .tl-item:nth-child(4), .vcard:nth-child(4) { animation-delay: 0s; }
+    .tl-item:nth-child(n+5), .vcard:nth-child(n+5) { animation-delay: 0s; }
+  }
+}
 #sheet-body > *, #drawer-body > * { animation: rise var(--dur-4) var(--ease-out) both; }
 #sheet-body > :nth-child(2), #drawer-body > :nth-child(2) { animation-delay: 40ms; }
 #sheet-body > :nth-child(3), #drawer-body > :nth-child(3) { animation-delay: 80ms; }

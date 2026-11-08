@@ -13,17 +13,17 @@
 
 "use strict";
 
-const SHELL_CACHE = "harness-shell-v12";
+const SHELL_CACHE = "harness-shell-v13";
 const API_CACHE = "harness-api-v1";
 
 const SHELL_ASSETS = [
   "/",
   "/help",
-  "/static/tokens.css?v=1",
-  "/static/app.css?v=1",
-  "/static/app-core.js?v=1",
-  "/static/app-board.js?v=1",
-  "/static/app-manage.js?v=1",
+  "/static/tokens.css?v=2",
+  "/static/app.css?v=2",
+  "/static/app-core.js?v=2",
+  "/static/app-board.js?v=2",
+  "/static/app-manage.js?v=2",
   "/static/assets/icon.svg?v=6",
   "/static/assets/icon-192.png?v=6",
   "/static/assets/icon-512.png?v=6",

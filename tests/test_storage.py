@@ -74,9 +74,14 @@ def test_list_evalsets_and_datasets(hermetic_storage):
     assert evalsets["evalset_v1"]["case_count"] == 13
     assert evalsets["evalset_scenario_rain"]["case_count"] == 3
 
-    datasets = {d["name"] for d in storage.list_datasets()}
+    datasets = {d["name"]: d for d in storage.list_datasets()}
     assert {"base", "rain_peak", "incident", "evening_peak",
-            "missing_volume", "empty"} <= datasets
+            "missing_volume", "empty"} <= set(datasets)
+    # 溯源字段贯通:只验结构存在性与非空,不把内容值钉进测试
+    for name in ("base", "rain_peak", "incident", "evening_peak",
+                 "missing_volume", "empty"):
+        assert datasets[name]["source"], name
+        assert datasets[name]["captured_at"], name
 
 
 def test_atomic_write_leaves_no_tmp(hermetic_storage):

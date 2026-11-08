@@ -784,6 +784,14 @@ def api_compare(a: str, b: str) -> dict:
         raise HTTPException(400, str(exc)) from exc
     except FileNotFoundError as exc:
         raise HTTPException(404, f"报告不存在:{exc}") from exc
+    # 跨评测集守卫:按 case_id 并集配对会把单侧 case 混入差分,令
+    # newly_passed/regressed 失真;两报告必须出自同一评测集(看板下拉已从
+    # 源头过滤,这里只作 API 层兜底)。
+    ea, eb = pa.get("evalset_id"), pb.get("evalset_id")
+    if not ea or not eb:
+        raise HTTPException(400, f"报告缺 evalset_id,无法对比:{a} / {b}")
+    if ea != eb:
+        raise HTTPException(400, f"跨评测集不可对比:{a} 属 {ea},{b} 属 {eb}")
     ra = {r["case_id"]: r for r in pa["results"]}
     rb = {r["case_id"]: r for r in pb["results"]}
     rows = [{

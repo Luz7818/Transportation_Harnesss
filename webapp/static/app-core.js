@@ -266,11 +266,18 @@ function switchTab(tab) {
 /* 减弱动态开关:动效注入/回放直出/轨道环共用(原在进化回放分节,拆分时上移至基础层) */
 const REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 /* ============ 主题(明/暗) ============ */
-function applyTheme(theme) {
+/* opts.instant:VT 圆形揭示路径跳过 340ms 颜色过渡 —— 快照会定格中间色,揭示完成后二次微变;
+   回退路径(命令面板/键盘/reduced-motion/无 VT)不传 instant,保留 theme-anim */
+function applyTheme(theme, opts = {}) {
   document.documentElement.dataset.theme = theme;
-  document.documentElement.classList.add("theme-anim");   // 切换瞬间全要素颜色过渡
-  clearTimeout(applyTheme._t);
-  applyTheme._t = setTimeout(() => document.documentElement.classList.remove("theme-anim"), 340);
+  if (opts.instant) {
+    clearTimeout(applyTheme._t);
+    document.documentElement.classList.remove("theme-anim");
+  } else {
+    document.documentElement.classList.add("theme-anim");   // 切换瞬间全要素颜色过渡
+    clearTimeout(applyTheme._t);
+    applyTheme._t = setTimeout(() => document.documentElement.classList.remove("theme-anim"), 340);
+  }
   try { localStorage.setItem("harness_theme", theme); } catch {}
   $$("[data-theme-toggle]").forEach(btn => { btn.innerHTML = icon(theme === "dark" ? "sun" : "moon", 14); });
   document.querySelector('meta[name="theme-color"]')   // 移动端状态栏/标题栏随主题联动
@@ -278,8 +285,7 @@ function applyTheme(theme) {
   applyHeroTheme();   // 欢迎页/登录页与工作台共用同一主题,不再各存一份
 }
 $$("[data-theme-toggle]").forEach(btn =>
-  btn.addEventListener("click",
-    () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")));
+  btn.addEventListener("click", e => toggleTheme(e.clientX, e.clientY)));
 applyTheme(document.documentElement.dataset.theme || "light");
 
 /* 欢迎页/登录页主题:与工作台同步(同一 data-theme,两处按钮等效) */
@@ -290,8 +296,7 @@ function applyHeroTheme() {
   $$("[data-hero-toggle]").forEach(btn => { btn.innerHTML = icon(light ? "moon" : "sun", 14); });
 }
 $$("[data-hero-toggle]").forEach(btn =>
-  btn.addEventListener("click", () =>
-    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")));
+  btn.addEventListener("click", e => toggleTheme(e.clientX, e.clientY)));
 /* ============ 视图分流与登录 ============ */
 const views = { welcome: $("#view-welcome"), login: $("#view-login"), app: $("#app") };
 /* 支持 View Transitions 的浏览器:视图/页签切换走快照形变,并抑制 .hidden 摘除自带的入场动画。
@@ -311,6 +316,33 @@ function withViewTransition(applySwap) {
   const bail = setTimeout(once, 350);
   const vt = document.startViewTransition(() => { clearTimeout(bail); once(); });
   return vt;
+}
+
+/* 主题切换统一入口:点击链带坐标走 VT 圆形揭示(圆心=点击点,--r=Math.hypot 到最远角),
+   揭示期间 data-vt="theme" 兼任颜色过渡压制(快照须直落终色,见 app.css 揭示块注释);
+   命令面板/键盘触发无坐标、reduced-motion、无 VT —— 自然回落 applyTheme 的 340ms 颜色过渡。
+   data-vt 的设置与摘除复用 showView 的 dataset.vt + vt.finished.finally 守卫清理模式:
+   同一属性两种取值(theme/in/out),不引入第二个状态机与第二个摘除定时器 */
+function toggleTheme(clickX, clickY) {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  const root = document.documentElement;
+  const hasPoint = Number.isFinite(clickX) && Number.isFinite(clickY) && (clickX || clickY);
+  if (!hasPoint || !canViewTransition()) { applyTheme(next); return; }
+  root.style.setProperty("--tx", `${clickX}px`);
+  root.style.setProperty("--ty", `${clickY}px`);
+  root.style.setProperty("--r",
+    `${Math.hypot(Math.max(clickX, innerWidth - clickX), Math.max(clickY, innerHeight - clickY))}px`);
+  root.dataset.vt = "theme";
+  const vt = withViewTransition(() => applyTheme(next, { instant: true }));
+  if (vt) {
+    toggleTheme._vt = vt;
+    vt.finished.finally(() => {   // 只清理自己那次的标记;属性可能已被视图切换改写成 in/out
+      if (toggleTheme._vt === vt) {
+        if (root.dataset.vt === "theme") delete root.dataset.vt;
+        toggleTheme._vt = null;
+      }
+    });
+  } else toggleTheme._vt = null;
 }
 
 /* 视图切换(开始页 ↔ 登录 ↔ 工作台):纵深推进 —— 按视图层级定方向 */
@@ -341,7 +373,9 @@ function showView(name) {
       showView._vt = vt;
       vt.finished.finally(() => {   // 只清理自己那次的标记,避免误删后一次切换的
         if (showView._vt === vt) {
-          delete document.documentElement.dataset.vt;
+          // 主题揭示(data-vt="theme")与视图切换共用本属性:只摘自己的取值
+          if (document.documentElement.dataset.vt === "in" || document.documentElement.dataset.vt === "out")
+            delete document.documentElement.dataset.vt;
           showView._vt = null;
         }
       });
@@ -514,7 +548,7 @@ async function cmdkActions() {
     { ico: "panelLeft", label: "展开 / 收起任务区", cat: "命令", run: () => setTaskCollapsed() },
     { ico: "chevR", label: "展开 / 收起侧栏", cat: "命令", run: () => setSideCollapsed() },
     { ico: "sun", label: "切换明暗主题", cat: "命令",
-      run: () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark") },
+      run: () => toggleTheme() },   // 无坐标:自然回退 340ms 颜色过渡,不走揭示
     { ico: "book", label: "打开文档中心", cat: "命令", run: () => window.open("/help", "_blank") },
     { ico: "logout", label: "退出登录", cat: "命令", run: () => doLogout() },
   ];
@@ -596,6 +630,25 @@ document.addEventListener("pointerdown", e => {
   r.addEventListener("animationend", () => r.remove(), { once: true });
   setTimeout(() => r.remove(), 820);   // 兜底:动画被全局规则停用等极端情况下也不残留
 }, { passive: true });
+/* ============ 卡片「探照灯」跟随悬停 ============ */
+/* document 级单一 pointermove 委托 + rAF 节流:把光斑坐标(卡片局部系)写进最近 .card/.vcard
+   的 --mx/--my,渐变与淡入淡出全在 CSS(app.css 探照灯块)。REDUCED 载入快照为真不注册;
+   触屏由 @media (hover:none) 整组不渲染;无 JS 时仅损失光斑,底色 hover 与带色阴影不受影响 */
+if (!REDUCED) {
+  let spotRaf = 0, spotCard = null, spotX = 0, spotY = 0;
+  document.addEventListener("pointermove", (e) => {
+    spotCard = e.target.closest ? e.target.closest(".card, .vcard") : null;
+    if (!spotCard) return;
+    spotX = e.clientX; spotY = e.clientY;
+    if (spotRaf) return;
+    spotRaf = requestAnimationFrame(() => {
+      spotRaf = 0;
+      const r = spotCard.getBoundingClientRect();
+      spotCard.style.setProperty("--mx", `${Math.round(spotX - r.left)}px`);
+      spotCard.style.setProperty("--my", `${Math.round(spotY - r.top)}px`);
+    });
+  }, { passive: true });
+}
 /* ============ 导航 ============ */
 const TITLES = {
   dashboard: ["评测看板", "评测驱动迭代:基线 → 最多 2 轮 → 验证无回归 → 归档报告"],

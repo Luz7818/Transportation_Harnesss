@@ -4,6 +4,7 @@
     harness-client versions
     harness-client analyze --version v2 --dataset base
     harness-client eval --version v2
+    harness-client compare --a report_v1_… --b report_v2_…   # 守回归:存在回归退出码 1
 
 地址与令牌支持环境变量 HARNESS_BASE_URL / HARNESS_TOKEN,免去重复输入
 (默认地址为 http://127.0.0.1:8765,本地起服务后直接可用)。
@@ -62,6 +63,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_an.add_argument("--version", default="v2", help="管线版本(默认 v2)")
     p_an.add_argument("--dataset", required=True, help="情景数据集名(见 datasets)")
 
+    p_cmp = sub.add_parser("compare", help="对比两份报告:存在回归退出码 1(CI 守回归)",
+                           parents=[_common_args(defaults=False)])
+    p_cmp.add_argument("--a", required=True, help="报告 A(基线)的 ID")
+    p_cmp.add_argument("--b", required=True, help="报告 B(对比)的 ID")
+
     return parser
 
 
@@ -88,6 +94,18 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"  FAIL {case.case_id} [{case.label}] {case.title}")
             elif args.command == "analyze":
                 _print(client.analyze(version=args.version, dataset_name=args.dataset))
+            elif args.command == "compare":
+                comparison = client.compare(a=args.a, b=args.b)
+                print(f"A {comparison.a_version} {comparison.a_accuracy:.1%}"
+                      f"({comparison.a_report_id}) vs "
+                      f"B {comparison.b_version} {comparison.b_accuracy:.1%}"
+                      f"({comparison.b_report_id})")
+                print(f"新通过 {len(comparison.newly_passed)} 条:"
+                      f" {', '.join(comparison.newly_passed) or '—'}")
+                print(f"回归 {len(comparison.regressed)} 条:"
+                      f" {', '.join(comparison.regressed) or '—'}")
+                if comparison.regressed:
+                    return 1  # CI 守回归:回归非空即失败
         finally:
             client.close()
     except Exception as exc:  # CLI 边界:统一转为非零退出码

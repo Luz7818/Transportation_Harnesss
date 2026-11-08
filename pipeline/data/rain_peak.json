@@ -6,6 +6,7 @@
     "insight": "降雨使各路段通行能力下降约 15%(capacity_per_lane 已按 0.85 折算)、车速普降;同等出行需求下饱和度整体上移,多个路段升级为拥堵/严重拥堵。可用于检验管线在恶劣天气下的稳健性与预警灵敏度。"
   },
   "captured_at": "2026-09-05 08:00",
+  "source": "合成快照",
   "segments": [
     {"segment_id": "S-01", "name": "城东大道", "length_km": 3.2, "lane_count": 4, "capacity_per_lane": 1530, "volume": 2850, "speed": 40, "free_flow_speed": 60},
     {"segment_id": "S-02", "name": "学府路", "length_km": 1.8, "lane_count": 2, "capacity_per_lane": 1445, "volume": 2950, "speed": 16, "free_flow_speed": 50},

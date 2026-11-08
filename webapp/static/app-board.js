@@ -179,7 +179,7 @@ function renderDashOverview(d) {
            <div class="s-title">${t}</div><div class="s-sub">${sub}</div></div>`
       ).join(`<div class="s-arrow">${icon("chevR", 16)}</div>`)}</div>
       <div class="loopback"><div class="lb-head"></div>
-        <div class="lb-label">${icon("cycle", 13)}新 badcase 回流 → 评测集增长 → 下一轮进化</div></div>
+        <div class="lb-label">${icon("cycle", 13)}新 badcase 回流 → 评测集增长 → 下一轮进化</div><div class="lb-dot"></div></div>
     </div>`;
 
   /* --- 进化时间线 --- */
@@ -382,15 +382,24 @@ document.addEventListener("mousemove", (e) => {
   tipEl.style.top = Math.max((e.clientY - wrapRect.top) - 30, 4) + "px";
 });
 
+/* 闭环「车流虚线 + 光点巡航」开关:贴 withBusy 生命周期 —— 发起挂 .running,resolve 摘除刹停
+   (withBusy 吞错不抛,await 后必达,成功失败同路);纯类切换,动画全在 CSS,不加轮询 */
+function loopRunning(on) {
+  $$(".loopback").forEach(el => el.classList.toggle("running", on));
+}
+
 async function runEval(btn, version) {
+  loopRunning(true);
   await withBusy(btn, async () => {
     const rep = await api("/api/eval/run", { version, evalset: currentEvalset });
     toast(`${version} 在 ${currentEvalset} 上评测完成:${rep.passed_count}/${rep.total}(${pct(rep.accuracy)})`);
     await renderDashboard();
   });
+  loopRunning(false);
 }
 
 async function runEvolve(btn) {
+  loopRunning(true);
   await withBusy(btn, async () => {
     const s = await api("/api/evolve/run", { evalset: currentEvalset, baseline: currentBaseline });
     const b = s.baseline;
@@ -422,27 +431,43 @@ async function runEvolve(btn) {
     toast(`自进化完成:最佳 ${s.best.version} ${pct(s.best.accuracy)}`);
     loadHealth();
   });
+  loopRunning(false);
 }
 /* ============ 版本对比 ============ */
+function filterCompareB() {
+  /* A 的评测集联动过滤 B 的选项:跨评测集组合从源头不可选,/api/compare 的 400 仅作 API 层兜底。 */
+  const sa = $("#cmp-a"), sb = $("#cmp-b");
+  if (!sa || !sb) return;
+  const evalset = sa.selectedOptions[0]?.dataset.evalset ?? "";
+  let firstUsable = null;
+  for (const o of sb.options) {
+    const usable = o.dataset.evalset === evalset;
+    o.hidden = !usable;
+    o.disabled = !usable;
+    if (usable && !firstUsable) firstUsable = o;
+  }
+  if (firstUsable && sb.selectedOptions[0]?.hidden) sb.value = firstUsable.value;
+}
 async function renderCompare() {
   const reports = await api("/api/reports");
   const options = reports.map(r =>
-    `<option value="${esc(r.report_id)}">${esc(r.report_id)}(${esc(r.version)} ${pct(r.accuracy)})</option>`).join("");
+    `<option value="${esc(r.report_id)}" data-evalset="${esc(r.evalset_id || "")}">${esc(r.report_id)}(${esc(r.version)} ${pct(r.accuracy)})</option>`).join("");
   $("#tab-compare").innerHTML = `
     <div class="card">
       <h3><span class="h-ico">${icon("scale", 16)}</span>报告对比</h3>
-      <p class="desc">闭环第 6 步:迭代是否合格,取决于「目标案例提升 + 历史案例不回归」,这里做逐 case 差分。</p>
+      <p class="desc">闭环第 6 步:迭代是否合格,取决于「目标案例提升 + 历史案例不回归」,这里做逐 case 差分。仅支持同一评测集内的报告对比。</p>
       ${reports.length < 2 ? emptyBox("scale", "至少需要两份报告才能对比", "先在评测看板运行评测生成报告")
         : `<div class="row">
-            <div><label>报告 A(基线)</label><select id="cmp-a">${options}</select></div>
+            <div><label>报告 A(基线)</label><select id="cmp-a" onchange="filterCompareB()">${options}</select></div>
             <div><label>报告 B(对比)</label><select id="cmp-b">${options}</select></div>
           </div>
           <p style="display:flex;gap:10px;margin:16px 0 0">
             <button class="btn" id="cmp-go" onclick="doCompare(this)">${icon("scale", 15)} 对比</button>
-            <button class="btn secondary" onclick="const a=$('#cmp-a'),b=$('#cmp-b');[a.value,b.value]=[b.value,a.value]">${icon("swap", 15)} 交换</button>
+            <button class="btn secondary" onclick="const a=$('#cmp-a'),b=$('#cmp-b');[a.value,b.value]=[b.value,a.value];filterCompareB()">${icon("swap", 15)} 交换</button>
           </p>
           <div id="cmp-out"></div>`}
     </div>`;
+  filterCompareB();              // 初始按 A 默认选中项过滤 B
   await doCompareFromPreset();   // 快捷对比入口先把 preset 写入 sessionStorage,这里渲染完即消费(无竞态)
 }
 const DIFF_BADGE = { fixed: "修复", regressed: "回归", changed: "数值变化",
@@ -765,7 +790,9 @@ async function doCompareFromPreset() {
   const { a, b } = JSON.parse(preset);
   const sa = $("#cmp-a"), sb = $("#cmp-b"), go = $("#cmp-go");
   if (!sa || !sb || !go) return;
-  sa.value = a; sb.value = b;
+  sa.value = a;
+  filterCompareB();   // A 变更联动过滤 B;跨评测集的 preset 值仍在选项里,由 /api/compare 的 400 兜底提示
+  sb.value = b;
   await doCompare(go);
 }
 /* ============ 全局快捷键 ============ */

@@ -45,7 +45,7 @@ function renderCaseItems(cases) {
       || c.label.toLowerCase().includes(kw) || (c.dataset_name || "").toLowerCase().includes(kw)));
   box.innerHTML = shown.length ? shown.map(c => {
     const lv = (c.checks || []).find(k => k.type === "classify");
-    return `<div class="tp-item ${selectedCaseId === c.case_id ? "sel" : ""}" onclick="selectCase('${esc(c.case_id)}')">
+    return `<div class="tp-item ${selectedCaseId === c.case_id ? "sel" : ""}" style="view-transition-name: case-${esc(c.case_id)}" onclick="selectCase('${esc(c.case_id)}')">
       <div class="ti-top"><span class="ti-id">${esc(c.case_id)}</span>
         <span class="ti-title" title="${esc(c.title)}">${esc(c.title)}</span></div>
       <div class="ti-meta">${lv && lv.expected ? lvPill(lv.expected) : ""}<span>${esc(c.label)}</span>
@@ -67,7 +67,13 @@ function caseWsNew() {
   renderCaseTaskPanel(window.__casesCache || []);
   renderCaseWorkspace(window.__casesCache || []);
 }
-function setFilter(label) { caseFilter = label; renderCaseTaskPanel(window.__casesCache || []); }
+function setFilter(label) {
+  caseFilter = label;
+  /* 标签筛选:VT 包 renderCaseTaskPanel 级重建(chips+搜索框与行一起进快照),保留项滑到新位、
+     移除项淡出 —— 行配对靠 renderCaseItems 的 view-transition-name: case-<id>。
+     搜索键入(setCaseSearch)按上方 :38 刻意设计仍直绘不包 VT(焦点与组合态不丢) */
+  withViewTransition(() => renderCaseTaskPanel(window.__casesCache || []));
+}
 function refreshCasesIfVisible() {
   if (!views.app.classList.contains("hidden") && $("#tab-cases").classList.contains("active")) renderCases();
 }

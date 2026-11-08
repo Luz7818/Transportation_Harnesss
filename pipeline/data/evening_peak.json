@@ -6,6 +6,7 @@
     "insight": "17:30-18:30 通勤潮汐方向反转:早高峰的拥堵走廊(学府路/长江路)压力明显回落,而泉山南路等联络线与文昌桥进入高位运行;用于检验管线对方向性流量重分布的表达能力。"
   },
   "captured_at": "2026-08-31 17:45",
+  "source": "合成快照",
   "segments": [
     {"segment_id": "S-01", "name": "城东大道", "length_km": 3.2, "lane_count": 4, "capacity_per_lane": 1800, "volume": 3200, "speed": 42, "free_flow_speed": 60},
     {"segment_id": "S-02", "name": "学府路", "length_km": 1.8, "lane_count": 2, "capacity_per_lane": 1700, "volume": 2600, "speed": 24, "free_flow_speed": 50},

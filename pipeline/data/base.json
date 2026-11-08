@@ -6,6 +6,7 @@
     "insight": "基准情景:工作日 8:00 主城区常规早高峰,用于标定其它情景的对比基线。"
   },
   "captured_at": "2026-08-31 08:00",
+  "source": "合成快照",
   "segments": [
     {"segment_id": "S-01", "name": "城东大道", "length_km": 3.2, "lane_count": 4, "capacity_per_lane": 1800, "volume": 3000, "speed": 45, "free_flow_speed": 60},
     {"segment_id": "S-02", "name": "学府路", "length_km": 1.8, "lane_count": 2, "capacity_per_lane": 1700, "volume": 3100, "speed": 18, "free_flow_speed": 50},
