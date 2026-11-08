@@ -5,8 +5,8 @@
 
 ## 当前进度
 
-- 正在做：无——「v2.2.1 看板韧性收口」与「TH-04 前端无构建拆分」已完成（2026-11-02~04，见 HISTORY）
-- 下一个：任务 3（2.0 真实数据接入；前置 TH-04 已清,拆分后渲染路径改 app-board.js/app-manage.js）或任务 4（建议文案可执行性）
+- 正在做：无——「v2.3.0 收口批」（数据集溯源贯通 / 摄取 CLI / 对比守卫 / CLI compare / 看板体验批）已完成（2026-11-09，见 HISTORY）
+- 下一个：任务 3（2.0 真实数据接入；前置已清——`source`/`captured_at` 溯源字段与 `scripts/import_dataset.py` 摄取通道已就位，换数据源即走该 CLI）或任务 4（建议文案真实复验,仍待端点配额）
 
 ## 任务计划
 
@@ -22,6 +22,7 @@
 
 ## 完成记录
 
+- [x] v2.3.0 收口批:数据集溯源字段贯通(`list_datasets` 增回 `source`/`captured_at` 经 `/api/datasets` 透出)+ 数据集摄取 CLI `scripts/import_dataset.py`(CSV/JSON 校验原子写,落地「新数据源」扩展点)+ `/api/compare` 跨评测集守卫(400 + 看板下拉按 A 侧评测集过滤)+ `harness-client compare` 子命令(回归退出码 1,「CI 里守回归」落地)+ 看板体验批(`--ease-spring` 弹簧曲线 / 主题切换 VT 圆形揭示 / 缓存穿透)—— 2026-11-09(见 HISTORY)
 - [x] TH-04 前端无构建拆分:静态前端 1 文件 3915 行 → 9 文件(index 壳 270 + tokens.css 56 + app.css 1375 + app-core 759/app-board 782/app-manage 677 三经典脚本按 core→board→manage 加载 + help 1025 + sw 117),零构建零依赖不变;浏览器全功能回归 + 计算样式逐项对比零回归,SW 注册断言随架构适配 —— 2026-11-02~04(见 HISTORY 三条)
 - [x] v2.2.1 看板韧性收口:auth 行为缺陷修复(改密下限统一 8 位/用户名白名单,周报 TH-05/TH-07)+三栏外壳挤压韧性(顶栏标题竖排折行容器查询修复/侧栏品牌完整显示/AI 面板覆盖化阈值上提 1200)+数字区 tabular-nums 清尾 —— 2026-11-02(见 HISTORY)
 

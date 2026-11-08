@@ -67,7 +67,7 @@ Python SDK、CLI 四个客户端，默认全程离线确定性（LLM 走 Mock）
 | `cases/` | replaycase 库 | 按失败标签分目录，一 case 一 JSON |
 | `evalsets/` | 评测集清单 | `case_ids` 顺序即重放顺序 |
 | `reports/` | 归档产物 | `report_<v>_<时间>.json`、`evolution_*.json`、`report_evolution_*.md` |
-| `scripts/` | 命令行工具箱 | seed / run_eval / verify / backup / export_openapi / generate_pwa_icons / check_release / probe_live |
+| `scripts/` | 命令行工具箱 | seed / run_eval / verify / backup / export_openapi / generate_pwa_icons / check_release / probe_live / import_dataset |
 | `sdk/` | 官方 Python SDK | `harness_client/`；`dist/` 下 wheel 按约定入库 |
 | `miniprogram/` | 微信小程序 | 4 Tab + 5 二级页，统一 Bearer 会话令牌 |
 | `tests/` | 测试 | `conftest.py` 把资产目录与 `.env`、`auth.json` 全隔离到临时目录 |
@@ -200,7 +200,7 @@ Runtime 统一负责配置/JSON 输出/重试/缓存/审计;未配置 Key 自动
 | 管线 v3 | `pipeline/versions.py` 实现 `analyze_v3` 并注册 |
 | 新检查类型 | `CheckSpec.type` 加语义 → `BaseJudge` 子类注册到 `CompositeJudge` |
 | 真实 LLM judge | 继承 `BaseJudge` 替换成员;runner/报告零改动 |
-| 新数据源 | `storage.load_dataset` 支持 CSV/DB,或加 ingest 端点;管线零改动 |
+| 新数据源 | `scripts/import_dataset.py` 摄取 CSV/JSON 进 `pipeline/data/`(校验 + 原子写);DB 等其它源再扩,管线零改动 |
 | 新客户端 | 任何能发 HTTP 的端:REST + OpenAPI 已就绪 |
 | 抽成通用框架 | `harness/` 对领域零依赖,注册表模式整体可迁移 |
 

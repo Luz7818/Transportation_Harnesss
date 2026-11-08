@@ -12,25 +12,25 @@
 
 | 文件 | 干什么 | 备注 |
 | --- | --- | --- |
-| `pyproject.toml` | 包元数据：名 `transportation-harness-sdk`、版本 `2.0.0`、依赖只有 `httpx>=0.27`、`harness-client` 命令行入口、hatchling 构建 | 与服务端版本需同步（`FastAPI(version=...)` 与根 `pyproject.toml`） |
+| `pyproject.toml` | 包元数据：名 `transportation-harness-sdk`、版本 `2.3.0`、依赖只有 `httpx>=0.27`、`harness-client` 命令行入口、hatchling 构建 | 与服务端版本需同步（`FastAPI(version=...)` 与根 `pyproject.toml`） |
 | `harness_client/client.py` | `TransportationHarnessClient`：30 个公开方法（含 `close`），其中 29 个对应 API 操作 —— `/api/settings` 的 GET/PUT 刻意不接 | 凭据两条通道：`token=` 走 `X-API-Token`，`username`+`password` 自动登录并持有会话 Cookie |
 | `harness_client/models.py` | 强类型返回：`EvalResult`（含 `report_id`、`failed_cases()`）、`CaseResult`、`CheckResult`、`CompareResult`（含 `regressed`）、`CompareRow` | 只对「评测结果」与「版本对比」两类核心负载建模；其余端点返回原生 dict，避免模型层与后端强耦合 |
-| `harness_client/cli.py` | `harness-client` 命令行：`health` / `versions` / `datasets` / `analyze` / `eval` | 地址与令牌取 `HARNESS_BASE_URL` / `HARNESS_TOKEN`，默认 `http://127.0.0.1:8765`；出错统一退出码 1 并把 `错误:…` 写 stderr |
+| `harness_client/cli.py` | `harness-client` 命令行：`health` / `versions` / `datasets` / `analyze` / `eval` / `compare` | 地址与令牌取 `HARNESS_BASE_URL` / `HARNESS_TOKEN`，默认 `http://127.0.0.1:8765`；出错统一退出码 1 并把 `错误:…` 写 stderr；`compare` 存在回归也退出码 1（CI 守回归） |
 | `harness_client/errors.py` | `HarnessAuthError`（401）与 `HarnessAPIError`（其它非 2xx，带 `.status`） | pydantic 校验错误数组会被拼成一句可读文本 |
-| `harness_client/__init__.py` | 导出与 `__version__ = "2.0.0"` | 只 re-export，不含逻辑 |
-| `dist/transportation_harness_sdk-2.0.0-py3-none-any.whl` / `.tar.gz` | 构建产物，按约定入库 | 改了包内容要重新构建再提交，别手改 |
+| `harness_client/__init__.py` | 导出与 `__version__ = "2.3.0"` | 只 re-export，不含逻辑 |
+| `dist/transportation_harness_sdk-2.3.0-py3-none-any.whl` / `.tar.gz` | 构建产物，按约定入库 | 改了包内容要重新构建再提交，别手改 |
 | `README.md` | 本文件 | — |
 
 ## 子目录
 
 | 子目录 | 负责 |
 | --- | --- |
-| `harness_client/` | 包的主体，5 个 `.py`、共 515 行：`client.py`（唯一的 HTTP 出口）、`models.py`（5 个 dataclass）、`cli.py`（5 个子命令）、`errors.py`（2 个异常类）、`__init__.py`（re-export 与 `__version__`） |
-| `dist/` | 构建产物 2 个文件：`transportation_harness_sdk-2.0.0-py3-none-any.whl` 与 `.tar.gz`，**已入库**（核对，在仓库根执行：`git ls-files sdk/dist` → 2 行）。`.docsignore` 里那行 `dist/` 登记的是仓库根那个前端 zip，不是这里「可以不构建」的凭据 |
+| `harness_client/` | 包的主体，5 个 `.py`、共 533 行：`client.py`（唯一的 HTTP 出口）、`models.py`（5 个 dataclass）、`cli.py`（6 个子命令）、`errors.py`（2 个异常类）、`__init__.py`（re-export 与 `__version__`） |
+| `dist/` | 构建产物 2 个文件：`transportation_harness_sdk-2.3.0-py3-none-any.whl` 与 `.tar.gz`，**已入库**（核对，在仓库根执行：`git ls-files sdk/dist` → 2 行）。`.docsignore` 里那行 `dist/` 登记的是仓库根那个前端 zip，不是这里「可以不构建」的凭据 |
 
 规模核对（在仓库根执行：
 `python -X utf8 -c "import glob;print(len(glob.glob('sdk/harness_client/*.py')),sum(len(open(p,encoding='utf-8').readlines()) for p in glob.glob('sdk/harness_client/*.py')),len(glob.glob('sdk/dist/*')))"`
-→ `5 515 2`）。逐文件说明见上面的文件清单，`__pycache__/` 是本地字节码、不入库。
+→ `5 533 2`）。逐文件说明见上面的文件清单，`__pycache__/` 是本地字节码、不入库。
 
 ## 和谁打交道
 
@@ -91,6 +91,7 @@ with TransportationHarnessClient(base_url="http://<你的服务器地址>:8765",
 harness-client health --base-url http://<你的服务器地址>:8765 --token <AUTH_TOKEN 的值>
 harness-client eval --version v2            # 不传 --base-url/--token 时取本地默认与
                                             # HARNESS_BASE_URL / HARNESS_TOKEN 环境变量
+harness-client compare --a report_v1_… --b report_v2_…   # 守回归:存在回归退出码 1
 ```
 
 完整接入文档见 [docs/INTEGRATION.md](../docs/INTEGRATION.md)。

@@ -97,8 +97,8 @@
 
 | 项 | 值 | 复核命令 |
 | --- | --- | --- |
-| 测试 | `219 passed`(本机实测 60–80 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
-| 测试分布 | 16 个文件共 219 例,最大 `test_webapp.py` 39 例、`test_settings_api.py` 37 例、`test_llm.py` 30 例 | `python -m pytest --collect-only -q` |
+| 测试 | `231 passed`(本机实测 60–80 s 之间浮动,含真起 uvicorn 的 SDK 用例;耗时受机器负载影响,别当判据) | `python -m pytest` |
+| 测试分布 | 17 个文件共 231 例,最大 `test_webapp.py` 41 例、`test_settings_api.py` 37 例、`test_llm.py` 30 例 | `python -m pytest --collect-only -q` |
 | 静态检查 | `All checks passed!`,退出码 0 | `ruff check .` |
 | 端到端校验 | `VERIFY PASS`,退出码 0;雨天评测集同样 PASS | `python scripts/verify.py` |
 | 发布一致性 | `RELEASE CHECK PASS`:版本四处一致 + `docs/openapi.json` 与 app 当前 schema 逐键一致(29 路径) | `python scripts/check_release.py` |
@@ -109,7 +109,7 @@
 | CI | 两条矩阵 job:`test (3.11)`、`test (3.12)`;当前分支 HEAD 的徽章为 `passing`(复核见右)。本机没有 `gh`,但徽章与 Actions 接口对**公开仓都免认证**;要提交号与耗时再用 `/actions/runs`(匿名限 60 次/小时/IP,别拿它轮询) | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/Transportation_Harnesss/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`;步骤清单见 `.github/workflows/ci.yml` |
 | CI 步骤 | `ruff check .` → `pytest` → `python scripts/verify.py` → `python scripts/check_release.py`,另装 `pip install -e .[dev]`（requirements 已并入 pyproject 单源）与 `pip install ./sdk` | `cat .github/workflows/ci.yml` |
 | 线上服务 | **已下线**（2026-10-06 决策）：TCP 8765 自 10-02 起连续失联 6 天,本机无主机访问渠道,每日探针连败失去信号价值。已撤 `probe.yml` 与 README 徽章;`scripts/probe_live.py` 保留(复活时本地探测用)。复活路径见 [DEPLOY.md](docs/DEPLOY.md) 与 HISTORY 当日条目 | `git log --oneline -- "**/probe.yml"`(恢复点) |
-| 版本 | 应用与 SDK 均为 `2.2.1`(四处同步:根 `pyproject.toml`、`sdk/pyproject.toml`、`sdk/harness_client/__init__.py`、`FastAPI(..., version=...)`;一致性已由 check_release 断言进 CI) | `python scripts/check_release.py` |
+| 版本 | 应用与 SDK 均为 `2.3.0`(四处同步:根 `pyproject.toml`、`sdk/pyproject.toml`、`sdk/harness_client/__init__.py`、`FastAPI(..., version=...)`;一致性已由 check_release 断言进 CI) | `python scripts/check_release.py` |
 | 发布 | `HISTORY.md` 从 2.0.0 起向前记录;tag 命名 `v主.次.补` | `head -20 HISTORY.md` |
 
 ## 已知坑（省下一次的调查时间）

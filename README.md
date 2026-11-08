@@ -80,7 +80,7 @@ python scripts/verify.py                     # 端到端不变量校验,预期 V
 | 📥 沉淀 badcase | 反馈 → 可重放用例,自动进评测集 | 看板「Case 管理」或 `POST /api/cases` |
 | 📊 看板(PWA) | 得分趋势、进化时间线回放、逐用例差分 | 浏览器打开 `/`,文档中心 `/help` |
 | 📱 微信小程序 | 外业现场提交 badcase、手机回看结果 | 微信开发者工具导入 `miniprogram/` |
-| 🐍 Python SDK / CLI | 程序化调用、CI 里守回归 | `pip install ./sdk` → `harness-client eval --version v2` |
+| 🐍 Python SDK / CLI | 程序化调用、CI 里守回归 | `pip install ./sdk` → `harness-client eval --version v2`;守回归 `harness-client compare --a <基线报告> --b <新报告>`(有回归退出码 1) |
 | 🤖 LLM 智能层 | 草稿助手、LLM-as-Judge、失败诊断双智能体 | 见 [docs/LLM.md](docs/LLM.md),全部可降级 |
 
 界面(三栏布局可拖拽,深色模式,支持安装为 PWA):

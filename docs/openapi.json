@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "交通分析自进化 Harness",
-    "version": "2.2.1"
+    "version": "2.3.0"
   },
   "paths": {
     "/api/auth/login": {

@@ -519,3 +519,62 @@
 - 门禁:pytest 219 passed;`python scripts/verify.py` VERIFY PASS(15/15);
   ruff 全过;括号配平(app.css 844/844、help.html 245/245);
   `grep a855f7 webapp/` 仅剩 HISTORY 注释中的历史记录,样式 0 命中
+
+## 2026-11-09 · v2.3.0 收口批:数据集溯源贯通 + 摄取 CLI + 对比守卫 + CLI compare + 看板体验批
+
+### Added(新增)
+
+- **数据集溯源字段贯通**:`pipeline/data/*.json` 六个数据集补 `source: "合成快照"`
+  (如实标注;真实源接入仍是任务 3,`captured_at` 原本就有);`storage.list_datasets()`
+  增回 `source`/`captured_at` 两键经 `/api/datasets` 透出(端点无 response_model,加键向后
+  兼容,openapi 无漂移);docs/API.md 与 help.html 的 datasets 段落同步
+- **数据集摄取 CLI `scripts/import_dataset.py`**:读 CSV/JSON → 校验(有路段时 8 字段必填、
+  数值非负且有限、segment_id 唯一;segments 可为空数组、顶层 scenario 可选、volume 可为
+  null 表缺测——取舍全按现有合法资产)→ 复用 `storage._safe_name`/`_write_json` 原子写
+  `pipeline/data/<name>.json`;`--source` 必填,写 `captured_at`;校验失败退出码 2 并逐条
+  报具体字段。落地 docs/ARCHITECTURE.md §10「新数据源」扩展点,不动任何端点;
+  `tests/test_import_dataset.py` 夹具把 `storage.DATA_DIR` monkeypatch 到临时目录,收尾
+  断言真实 `pipeline/data/` 逐文件字节不变(全程序零写入真实评测资产)
+- **`/api/compare` 跨评测集守卫**:两报告 `evalset_id` 缺失或不一致回 400——按 case_id 并集
+  配对会把单侧 case 混入差分,令 newly_passed/regressed 失真(归档报告均带该字段,18 份
+  存量实测);看板对比下拉按 A 侧评测集过滤 B 的选项(`app-board.js` `filterCompareB`,A 变更/
+  交换按钮/preset 流程联动),跨集组合源头不可选、400 仅作 API 兜底;`test_webapp.py` 增
+  同集 200 / 跨集 400 两例;docs/API.md 与 help.html 的 compare 段落补 400 语义
+- **SDK CLI `compare` 子命令**:`harness-client compare --a <基线报告> --b <新报告>` 打印双方
+  accuracy 与 newly_passed/regressed,回归非空退出码 1——README「CI 里守回归」的宣称自此有
+  命令承载;`pyproject.toml` pytest `pythonpath` 增 `sdk`,测试固定解析仓库内 SDK 源(不再被
+  环境里过期的 site-packages 旧拷贝遮蔽,与 CI `pip install ./sdk` 同效)
+- **看板体验批(webapp/static 五文件)**:`tokens.css` 新增第四动效曲线 `--ease-spring`(收敛
+  弹簧,默认回落 `--ease-out`,`@supports linear()` 65 点采样 ζ=.52/ωn=9.7,过冲 ~15% 一次
+  收敛);`.btn` 与可点击 chip 换弹簧曲线,按压相 `:active` 压制回 `--ease-out` 防 scale 按过
+  头;主题切换统一入口 `toggleTheme()`——点击链带坐标走 View Transitions 圆形揭示(app.css
+  `data-vt="theme"` clip-path circle 自点击点展开,揭示期压制颜色过渡防快照定格中间色),
+  命令面板/键盘/reduced-motion/无 VT 回退 340ms 颜色过渡;`data-vt` 清理只摘自己的取值
+  (theme/in/out 三值共用一属性);`index.html` 静态资源版本参数 v=1→v=2、SW shell 缓存
+  `v12`→`v13`(变更穿透)
+
+### Tests(测试)
+
+- 219 → 231(+12,17 文件):test_import_dataset 7 例、test_webapp compare 守卫 2 例、
+  test_sdk CLI compare 3 例;test_storage 溯源字段断言并入既有 list 用例(按 name 定位,
+  只验结构存在性不钉内容值)
+
+### 验证
+
+- 门禁:ruff 全过;pytest 231 passed;`python scripts/verify.py` VERIFY PASS;
+  `python scripts/check_release.py` RELEASE CHECK PASS(OpenAPI 无漂移 29 路径,
+  `/api/*` 31 操作/27 路径口径不变);SDK 公开方法数 AST 复核仍 30
+
+## 2026-11-09 · v2.3.0 发布:版本同步(2.2.1 → 2.3.0)
+
+- 版本号 2.2.1 → 2.3.0(四处同步:根 `pyproject.toml` / `sdk/pyproject.toml` /
+  `sdk/harness_client/__init__.py` / `FastAPI(version=)`);加能力升次版本
+  (溯源字段贯通、摄取 CLI、对比守卫、CLI compare、看板体验批)
+- `sdk/dist` wheel/sdist 重建入库并替换 2.2.1 旧构建(2.2.1 wheel 不含本批新增的
+  `compare` 子命令;wheel 复核:METADATA Version 2.3.0、`cli.py` 含 compare、
+  `__version__ = "2.3.0"`);`sdk/README.md` 文件表随动(版本表述 2.0.0 → 2.3.0
+  四处、cli 子命令数 5 → 6、行数 515 → 533)
+- 门禁(发布定稿本机复跑):ruff 全过;pytest 231 passed;`python scripts/verify.py`
+  VERIFY PASS(默认与雨天评测集均 PASS);`python scripts/check_release.py`
+  RELEASE CHECK PASS(2.3.0 四处一致 + OpenAPI 无漂移 29 路径)
+

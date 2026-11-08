@@ -19,22 +19,25 @@
 | `generate_pwa_icons.py` | 从 `webapp/static/assets/icon.svg` 栅格化 PWA 图标四件套，并内联组合 `logo-lockup.svg`、`banner.svg` | `webapp/static/assets/` 下 4 个 PNG + 2 个 SVG（都入库） | 需要 `resvg-py`（不在 `requirements*.txt` 里，属可选工具链）；缺它直接退出并给安装提示 |
 | `check_release.py` | 发布一致性断言(CI 第四步):版本号四处同步 + `docs/openapi.json` 无漂移 | 不写(只读) | 任一断言失败退出码 1;`__init__.py` 的版本直接读源码文件,不经 import(环境里可能装着旧包) |
 | `probe_live.py` | 线上只读探针:`GET $LIVE_HEALTH_URL`,断言在线且 `default_credentials=false` | 不写(只读,不携带凭据) | 服务地址从环境变量读,不入库;失败退出码 1,给 GitHub Actions 的 Live Probe 用 |
+| `import_dataset.py` | 数据集摄取 CLI:读 CSV/JSON → 校验 → 原子写数据集(「新数据源」扩展点的落地面,见 ARCHITECTURE.md §10) | `pipeline/data/<name>.json`(幂等覆盖) | `--source` 必填,写 `source` 与 `captured_at` 溯源字段;schema 按现有合法资产(segments 可空、scenario 可选、volume 可 null、有路段时 8 字段必填非负、segment_id 唯一);校验失败退出码 2 并逐条报具体字段;复用 `storage._safe_name`/`_write_json` |
 
 ## 和谁打交道
 
 - **上游**:`harness/`(`storage`、`ReplayRunner`)与 `pipeline/versions.py` 的 `PIPELINES`——多数脚本先把仓库根插进
   `sys.path` 再 import 项目包;`export_openapi.py` 只 import `webapp.app` 取 schema,不起服务;
   `check_release.py` 还会 import `harness_client`(版本断言直接读文件,不依赖安装版本)。
-  核对(在仓库根执行):`grep -c "sys.path.insert" scripts/*.py` → `generate_pwa_icons.py` 与 `probe_live.py` 是 `0`,其余 7 个都是 `1`。
-- **下游**（被这些脚本写到）：`cases/<标签>/` 与 `evalsets/*.json`（两个 seed 脚本）、`reports/report_<v>_<时间>.json`
+  核对(在仓库根执行):`grep -c "sys.path.insert" scripts/*.py` → `generate_pwa_icons.py` 与 `probe_live.py` 是 `0`,其余 8 个都是 `1`。
+- **下游**（被这些脚本写到）：`cases/<标签>/` 与 `evalsets/*.json`（两个 seed 脚本）、`pipeline/data/<name>.json`（`import_dataset.py`，幂等覆盖）、`reports/report_<v>_<时间>.json`
   与 `.md`（`run_eval.py`）、`docs/openapi.json`（`export_openapi.py`）、`webapp/static/assets/` 的 4 PNG + 2 SVG
   （`generate_pwa_icons.py`）、仓库根 `backups/`（`backup.py`，已 gitignore）。`verify.py` 只读，一个文件都不写。
 - **改这里之后要跑**:CI 跑 `python scripts/verify.py` 与 `python scripts/check_release.py` 两步
   (复核,在仓库根执行:`grep -n "scripts/" .github/workflows/ci.yml`),先在仓库根跑它们,
   看到 `VERIFY PASS` 与 `RELEASE CHECK PASS` 且退出码 0 才算过。
   按脚本再补一条:改 `export_openapi.py` → `python scripts/export_openapi.py` 后跑 `python scripts/check_release.py` 核对无漂移;
-  改 `generate_pwa_icons.py` → `python -m pytest tests/test_pwa.py -q`。
-  本目录不被任何测试引用(复核,在仓库根执行:`grep -rn "scripts/" tests/*.py` → 无输出)。
+  改 `generate_pwa_icons.py` → `python -m pytest tests/test_pwa.py -q`;
+  改 `import_dataset.py` → `python -m pytest tests/test_import_dataset.py -q`(其夹具把 `storage.DATA_DIR` monkeypatch 到临时目录,不会写真实 `pipeline/data/`)。
+  除 `import_dataset.py`(被 `tests/test_import_dataset.py` 以文件路径加载后调 `main()`,不经 import scripts 包)外,本目录不被任何测试引用
+  (复核,在仓库根执行:`grep -rn "scripts/" tests/*.py` → 无输出)。
 
 ## 命令与真实输出
 
@@ -119,6 +122,19 @@ webapp\static\assets\apple-touch-icon-180.png  (21994 bytes)
 
 字节数取决于图标内容，只用于确认「四个都生成了」。改完必跑
 `python -m pytest tests/test_pwa.py -q`（断言尺寸与 maskable 不透明）。
+
+```bash
+python scripts/import_dataset.py 早高峰样例.csv --name morning_peak --source "外业采集" --captured-at "2026-10-01 08:00"
+python scripts/import_dataset.py 样例.json --source "合成快照"   # --name 缺省取文件主干;JSON 自带 captured_at 时可不传
+```
+
+```
+已写入 D:\<项目所在路径>\pipeline\data\morning_peak.json(segments: 10,source: 外业采集,captured_at: 2026-10-01 08:00)
+```
+
+校验失败(缺字段/负值/segment_id 重复/名称非法等)逐条打印到 stderr 并以退出码 2 结束,
+例如 `  - segments[1]: 缺字段: free_flow_speed`,此时不落盘。导入成功即是 `/api/datasets`
+可见的资产;CSV 表头须恰含 8 个路段字段,volume 留空表示缺测(同 `missing_volume.json`)。
 
 ## 与另外两个入口的分工
 
