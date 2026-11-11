@@ -142,7 +142,8 @@ WantedBy=multi-user.target
 还会内含 `docker save` 的镜像 tar(目标机 `docker load` 免网络,否则在线构建)。
 
 目标机解压后按包内 `deploy-guide.md`(部署说明)三步走:`cp .env.example .env` 填凭据 →
-`docker compose up -d --build`(含 tar 则 `docker load` + `up -d`)→ probe 验收;
+`docker compose up -d --build`(含 tar 则 `docker load`,按包内 deploy-guide 第 1 节
+对号镜像标签后 `up -d`——compose 标签未随版本升位属 TH4-3)→ probe 验收;
 本文件其余章节(凭据语义/反代/备份/监控)对交付包同样适用。
 
 ## 路线 C:免费托管平台(Render / Fly.io)

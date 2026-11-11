@@ -618,3 +618,39 @@
   OpenAPI 无漂移 29 路径);前端回归:index.html 270 行不变、SW 预缓存表与本批变更 URL
   (tokens.css?v=3/app.css?v=3)逐条一致(既有已知缺口 apple-touch-icon-180.png 不在预缓存、
   logo-lockup.svg 零代码引用,属深评 THX-2 范围,本批未动)
+
+## 2026-11-12 · 文档清零批3:TH4-3 文档侧——离线部署「compose 已对号」承诺与现实对齐
+
+### Changed(变更)
+
+- **问题(体检 2026-11-11 TH4-3 的文档侧)**:`docker-compose.yml:6` 镜像标签钉在
+  `2.1.0`(2026-10-07 v2.1.0 定名后,2.2.0/2.2.1/2.3.0 三次发版未随动),而
+  `packaging/build_deploy.py:44` 按 pyproject 版本给镜像打 tag(现 `2.3.0`)并
+  `docker save` 进交付 tar、把 `docker-compose.yml` 原样拷进包——目标机 load 进
+  2.3.0 标签、compose 找 2.1.0,转去 registry 拉取不存在的镜像,离线部署必败;
+  部署文档当时却承诺「load 后 `up -d`(免网络)」「compose 已对号(随版本发布同步升位)」,
+  与实现相反
+- **packaging/deploy-guide.md**:部署第 3 步改为 load 后先对号镜像标签
+  (`docker tag transportation-harness:<版本> transportation-harness:2.1.0`,
+  2.1.0 以 `grep image: docker-compose.yml` 实测为准,升位修复后此步可省)再
+  `up -d`;升级条目 `up -d --build` 改为对号后 `up -d`(交付镜像直接用,免在目标机
+  重新构建——--build 会把源码重建产物错标为 compose 里的旧标签),删除
+  「compose 已对号」的不实承诺
+- **docs/DEPLOY.md**:交付包「三步走」同步「对号镜像标签」一步并注明属 TH4-3
+- **目录说明.md**:docker-compose.yml 行「四个数据卷」漂移清零——实际 6 个卷挂载
+  (评测资产 4 + LLM 层 drafts/llm_cache 2)
+- compose 标签升位(2.1.0→2.3.0)与 check_release 四处扩五处属配置/代码侧,另批处理,
+  本批不动;README:130/HISTORY v2.1.0 条目里的 2.1.0 为历史批次记述,不属活性承诺,不改
+
+### 验证
+
+- 门禁:`python ../文档标准/check_docs.py Transportation_Harnesss` 无阻断
+- 文档核对节其余各项复测一致(全部本机实测):版本 2.3.0 五处(根 pyproject.toml:7/
+  sdk pyproject.toml:7/sdk `__init__.py`:20/FastAPI version( webapp/app.py:107)/
+  sdk/README 三处 + wheel METADATA,check_release 机器断言 4 处一致);AGENTS 全表
+  (`--collect-only` 17 文件合计 231 例、top3 41/37/30;API 面 /api 31 操作 27 路径 +
+  `/`、`/help` 在 schema、`/sw.js` 不在 = 3 页面路由;SDK 30 公开方法;评测资产
+  18 replaycase/2 评测集/6 数据集;CI 徽章 True);README 160 行;端点语义随动
+  (API.md:475-478 与 help.html:733 跨评测集 400);taste 余量 `.22/.28/.34s`
+  app.css/help.html 均 0 处
+

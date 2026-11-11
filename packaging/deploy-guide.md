@@ -9,8 +9,13 @@
 2. 准备凭据:`cp .env.example .env`,编辑 `.env` 至少设置
    `AUTH_TOKEN=<≥16 位强随机串>`(机器客户端令牌,公网必设)与
    `ADMIN_PASSWORD=<你的强口令>`(初始管理员口令,提供即视为已设置);
-3. 启动:包内**含镜像 tar** 时 `docker load -i transportation-harness-<版本>.tar`
-   后 `docker compose up -d`(免网络);**不含 tar** 时
+3. 启动:包内**含镜像 tar** 时 `docker load -i transportation-harness-<版本>.tar`,
+   先对号镜像标签再启动——compose 的 `image:` 标签当前钉在 2.1.0、未随版本升位
+   (TH4-3),而 load 进来的是 `<版本>` 标签,直接 `docker compose up -d` 会去
+   registry 拉取不存在的 2.1.0 而部署失败;对号:
+   `docker tag transportation-harness:<版本> transportation-harness:2.1.0`
+   (2.1.0 以 `grep image: docker-compose.yml` 实际输出为准,升位修复后此步可省),
+   然后 `docker compose up -d`(免网络);**不含 tar** 时
    `docker compose up -d --build`(在线构建);
 4. 验收:`curl http://127.0.0.1:8765/api/health` 应返回 `"status":"ok"` 且
    `"default_credentials":false`;装有 Python 的机器也可
@@ -23,7 +28,9 @@
   本目录落盘,容器升级/重建不丢评测资产;
 - **备份**:`python scripts/backup.py --out <目录>`(cron 示例见 docs/DEPLOY.md);
 - **升级**:解压新版本包覆盖(数据卷目录不动)→ 含 tar 则 `docker load` 新镜像,
-  然后 `docker compose up -d --build`;镜像版本号随包升级,compose 已对号;
+  按第 1 节第 3 步对号标签后 `docker compose up -d`(免网络,交付镜像直接用,
+  不必在目标机重新构建);镜像版本号随包升级,compose 标签的随版本升位属
+  TH4-3(修复前需手动对号);
 - **安全建议**:生产环境把 docker-compose.yml 的 ports 改为
   `"127.0.0.1:8765:8765"`,由 Nginx 反代 + HTTPS 对外(步骤见 docs/DEPLOY.md 路线 B);
 - 凭据语义、CORS、小程序接入、Render/Fly.io 托管等完整说明见 `docs/DEPLOY.md`。
