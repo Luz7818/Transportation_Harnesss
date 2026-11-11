@@ -18,11 +18,11 @@
 | `__init__.py` | 空 | 包标记 |
 | `auth.json` | 本机账号库（口令哈希 + 会话签名密钥 `secret` + `default_credentials` 标记） | **已 gitignore，严禁提交**；删掉重启会重建并随机生成新初始口令 |
 | `static/index.html` | 应用壳：欢迎页 + 登录页 + 三栏工作台（5 个页签，侧栏/任务区可收起为图标轨）+ 常驻 AI 面板 + 命令面板 + 深浅主题（全站同步） | 270 行纯 HTML；样式与脚本全部外链（下 5 行），主题引导脚本仍内联（防闪烁） |
-| `static/tokens.css` | 设计令牌唯一事实源：色板/灰阶/圆角/动效曲线/阴影/焦点环，亮暗两表逐键对仗 | 56 行；改主题先改这里 |
-| `static/app.css` | 组件样式：工作台/弹层/动效/响应式/容器查询降级 | 1375 行；依赖 tokens.css，必须后于令牌表加载 |
-| `static/app-core.js` | 基础设施层：图标库/工具（api/toast/confirm/动效助手）/主题/视图分流与登录/健康检查/命令面板/点击轨道环/导航/面板拖拽/PWA 注册 | 759 行；三个脚本按 core → board → manage 顺序加载 |
-| `static/app-board.js` | 评测主线渲染：评测看板/版本对比/分析提交/进化回放/报告详情与快捷对比/全局快捷键 | 782 行 |
-| `static/app-manage.js` | 资产与辅助渲染：Case 管理/设置/AI 助手右栏 + 页签接线（`TASK_RENDERERS`/`renderers`）与 `boot()` 启动 | 677 行；接线表依赖前两个文件的渲染函数，**必须最后加载** |
+| `static/tokens.css` | 设计令牌唯一事实源：色板/灰阶/圆角/动效曲线/时长阶梯/字号阶/间距九档/tnum/阴影/焦点环，亮暗两表逐键对仗 | 99 行；改主题先改这里 |
+| `static/app.css` | 组件样式：工作台/弹层/动效/响应式/容器查询降级 | 1479 行；依赖 tokens.css，必须后于令牌表加载 |
+| `static/app-core.js` | 基础设施层：图标库/工具（api/toast/confirm/动效助手）/主题/视图分流与登录/健康检查/命令面板/点击轨道环/导航/面板拖拽/PWA 注册 | 812 行；三个脚本按 core → board → manage 顺序加载 |
+| `static/app-board.js` | 评测主线渲染：评测看板/版本对比/分析提交/进化回放/报告详情与快捷对比/全局快捷键 | 809 行 |
+| `static/app-manage.js` | 资产与辅助渲染：Case 管理/设置/AI 助手右栏 + 页签接线（`TASK_RENDERERS`/`renderers`）与 `boot()` 启动 | 683 行；接线表依赖前两个文件的渲染函数，**必须最后加载** |
 | `static/help.html` | 文档中心（`/help`，免登录）：核心概念、工作流、接口参考、错误码 | 内容与 `docs/API.md` 同构，改一份必须改另一份 |
 | `static/sw.js` | Service Worker：页面壳预缓存、`/static/*` stale-while-revalidate、`/api/*` network-first 回退缓存、非 GET 与 `/api/auth/*` 直连 | 必须从根路径提供（`GET /sw.js`），SW 作用域 = 脚本所在目录；缓存名带版本（当前 `harness-shell-v11` / `harness-api-v1`，壳内容变更须递增触发预缓存重建） |
 | `static/manifest.webmanifest` | PWA 清单：`start_url`/`scope` 为 `/`、`display: standalone`、4 个图标、2 个快捷方式（`/` 与 `/help`） | 可安装性字段由 `tests/test_pwa.py` 断言 |
@@ -32,7 +32,7 @@
 
 | 子目录 | 负责 |
 | --- | --- |
-| `static/` | 零构建前端的根：9 个入口文件（`index.html` 270 行壳 + `tokens.css` 56 + `app.css` 1375 + `app-core/board/manage.js` 760/782/676 + `help.html` 1025 + `sw.js` 117 + `manifest.webmanifest` 35）加 `assets/` 的 11 个图标与背景（4 PNG + 7 SVG），共 20 个文件 |
+| `static/` | 零构建前端的根：9 个入口文件（`index.html` 270 行壳 + `tokens.css` 99 + `app.css` 1479 + `app-core/board/manage.js` 812/809/683 + `help.html` 1028 + `sw.js` 117 + `manifest.webmanifest` 35）加 `assets/` 的 11 个图标与背景（4 PNG + 7 SVG），共 20 个文件 |
 
 本目录唯一的二级目录（`__pycache__/` 已 gitignore）。规模核对（在仓库根执行：
 `python -X utf8 -c "import glob;print(len(glob.glob('webapp/static/*')),len(glob.glob('webapp/static/assets/*')))"` → `10 11`）。

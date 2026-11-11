@@ -578,3 +578,43 @@
   VERIFY PASS(默认与雨天评测集均 PASS);`python scripts/check_release.py`
   RELEASE CHECK PASS(2.3.0 四处一致 + OpenAPI 无漂移 29 路径)
 
+## 2026-11-12 · 令牌归仓批2:动效时长收权 + 静态全 token 单源 + 死令牌清理
+
+### Changed(变更)
+
+- **时长散值贴梯归仓(app.css 79 处值 + help.html 12 处值)**:
+  `.15s×46/.16s/.19s×2/.2s×13→var(--dur-2)`、`.1s×2/.13s×2→var(--dur-1)`、
+  `.25s×4/.26s×5→var(--dur-3)`、`.32s×4→var(--dur-4)`;help.html 同步
+  `.15s×8/.2s/.25s×2→var(--dur-2/--dur-3)`、`.1s→var(--dur-1)`。
+  拍板走方案 (b)(深评-TH:74 THX-2 二选一):四档数值不动(.12/.18/.24/.3s,
+  与 zhishuxing style.css:33 同值、help.html 内联阶梯同源),现实向令牌收敛,
+  消解 tokens.css「悬停=--dur-2」自注与全站悬停实值 .15s 的矛盾
+  (深评-TH:35「搬家只完成 26%」收权欠账;代价 = 悬停/遮罩档 +30ms、.2s 系 −20ms,贴梯取整)
+- **豁免行内注释 66 行**:错峰延迟 34 行(30ms 系与 1.5s/3s/.07s)、reduced-motion 清零 5 行、
+  营销档/循环/width 数据条/VT 时长 27 行,逐行以「豁免:」标记(阶梯注释既定口径:
+  错峰(30ms 系)与营销档(>300ms)不入阶梯);app-board.js:345 图表 area 渐显(.8s+.2s 延迟,
+  营销档)在 JS 模板串内,留原值登记为豁免
+- **tokens.css 扩静态全 token 单源(82→99 行)**:字号阶九档 `--fs-1..9`(11/12/13/14/15/16/20/24/32px)
+  + `--fs-hero: 44px` 展示特例(R1)、间距九档 `--sp-1..9`(4/6/8/10/12/16/20/24/32px,4px 基数)(R3)、
+  `--tnum: tabular-nums`(R9);各档注释给出全站现值→档贴梯映射(如字号 12.5→12、间距 28~36→32),
+  消费批照表搬家;**tnum 随批消费**:app.css 14 处字面 `tabular-nums` → `var(--tnum)`
+- **删死令牌**:app.css 两处 `--hv-fico-bg`(135deg 渐变,全仓零消费,深评-TH:76)删除;
+  `--hv-grad-a` 有 app.css:932 在用,保留
+- **缓存穿透**:`tokens.css`/`app.css` 版本参数 v=2→v=3(index.html 两处 + sw.js 预缓存表两处同步),
+  SW shell 缓存 `harness-shell-v13`→`v14`;webapp/README.md 文件表规模数字对账
+  (本批 tokens 99/app.css 1479,顺带修正既有漂移 core 759→812/board 782→809/manage 677→683/help 1025→1028)
+
+### 验证
+
+- 收权率(深评-TH:94 同口径行计数):`grep -c "var(--dur-"` app.css 39→89 行
+  (值出现 50→129 次)、help.html 8→13 行(8→25 次),行占比 26%→59%;
+  散值 `grep -nE "(transition|animation).*[0-9.]+m?s"` 排除 var 引用后 app.css 余 62 行/
+  help.html 4 行,逐行审计全部为「豁免:」注释行(非豁免散值行 = 0);
+  `grep -n "\.15s" webapp/static/app.css` → 0 命中
+- 括号配平:app.css 877/877、help.html 245/245、tokens.css 4/4
+- 门禁:ruff 全过(All checks passed!,退出码 0);pytest 231 passed/0 failed/0 error
+  (JUnit XML 计数,62.9s);`python scripts/verify.py` 默认与 `--evalset evalset_scenario_rain`
+  均 VERIFY PASS;`python scripts/check_release.py` RELEASE CHECK PASS(2.3.0 四处一致 +
+  OpenAPI 无漂移 29 路径);前端回归:index.html 270 行不变、SW 预缓存表与本批变更 URL
+  (tokens.css?v=3/app.css?v=3)逐条一致(既有已知缺口 apple-touch-icon-180.png 不在预缓存、
+  logo-lockup.svg 零代码引用,属深评 THX-2 范围,本批未动)
