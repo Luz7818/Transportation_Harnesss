@@ -101,9 +101,9 @@
 | 测试分布 | 17 个文件共 231 例,最大 `test_webapp.py` 41 例、`test_settings_api.py` 37 例、`test_llm.py` 30 例 | `python -m pytest --collect-only -q` |
 | 静态检查 | `All checks passed!`,退出码 0 | `ruff check .` |
 | 端到端校验 | `VERIFY PASS`,退出码 0;雨天评测集同样 PASS | `python scripts/verify.py` |
-| 发布一致性 | `RELEASE CHECK PASS`:版本四处一致 + `docs/openapi.json` 与 app 当前 schema 逐键一致(29 路径) | `python scripts/check_release.py` |
-| API 面 | `/api/*` 31 个操作(27 条路径),另有 3 条页面路由 | `python -c "import json;s=json.load(open('docs/openapi.json',encoding='utf-8'));print(len(s['paths']),sum(len(v) for v in s['paths'].values()))"` |
-| SDK 面 | 30 个公开方法(含 `close`),其中 29 个对应 API 操作 —— `/api/settings` 的 GET/PUT 刻意不接 | `python -c "import ast;print(len([n for n in ast.walk(ast.parse(open('sdk/harness_client/client.py',encoding='utf-8').read())) if isinstance(n,ast.FunctionDef) and not n.name.startswith('_')]))"` |
+| 发布一致性 | `RELEASE CHECK PASS`:版本四处一致 + `docs/openapi.json` 与 app 当前 schema 逐键一致(31 路径) | `python scripts/check_release.py` |
+| API 面 | `/api/*` 31 个操作(27 条路径),另有 3 条页面路由 + 2 条拨测路由(`/healthz` 存活 / `/readyz` 就绪,免鉴权,不在 `/api/*` 口径内) | `python -c "import json;s=json.load(open('docs/openapi.json',encoding='utf-8'));print(len(s['paths']),sum(len(v) for v in s['paths'].values()))"` |
+| SDK 面 | 30 个公开方法(含 `close`),其中 29 个对应 API 操作 —— `/api/settings` 的 GET/PUT 与拨测端点 `/healthz` `/readyz` 刻意不接(前者默认关闭;后者面向编排器/拨测器,SDK 的 `health()` 继续对应 `/api/health` 全量诊断) | `python -c "import ast;print(len([n for n in ast.walk(ast.parse(open('sdk/harness_client/client.py',encoding='utf-8').read())) if isinstance(n,ast.FunctionDef) and not n.name.startswith('_')]))"` |
 | 评测资产 | 18 条 replaycase(8 个标签目录)、2 个评测集(15 + 3 条)、6 个数据集、`reports/` 归档随运行增长 | `python -c "import glob;print(len(glob.glob('cases/*/*.json')),len(glob.glob('evalsets/*.json')),len(glob.glob('pipeline/data/*.json')),len(glob.glob('reports/*')))"` |
 | 得分轨迹 | evalset_v1:v0 1/13 → v1 11/13 → v2 13/13;evalset_scenario_rain:0/3 → 2/3 → 3/3 | `python scripts/verify.py` |
 | CI | 两条矩阵 job:`test (3.11)`、`test (3.12)`;当前分支 HEAD 的徽章为 `passing`(复核见右)。本机没有 `gh`,但徽章与 Actions 接口对**公开仓都免认证**;要提交号与耗时再用 `/actions/runs`(匿名限 60 次/小时/IP,别拿它轮询) | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/Transportation_Harnesss/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`;步骤清单见 `.github/workflows/ci.yml` |
@@ -121,6 +121,7 @@
   换到临时文件，拆了单跑就读到本机真实 `webapp/auth.json` 而 401。
 - **本机 `webapp/auth.json` 的 `default_credentials` 已翻转为 false**（1.6.0 轮换通道）；
   `/api/health` 原样回显该布尔。线上服务已下线（2026-10-06），复活部署后按 DEPLOY.md 重配探针。
+  探针三件套分工：`/readyz`（就绪，Docker healthcheck 指向）/ `/healthz`（存活）/ `/api/health`（全量诊断）。
 - **Windows 控制台/管道编码**：捕获输出前 `set PYTHONIOENCODING=utf-8`（脚本自身有
   `reconfigure`，但没走这条的进程在 GBK 控制台经管道会乱码）。
 - **评测脚本会往 `reports/` 写文件**：干净工作区试跑后，要么一起提交（归档即历史），

@@ -17,6 +17,8 @@
 会话令牌由 webapp/auth.py 的 HMAC 签名机制签发与校验,三处共用同一套,不存在第二套格式。
 初始口令未修改(default_credentials=true)期间,以上三种凭据都只对
 /api/health 与 /api/auth/* 生效,其余接口一律 403 —— 先改口令,再开放业务。
+拨测端点 /healthz(存活)与 /readyz(就绪)不带 /api/ 前缀,不受该门禁影响:
+编排器在任何状态下都必须能探测容器。
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ import os
 import re
 import sys
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -128,7 +131,8 @@ def _openapi_schema() -> dict[str, Any]:
     schema["security"] = [{"ApiToken": []}, {"BearerSession": []}, {"SessionCookie": []}]
     # 无需鉴权的端点逐个豁免(健康拨测/登录/登出/静态页);/api/auth/me 保留锁标:
     # login 模式下未登录访问它就是 401
-    public_paths = ("/api/health", "/api/auth/login", "/api/auth/logout", "/", "/help")
+    public_paths = ("/api/health", "/healthz", "/readyz",
+                    "/api/auth/login", "/api/auth/logout", "/", "/help")
     for path, ops in schema.get("paths", {}).items():
         if path in public_paths:
             for op in ops.values():
@@ -204,6 +208,7 @@ async def auth_middleware(request: Request, call_next):
     """访问控制:
     - AUTH_MODE=open:全部放行(仅限内网演示);
     - /api/auth/* 与 /api/health 始终放行(登录页与拨测需要);
+      根路径拨测端点 /healthz /readyz 不带 /api/ 前缀,走下面的非 /api/* 豁免,同样恒可达;
     - 初始口令未修改(default_credentials=true)时,其余 /api/* 一律 403 ——
       部署者必须先登录改掉初始口令(或启动时经 ADMIN_PASSWORD 提供),业务接口才开放;
     - /api/settings 交给端点自己做更严的准入判定(要区分本机直连与会话),
@@ -453,6 +458,54 @@ def api_health() -> dict:
         "evalset_count": len(storage.list_evalsets()),
         "report_count": len(storage.list_reports()),
     }
+
+
+# 存活/就绪分离(拨测三件套的另外两件):/api/health 是带资产计数的全量诊断,
+# /healthz 与 /readyz 是给容器编排器(Docker healthcheck/K8s)的轻量探针 ——
+# 存活判定与就绪判定分开,重启看前者、摘流量看后者,互不误伤。
+_STARTED_AT = time.monotonic()
+
+# 就绪检查的存储目录(属性名在调用期从 storage 取,测试才能重定向后生效)
+_READY_DIRS = (("cases", "CASES_DIR"), ("evalsets", "EVALSETS_DIR"),
+               ("reports", "REPORTS_DIR"), ("datasets", "DATA_DIR"))
+
+
+def _dir_listable(path: Path) -> bool:
+    """目录存在且可列(读+遍历权限):缺失/被同名文件顶替/权限不足都算未就绪。"""
+    try:
+        next(iter(path.iterdir()), None)
+    except OSError:
+        return False
+    return True
+
+
+@app.get("/healthz", tags=["metadata"])
+def healthz() -> dict:
+    """存活探针(liveness):进程在即 200,零依赖检查 —— 编排器据此判定要不要重启容器。
+
+    刻意不碰存储/资产:重启判定必须永不误报,资产层故障(目录缺失、坏文件)
+    属于就绪问题,由 /readyz 与业务端点的错误响应呈现。
+    """
+    return {"status": "alive", "app_version": app.version,
+            "uptime_s": int(time.monotonic() - _STARTED_AT)}
+
+
+@app.get("/readyz", tags=["metadata"])
+def readyz() -> JSONResponse:
+    """就绪探针(readiness):四类存储目录全部可读即 200,任一不可读回 503。
+
+    编排器(Docker healthcheck/反代上游健康检查)据此决定挂/摘流量;
+    刻意不做资产全量扫描(那是 /api/health 的职责):就绪判定要便宜且稳定,
+    不与单个损坏文件的容错策略耦合 —— 坏文件让业务端点报错,不让探针震荡。
+    """
+    checks = {name: _dir_listable(getattr(storage, attr)) for name, attr in _READY_DIRS}
+    ready = all(checks.values())
+    body: dict[str, Any] = {"status": "ready" if ready else "not_ready",
+                            "app_version": app.version, "checks": checks}
+    if not ready:
+        body["detail"] = "存储目录未就绪:" + ", ".join(
+            name for name, ok in checks.items() if not ok)
+    return JSONResponse(body, status_code=200 if ready else 503)
 
 
 @app.get("/api/evalsets", tags=["metadata"])

@@ -270,6 +270,52 @@
         "security": []
       }
     },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Healthz",
+        "description": "存活探针(liveness):进程在即 200,零依赖检查 —— 编排器据此判定要不要重启容器。\n\n刻意不碰存储/资产:重启判定必须永不误报,资产层故障(目录缺失、坏文件)\n属于就绪问题,由 /readyz 与业务端点的错误响应呈现。",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Healthz Healthz Get"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "Readyz",
+        "description": "就绪探针(readiness):四类存储目录全部可读即 200,任一不可读回 503。\n\n编排器(Docker healthcheck/反代上游健康检查)据此决定挂/摘流量;\n刻意不做资产全量扫描(那是 /api/health 的职责):就绪判定要便宜且稳定,\n不与单个损坏文件的容错策略耦合 —— 坏文件让业务端点报错,不让探针震荡。",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
     "/api/evalsets": {
       "get": {
         "tags": [

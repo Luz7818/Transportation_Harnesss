@@ -21,8 +21,10 @@ USER harness
 ENV HOST=0.0.0.0 PORT=8765 PYTHONUNBUFFERED=1
 EXPOSE 8765
 
+# healthcheck 指向 /readyz(就绪):存储卷不可读即 unhealthy 可见;
+# 存活判定另有 /healthz(零依赖,重启/看门狗语义),业务诊断用 /api/health
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8765/api/health', timeout=4).status == 200 else 1)"
+  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8765/readyz', timeout=4).status == 200 else 1)"
 
 # 建议运行时注入:AUTH_TOKEN=<强随机串>(公网必须开启 API 令牌鉴权)
 CMD ["python", "webapp/app.py"]

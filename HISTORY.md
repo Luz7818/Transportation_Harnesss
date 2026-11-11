@@ -654,3 +654,53 @@
   (API.md:475-478 与 help.html:733 跨评测集 400);taste 余量 `.22/.28/.34s`
   app.css/help.html 均 0 处
 
+
+## 2026-11-12 · readyz 就绪探针与健康检查分离(核查报告批4·部署件)
+
+### Added(拨测三件套成形)
+
+- **`GET /healthz` 存活探针(liveness)**:`webapp/app.py` 新增——零依赖检查,进程在即 200,
+  刻意不碰存储/资产(重启判定永不误杀);响应带 `status: "alive"` / `app_version` / `uptime_s`
+  (进程级单调时钟,可识别反复崩溃重启)
+- **`GET /readyz` 就绪探针(readiness)**:检查四类存储目录(cases/evalsets/reports/datasets)
+  存在且可列,全过 200、任一失败 503(`checks` 逐项布尔 + `detail` 指名未就绪目录);
+  刻意不做资产全量扫描——就绪判定便宜且稳定,不与单个损坏文件的容错策略耦合
+  (坏文件让业务端点报错,不让探针震荡)
+- **拨测三件套分工**:`/healthz`(存活,重启判定)/ `/readyz`(就绪,摘挂流量)/
+  `/api/health`(全量诊断,带资产计数与口令门禁状态,SDK `health()` 与小程序/看板继续用它);
+  `/api/health` 响应体新增一句职责注记,文档明示拨测频率别配太高
+- **healthcheck 改指 readyz**:Dockerfile 与 docker-compose.yml 的 HEALTHCHECK 从
+  `/api/health` 改指 `/readyz`——存储卷未挂载/不可读即 unhealthy 可见,这正是单容器部署
+  该看的信号;两处各加一行注释写明三件套分工
+- 鉴权语义:两探针不带 `/api/` 前缀,初始口令门禁(403)与凭据裁决天然不影响;
+  OpenAPI `public_paths` 豁免同步(`/healthz` `/readyz` 标 `security: []`,Swagger 如实可见);
+  app.py 模块/中间件 docstring 随动写明「编排器在任何状态下都必须能探测容器」
+
+### 文档与统计随动(端点改动维护矩阵)
+
+- OpenAPI 重导:29 → 31 路径(check_release 机器断言无漂移,RELEASE CHECK PASS)
+- `docs/API.md`:鉴权方式两处补「探针不带 /api/ 前缀不受门禁影响」;元数据节新增
+  `/healthz` `/readyz` 两节(含 200/503 响应示例与分工说明)
+- `webapp/static/help.html`:API 参考新增两探针条目,`/api/health` 条目补职责注记
+- `docs/DEPLOY.md`:门禁语义、健康检查与监控节改为三件套分工指引(拨测服务打
+  `/api/health`,编排器/反代打 `/readyz`,重启判定用 `/healthz`)
+- `AGENTS.md`:发布一致性 29→31 路径;API 面补「2 条拨测路由(不在 /api/* 口径内)」;
+  SDK 面注明 `/healthz` `/readyz` 刻意不接(面向编排器/拨测器,`health()` 继续对应
+  `/api/health`,对齐 `/api/settings` 的「刻意不接」先例);已知坑补探针三件套分工
+
+### 测试
+
+- `tests/test_webapp.py` 新增 `TestProbes` 6 例(231 → 237):liveness 零依赖
+  (存储目录全不可用仍 200)、readyz 就绪 200(hermetic 夹具)、目录缺失 503 + detail 指名、
+  目录被同名文件顶替 503、初始口令门禁期间探针仍可达(门禁先实证在挡 403)、
+  OpenAPI 免鉴权标记
+
+### 验证(全部本机实测)
+
+- `python -m pytest` → **237 passed, 1 warning in 15.58s**
+- `python -m ruff check .` → **All checks passed!**
+- `python scripts/verify.py` → **VERIFY PASS**(最小闭环与两轮自进化全部符合预期)
+- `python scripts/check_release.py` → **RELEASE CHECK PASS**(版本 2.3.0 四处一致,
+  OpenAPI 无漂移 31 路径)
+- TestClient 实测:缺 cases 目录时 `/readyz` 503 `{"status":"not_ready","checks":{"cases":false,...},
+  "detail":"存储目录未就绪:cases"}`,恢复后回 200

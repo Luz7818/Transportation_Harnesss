@@ -28,7 +28,8 @@ python webapp/app.py    # .env 在启动时自动读取
   所有接口立即可用;用户名默认 `admin`,可用 `ADMIN_USER` 改;
 - **未提供** `ADMIN_PASSWORD` → 随机生成一枚强口令只在控制台打印一次,且 `default_credentials=true`:
   在口令被改掉之前,业务接口对**三种凭据一律 403**,只放行 `/api/health` 与 `/api/auth/*`
-  (登录、改密)。用打印的口令登录 → 看板右上角「改密」→ 门禁立即解除;
+  (登录、改密);根路径拨测端点 `/healthz` `/readyz` 不受门禁影响,编排器探针任何时刻可达。
+  用打印的口令登录 → 看板右上角「改密」→ 门禁立即解除;
 - **存量部署补收口**:线上 `auth.json` 还是默认口令状态时,在 `.env` 里加上
   `ADMIN_PASSWORD=<新口令>` 重启一次即自动轮换并翻转标记;已在界面改过口令的部署,
   环境变量会被忽略,不会覆盖;
@@ -167,12 +168,18 @@ WantedBy=multi-user.target
 
 ## 健康检查与监控
 
+拨测三件套,按用途各取其一(全部免鉴权,初始口令门禁期间同样可达):
+
 ```bash
-curl https://你的域名/api/health        # {"status":"ok","app_version":"<版本>",...,"default_credentials":false,...}
-# default_credentials 必须是 false;为 true 表示初始口令未改,业务接口处于 403 门禁状态
+curl https://你的域名/readyz            # {"status":"ready",...,"checks":{...}} —— 就绪:存储目录可读,编排器/反代摘挂流量看它(Docker healthcheck 已指向)
+curl https://你的域名/healthz           # {"status":"alive","uptime_s":...}    —— 存活:进程在即 200,重启/看门狗判定用它
+curl https://你的域名/api/health        # {"status":"ok","app_version":"<版本>",...,"default_credentials":false,...} —— 全量诊断
+# /api/health 的 default_credentials 必须是 false;为 true 表示初始口令未改,业务接口处于 403 门禁状态
 ```
 
-UptimeRobot 等拨测服务监控 `/api/health` 即可。
+UptimeRobot 等拨测服务监控 `/api/health`(全量诊断,带资产计数与口令门禁状态)即可;
+容器编排与反代上游健康检查用 `/readyz`(便宜且稳定,storage 卷未挂载/不可读即 503);
+`/healthz` 留给重启判定——它零依赖、永不因资产问题失败,不会误杀容器。
 
 ## 数据备份
 

@@ -31,7 +31,9 @@ Transportation Harness 的全部能力通过一套 REST API 暴露,网页看板�
 同一条中间件裁决三种凭据,**按下列顺序判定,任一通过即放行**。
 第 0 步是**初始口令门禁**(先于一切凭据):`/api/health` 的 `default_credentials` 为 true 时
 (部署者还没提供/改掉初始口令),除 `/api/health` 与 `/api/auth/*` 外的全部 `/api/*`
-对三种凭据一律 `403`,直到口令被改掉或启动环境提供 `ADMIN_PASSWORD`。各凭据语义见 [DEPLOY.md](DEPLOY.md):
+对三种凭据一律 `403`,直到口令被改掉或启动环境提供 `ADMIN_PASSWORD`。
+根路径拨测端点 `/healthz` `/readyz` 不带 `/api/` 前缀,不受该门禁影响——编排器在任何状态下都要能探测容器。
+各凭据语义见 [DEPLOY.md](DEPLOY.md):
 
 | 顺序 | 凭据 | 给谁用 | 来源 |
 | --- | --- | --- | --- |
@@ -50,7 +52,8 @@ Transportation Harness 的全部能力通过一套 REST API 暴露,网页看板�
 | **open** | `AUTH_MODE=open` | 全部放行,以 `demo` 身份进入工作台。**仅限内网演示**(不影响 `/api/settings` 的准入) |
 | **自判定** | `/api/settings` | 不经通用 401,由端点自己裁决:总开关开启 + (本机直连 或 已鉴权会话),否则 `403` |
 
-`/api/health` 与 `/api/auth/*` 始终免鉴权,可用于拨测。
+`/api/health` 与 `/api/auth/*` 始终免鉴权,可用于拨测;根路径的 `/healthz`(存活)与
+`/readyz`(就绪)同样恒免鉴权 —— 三件拨测端点语义见「元数据」节。
 安全内建:口令 PBKDF2 哈希(12 万次迭代)、登录连续失败 5 次锁定 10 分钟、HMAC 签名会话(7 天)、
 令牌时序安全比较、文件名白名单防路径穿越、`.env` 原子写 + 写前备份。
 
@@ -195,7 +198,8 @@ Bearer 与 Cookie 两种会话凭据都能在这里换出用户名。
 
 ### GET /api/health — 健康检查
 
-公开接口,适合 UptimeRobot 等拨测。
+公开接口,适合 UptimeRobot 等拨测。带资产计数的**全量诊断**:每次调用全量扫描
+cases/evalsets/reports,拨测频率别配得太高;编排器探针请用下面的 `/healthz` `/readyz`。
 
 ```jsonc
 {
@@ -206,6 +210,33 @@ Bearer 与 Cookie 两种会话凭据都能在这里换出用户名。
   "versions": ["v0", "v1", "v2"],
   "case_count": 16, "evalset_count": 2, "report_count": 3
 }
+```
+
+### GET /healthz — 存活探针(liveness)
+
+公开接口,给容器编排器/看门狗判定「**进程是否活着**」:零依赖检查,进程在即 `200`,
+不会因资产或权限问题失败——重启判定用它,避免误杀;`uptime_s` 可用于识别反复崩溃重启。
+
+```jsonc
+{ "status": "alive", "app_version": "2.3.0", "uptime_s": 86400 }
+```
+
+### GET /readyz — 就绪探针(readiness)
+
+公开接口,给编排器(Docker healthcheck/反代上游健康检查)判定「**能否接流量**」:
+检查四类存储目录(cases/evalsets/reports/datasets)存在且可列,全过 `200`,
+任一失败 `503`(`checks` 逐项布尔 + `detail` 指名未就绪目录)。
+刻意不做资产全量扫描:就绪判定要便宜且稳定,单个损坏文件让业务端点报错,不让探针震荡。
+Dockerfile 与 docker-compose 的 healthcheck 即指向此端点。
+
+```jsonc
+// 200
+{ "status": "ready", "app_version": "2.3.0",
+  "checks": { "cases": true, "evalsets": true, "reports": true, "datasets": true } }
+// 503(存储卷未挂载/权限不足时)
+{ "status": "not_ready", "app_version": "2.3.0",
+  "checks": { "cases": false, "evalsets": true, "reports": true, "datasets": true },
+  "detail": "存储目录未就绪:cases" }
 ```
 
 ### GET /api/versions — 管线版本与 CHANGELOG

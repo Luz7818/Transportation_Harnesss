@@ -472,6 +472,7 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
     <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/api/health</span><span class="ep-name">健康检查(拨测用)</span><span class="ep-caret">▶</span></div>
     <div class="ep-body">
       <p><span class="auth-pill no">公开接口</span></p>
+      <p>带资产计数的<b>全量诊断</b>:每次调用全量扫描 cases/evalsets/reports,拨测频率别配太高;编排器探针用下面的 <code class="inline">/healthz</code> <code class="inline">/readyz</code>。</p>
       <h4>响应 200</h4>
       <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
 <pre>{
@@ -481,6 +482,30 @@ curl -H <span class="s">"X-API-Token: &lt;你的令牌&gt;"</span> http://127.0.
   <span class="k">"versions"</span>: [<span class="s">"v0"</span>, <span class="s">"v1"</span>, <span class="s">"v2"</span>],
   <span class="k">"case_count"</span>: 16, <span class="k">"evalset_count"</span>: 2, <span class="k">"report_count"</span>: 3
 }</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/healthz</span><span class="ep-name">存活探针(liveness)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill no">公开接口</span></p>
+      <p>给容器编排器/看门狗判定「<b>进程是否活着</b>」:零依赖检查,进程在即 200,不会因资产或权限问题失败——重启判定用它,避免误杀;<code class="inline">uptime_s</code> 识别反复崩溃重启。</p>
+      <h4>响应 200</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"status"</span>: <span class="s">"alive"</span>, <span class="k">"app_version"</span>: <span class="s">"2.3.0"</span>, <span class="k">"uptime_s"</span>: 86400 }</pre></div>
+    </div>
+  </div>
+
+  <div class="ep">
+    <div class="ep-head"><span class="method get">GET</span><span class="ep-path">/readyz</span><span class="ep-name">就绪探针(readiness)</span><span class="ep-caret">▶</span></div>
+    <div class="ep-body">
+      <p><span class="auth-pill no">公开接口</span></p>
+      <p>给编排器(Docker healthcheck/反代上游健康检查)判定「<b>能否接流量</b>」:四类存储目录存在且可列即 200,任一失败 503(带 <code class="inline">checks</code> 逐项布尔与 <code class="inline">detail</code>)。Dockerfile 与 compose 的 healthcheck 即指向此端点。</p>
+      <h4>响应 200 / 503</h4>
+      <div class="code-block"><div class="code-head"><span>JSON</span><button class="copy-btn">复制</button></div>
+<pre>{ <span class="k">"status"</span>: <span class="s">"ready"</span>, <span class="k">"app_version"</span>: <span class="s">"2.3.0"</span>,
+  <span class="k">"checks"</span>: { <span class="k">"cases"</span>: true, <span class="k">"evalsets"</span>: true, <span class="k">"reports"</span>: true, <span class="k">"datasets"</span>: true } }
+<span class="c">// 503 时 status 为 "not_ready",失败项为 false 并带 "detail": "存储目录未就绪:cases"</span></pre></div>
     </div>
   </div>
 

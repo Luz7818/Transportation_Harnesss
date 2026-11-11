@@ -89,6 +89,80 @@ class TestAuthFlow:
         assert resp.status_code == 401
 
 
+class TestProbes:
+    """存活/就绪分离(/healthz /readyz):重启判定零依赖,就绪判定看存储目录;
+    /api/health 仍是带资产计数的全量诊断,三件拨测端点免鉴权。"""
+
+    def test_healthz_liveness_ignores_storage(self, client, tmp_path, monkeypatch):
+        """liveness 契约:零依赖检查 —— 存储目录全部不可用时仍 200,重启判定永不误杀。"""
+        from harness import storage
+
+        for attr in ("CASES_DIR", "EVALSETS_DIR", "REPORTS_DIR", "DATA_DIR"):
+            monkeypatch.setattr(storage, attr, tmp_path / "no_such_dir")
+        resp = client.get("/healthz")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "alive"
+        assert body["app_version"]
+        assert body["uptime_s"] >= 0
+
+    def test_readyz_ready_when_storage_listable(self, client, hermetic_storage):
+        resp = client.get("/readyz")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "ready"
+        assert body["app_version"]
+        assert all(body["checks"].values())
+
+    def test_readyz_503_names_missing_dir(self, client, hermetic_storage, tmp_path, monkeypatch):
+        """就绪契约:目录缺失 → 503 + checks 逐项布尔 + detail 指名未就绪目录。"""
+        from harness import storage
+
+        monkeypatch.setattr(storage, "CASES_DIR", tmp_path / "missing_cases")
+        resp = client.get("/readyz")
+        assert resp.status_code == 503
+        body = resp.json()
+        assert body["status"] == "not_ready"
+        assert body["checks"]["cases"] is False
+        assert all(ok for name, ok in body["checks"].items() if name != "cases")
+        assert "cases" in body["detail"]
+
+    def test_readyz_503_when_dir_replaced_by_file(self, client, hermetic_storage,
+                                                  tmp_path, monkeypatch):
+        """目录被同名文件顶替(iterdir 抛 NotADirectoryError)同样判未就绪。"""
+        from harness import storage
+
+        impostor = tmp_path / "impostor"
+        impostor.write_text("not a dir", encoding="utf-8")
+        monkeypatch.setattr(storage, "REPORTS_DIR", impostor)
+        resp = client.get("/readyz")
+        assert resp.status_code == 503
+        assert resp.json()["checks"]["reports"] is False
+
+    def test_probes_stay_open_during_password_gate(self, make_client, monkeypatch):
+        """初始口令门禁(default_credentials=true)只挡 /api/*:探针任何时刻可达。"""
+        import webapp.app as app_mod
+        import webapp.auth as auth_mod
+
+        salt = "cd" * 16
+        gated = {"secret": "s" * 64, "default_credentials": True,
+                 "users": [{"username": "admin", "salt": salt,
+                            "password_hash": auth_mod._hash(salt, "initial-pw-123")}]}
+        monkeypatch.setattr(app_mod, "_AUTH_STORE", gated)
+        with make_client() as tc:
+            assert tc.get("/api/cases").status_code == 403     # 门禁确已在挡
+            assert tc.get("/healthz").status_code == 200
+            assert tc.get("/readyz").status_code == 200
+
+    def test_probe_paths_public_in_openapi(self):
+        """schema 如实标记免鉴权(Swagger 不撒谎,对齐 /api/health 的既有豁免口径)。"""
+        from webapp.app import app
+
+        schema = app.openapi()
+        for path in ("/healthz", "/readyz"):
+            assert schema["paths"][path]["get"]["security"] == []
+
+
 class TestEvalsets:
     def test_list_evalsets(self, authed_client):
         body = authed_client.get("/api/evalsets").json()
